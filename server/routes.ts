@@ -1,16 +1,134 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server } from "http";
 import { storage } from "./storage";
+import { api } from "@shared/routes";
+import { z } from "zod";
+import { registerChatRoutes } from "./replit_integrations/chat";
+import { registerImageRoutes } from "./replit_integrations/image";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  
+  // Register integrations
+  registerChatRoutes(app);
+  registerImageRoutes(app);
+  registerObjectStorageRoutes(app);
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  // --- Users API ---
+  
+  // Mock "Me" - in a real app this would use session/auth
+  // For MVP, we'll just return the first user or create one if none exist
+  app.get(api.users.me.path, async (req, res) => {
+    let user = await storage.getUserByUsername("demo_user");
+    if (!user) {
+      user = await storage.createUser({ username: "demo_user" });
+    }
+    res.json(user);
+  });
+
+  app.post(api.users.addFunds.path, async (req, res) => {
+    // For MVP, assume the user is "demo_user"
+    const user = await storage.getUserByUsername("demo_user");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    try {
+      const { amount } = api.users.addFunds.input.parse(req.body);
+      const updatedUser = await storage.updateUserBalance(user.id, amount);
+      res.json(updatedUser);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  // --- Tasks API ---
+
+  app.get(api.tasks.list.path, async (req, res) => {
+    const tasks = await storage.getTasks();
+    res.json(tasks);
+  });
+
+  app.get(api.tasks.get.path, async (req, res) => {
+    const task = await storage.getTask(Number(req.params.id));
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    res.json(task);
+  });
+
+  app.post(api.tasks.create.path, async (req, res) => {
+    try {
+      // Get current user (demo)
+      const user = await storage.getUserByUsername("demo_user");
+      if (!user) return res.status(401).json({ message: "Not authenticated" });
+
+      const input = api.tasks.create.input.parse(req.body);
+
+      // Check balance
+      if (user.balance < input.amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Deduct balance (escrow)
+      await storage.updateUserBalance(user.id, -input.amount);
+
+      const task = await storage.createTask({
+        ...input,
+        userId: user.id
+      });
+      res.status(201).json(task);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      throw err;
+    }
+  });
+
+  app.post(api.tasks.submitEvidence.path, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { evidenceUrl } = api.tasks.submitEvidence.input.parse(req.body);
+      const task = await storage.submitEvidence(id, evidenceUrl);
+      res.json(task);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  // Mock Admin Actions for MVP
+  app.post(api.tasks.complete.path, async (req, res) => {
+    const id = Number(req.params.id);
+    const task = await storage.getTask(id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    
+    if (task.status === "completed") return res.json(task);
+
+    // Return funds to user
+    await storage.updateUserBalance(task.userId, task.amount);
+    
+    const updated = await storage.updateTaskStatus(id, "completed");
+    res.json(updated);
+  });
+
+  app.post(api.tasks.fail.path, async (req, res) => {
+    const id = Number(req.params.id);
+    // Funds are already deducted, so we just mark as failed
+    // The money "stays with us" (is burned/kept in escrow)
+    const updated = await storage.updateTaskStatus(id, "failed");
+    res.json(updated);
+  });
 
   return httpServer;
 }

@@ -83,8 +83,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        serif: ["var(--font-serif)"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["SF Pro Display", "Inter", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)"],
       },
       keyframes: {
