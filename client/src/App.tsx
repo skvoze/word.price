@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import CreateTask from "@/pages/CreateTask";
 import TaskDetails from "@/pages/TaskDetails";
 import Wallet from "@/pages/Wallet";
+import Verify from "@/pages/Verify";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
         <Route path="/create" component={CreateTask} />
         <Route path="/task/:id" component={TaskDetails} />
         <Route path="/wallet" component={Wallet} />
+        <Route path="/verify" component={Verify} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

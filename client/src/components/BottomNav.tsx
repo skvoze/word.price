@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, PlusCircle, Wallet, ListTodo } from "lucide-react";
+import { Home, PlusCircle, Wallet, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function BottomNav() {
@@ -8,12 +8,13 @@ export function BottomNav() {
   const navItems = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/create", icon: PlusCircle, label: "Pledge", highlight: true },
+    { href: "/verify", icon: CheckCircle, label: "Verify" },
     { href: "/wallet", icon: Wallet, label: "Wallet" },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-t border-border/50 pb-safe">
-      <div className="flex justify-around items-center h-16 max-w-md mx-auto px-4">
+      <div className="flex justify-around items-center h-16 max-w-2xl mx-auto px-4">
         {navItems.map((item) => {
           const isActive = location === item.href;
           return (

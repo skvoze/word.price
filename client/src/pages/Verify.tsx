@@ -1,0 +1,199 @@
+import { useTasks, useCompleteTask, useFailTask } from "@/hooks/use-tasks";
+import { BottomNav } from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Loader2, ArrowLeft, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
+
+export default function Verify() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { data: tasks, isLoading } = useTasks();
+  const completeTask = useCompleteTask();
+  const failTask = useFailTask();
+
+  const pendingSubmissions = tasks?.filter(t => t.status === "submitted") || [];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const handleApprove = async (taskId: number) => {
+    try {
+      await completeTask.mutateAsync(taskId);
+      toast({
+        title: "Approved!",
+        description: "Task marked as completed. Funds returned to user.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to approve",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (taskId: number) => {
+    try {
+      await failTask.mutateAsync(taskId);
+      toast({
+        title: "Rejected",
+        description: "Task marked as failed. Funds retained.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to reject",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen pb-24 bg-background">
+      <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-40">
+        <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="-ml-2">
+          <ArrowLeft className="w-6 h-6" />
+        </Button>
+        <h1 className="text-xl font-bold">Verify Evidence</h1>
+        {pendingSubmissions.length > 0 && (
+          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+            {pendingSubmissions.length} pending
+          </span>
+        )}
+      </header>
+
+      <main className="px-4 py-6 max-w-2xl mx-auto">
+        {pendingSubmissions.length === 0 ? (
+          <div className="bg-card/50 border border-border/50 rounded-2xl p-8 text-center border-dashed">
+            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+            </div>
+            <p className="text-foreground font-medium">All caught up!</p>
+            <p className="text-sm text-muted-foreground mt-1">No evidence submissions to review.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pendingSubmissions.map((task, idx) => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <Card className="p-6 border-border/50">
+                  <div className="space-y-4">
+                    {/* Task Info */}
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-bold text-foreground">{task.title}</h3>
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 font-medium dark:text-yellow-400">
+                          Pending Review
+                        </span>
+                      </div>
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                      )}
+                      <div className="mt-3 flex gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Pledge Amount</p>
+                          <p className="font-bold text-foreground">${(task.amount / 100).toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Submitted</p>
+                          <p className="font-bold text-foreground">
+                            {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Evidence Section */}
+                    {task.evidenceUrl && (
+                      <div className="bg-secondary/50 rounded-lg p-4 border border-border/50">
+                        <p className="text-sm font-semibold text-muted-foreground mb-3">Evidence Submitted:</p>
+                        <div className="bg-background rounded-lg p-3 border border-border/50 overflow-hidden">
+                          {task.evidenceUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                            <img 
+                              src={task.evidenceUrl} 
+                              alt="Task evidence" 
+                              className="w-full max-h-96 object-cover rounded"
+                            />
+                          ) : task.evidenceUrl.match(/\.(mp4|webm|mov|avi)$/i) ? (
+                            <video 
+                              src={task.evidenceUrl} 
+                              controls 
+                              className="w-full max-h-96 rounded"
+                            />
+                          ) : (
+                            <a 
+                              href={task.evidenceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline break-all text-sm"
+                            >
+                              {task.evidenceUrl}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        onClick={() => handleApprove(task.id)}
+                        disabled={completeTask.isPending || failTask.isPending}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        {completeTask.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Approving...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Approve
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleReject(task.id)}
+                        disabled={completeTask.isPending || failTask.isPending}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        {failTask.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Rejecting...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Reject
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+}
