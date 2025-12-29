@@ -34,7 +34,7 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/tasks',
-      input: insertTaskSchema,
+      input: insertTaskSchema.extend({ deadline: z.coerce.date() }),
       responses: {
         201: z.custom<typeof tasks.$inferSelect>(),
         400: errorSchemas.validation,

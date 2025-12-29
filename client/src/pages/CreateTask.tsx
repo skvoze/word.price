@@ -108,11 +108,21 @@ export default function CreateTask() {
                     You'll get this back only if you complete the task.
                   </FormDescription>
                   <FormControl>
-                    <CurrencyInput 
-                      value={field.value} 
-                      onValueChange={field.onChange}
-                      className="bg-card border-border"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        min="1"
+                        placeholder="5.00"
+                        className="h-12 text-lg bg-card border-border pl-8" 
+                        value={field.value ? field.value / 100 : ""}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : Math.round(val * 100));
+                        }}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,8 +141,13 @@ export default function CreateTask() {
                         type="datetime-local" 
                         className="h-12 bg-card border-border pl-10" 
                         {...field}
-                        value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                        onChange={(e) => field.onChange(new Date(e.target.value))}
+                        value={field.value ? new Date(field.value.getTime() - field.value.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                        onChange={(e) => {
+                          const date = new Date(e.target.value);
+                          if (!isNaN(date.getTime())) {
+                            field.onChange(date);
+                          }
+                        }}
                       />
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     </div>
