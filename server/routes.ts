@@ -19,19 +19,22 @@ export async function registerRoutes(
 
   // --- Users API ---
   
-  // Mock "Me" - in a real app this would use session/auth
-  // For MVP, we'll just return the first user or create one if none exist
+  // Get or create user from Telegram Mini App context
+  // In Telegram Mini App, window.Telegram.WebApp.initData contains user info
   app.get(api.users.me.path, async (req, res) => {
-    let user = await storage.getUserByUsername("demo_user");
+    // Get Telegram ID from header or use demo for testing
+    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    
+    let user = await storage.getUserByTelegramId(telegramId);
     if (!user) {
-      user = await storage.createUser({ username: "demo_user" });
+      user = await storage.createUser({ telegramId });
     }
     res.json(user);
   });
 
   app.post(api.users.addFunds.path, async (req, res) => {
-    // For MVP, assume the user is "demo_user"
-    const user = await storage.getUserByUsername("demo_user");
+    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const user = await storage.getUserByTelegramId(telegramId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     try {
@@ -63,8 +66,9 @@ export async function registerRoutes(
 
   app.post(api.tasks.create.path, async (req, res) => {
     try {
-      // Get current user (demo)
-      const user = await storage.getUserByUsername("demo_user");
+      // Get current user from Telegram ID
+      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(401).json({ message: "Not authenticated" });
 
       const input = api.tasks.create.input.parse(req.body);

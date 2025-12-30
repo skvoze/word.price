@@ -7,8 +7,9 @@ export * from "./models/chat";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  telegramId: text("telegram_id").notNull().unique(),
   balance: integer("balance").notNull().default(0), // Balance in cents
+  role: text("role").notNull().default("user"), // "user" or "admin"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -24,7 +25,7 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, balance: true, createdAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, balance: true, createdAt: true, role: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, status: true, evidenceUrl: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;
