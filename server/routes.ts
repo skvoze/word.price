@@ -49,6 +49,23 @@ export async function registerRoutes(
     }
   });
 
+  app.post(api.users.setRole.path, async (req, res) => {
+    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const user = await storage.getUserByTelegramId(telegramId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    try {
+      const { role } = api.users.setRole.input.parse(req.body);
+      const updatedUser = await storage.updateUserRole(user.id, role);
+      res.json(updatedUser);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
   // --- Tasks API ---
 
   app.get(api.tasks.list.path, async (req, res) => {

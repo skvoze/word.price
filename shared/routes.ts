@@ -81,6 +81,14 @@ export const api = {
       responses: {
         200: z.custom<typeof users.$inferSelect>(),
       }
+    },
+    setRole: {
+      method: 'POST' as const,
+      path: '/api/users/role',
+      input: z.object({ role: z.enum(['user', 'admin']) }),
+      responses: {
+        200: z.custom<typeof users.$inferSelect>(),
+      }
     }
   }
 };

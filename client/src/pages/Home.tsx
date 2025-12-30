@@ -2,8 +2,8 @@ import { useUser } from "@/hooks/use-user";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
+import { RoleToggle } from "@/components/RoleToggle";
 import { Loader2, TrendingUp, ShieldCheck, Target } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function Home() {
   const { data: user, isLoading: isLoadingUser } = useUser();
@@ -24,6 +24,9 @@ export default function Home() {
     <div className="min-h-screen pb-24 bg-background">
       {/* Header / Wallet Summary */}
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
+        <div className="absolute top-6 right-6 z-20">
+          <RoleToggle />
+        </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10">

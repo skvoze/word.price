@@ -13,6 +13,7 @@ export interface IStorage {
   getUserByTelegramId(telegramId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserBalance(id: number, amount: number): Promise<User>;
+  updateUserRole(id: number, role: string): Promise<User>;
 
   // Tasks
   getTasks(): Promise<Task[]>;
@@ -47,6 +48,14 @@ export class DatabaseStorage implements IStorage {
     const newBalance = (user.balance || 0) + amount;
     const [updated] = await db.update(users)
       .set({ balance: newBalance })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUserRole(id: number, role: string): Promise<User> {
+    const [updated] = await db.update(users)
+      .set({ role })
       .where(eq(users.id, id))
       .returning();
     return updated;

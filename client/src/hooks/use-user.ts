@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 
 export function useUser() {
-  return useQuery({
+  const query = useQuery({
     queryKey: [api.users.me.path],
     queryFn: async () => {
       const res = await fetch(api.users.me.path, { credentials: "include" });
@@ -10,6 +10,11 @@ export function useUser() {
       return api.users.me.responses[200].parse(await res.json());
     },
   });
+  
+  return {
+    ...query,
+    refetch: query.refetch,
+  };
 }
 
 export function useAddFunds() {
