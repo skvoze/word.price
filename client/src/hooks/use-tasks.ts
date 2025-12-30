@@ -13,6 +13,17 @@ export function useTasks() {
   });
 }
 
+export function useSubmittedTasks() {
+  return useQuery({
+    queryKey: [api.tasks.submitted.path],
+    queryFn: async () => {
+      const res = await fetch(api.tasks.submitted.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch submitted tasks");
+      return api.tasks.submitted.responses[200].parse(await res.json());
+    },
+  });
+}
+
 export function useTask(id: number) {
   return useQuery({
     queryKey: [api.tasks.get.path, id],

@@ -23,6 +23,13 @@ export const api = {
         200: z.array(z.custom<typeof tasks.$inferSelect>()),
       },
     },
+    submitted: {
+      method: 'GET' as const,
+      path: '/api/tasks/submitted',
+      responses: {
+        200: z.array(z.custom<typeof tasks.$inferSelect>()),
+      },
+    },
     get: {
       method: 'GET' as const,
       path: '/api/tasks/:id',

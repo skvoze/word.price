@@ -69,8 +69,17 @@ export async function registerRoutes(
   // --- Tasks API ---
 
   app.get(api.tasks.list.path, async (req, res) => {
-    const tasks = await storage.getTasks();
-    res.json(tasks);
+    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const user = await storage.getUserByTelegramId(telegramId);
+    if (!user) return res.status(401).json({ message: "Not authenticated" });
+    
+    const userTasks = await storage.getTasksByUser(user.id);
+    res.json(userTasks);
+  });
+
+  app.get(api.tasks.submitted.path, async (req, res) => {
+    const submittedTasks = await storage.getAllSubmittedTasks();
+    res.json(submittedTasks);
   });
 
   app.get(api.tasks.get.path, async (req, res) => {

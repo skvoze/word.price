@@ -1,8 +1,8 @@
-import { useTasks, useCompleteTask, useFailTask } from "@/hooks/use-tasks";
+import { useSubmittedTasks, useCompleteTask, useFailTask } from "@/hooks/use-tasks";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -11,11 +11,9 @@ import { motion } from "framer-motion";
 export default function Verify() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { data: tasks, isLoading } = useTasks();
+  const { data: pendingSubmissions, isLoading } = useSubmittedTasks();
   const completeTask = useCompleteTask();
   const failTask = useFailTask();
-
-  const pendingSubmissions = tasks?.filter(t => t.status === "submitted") || [];
 
   if (isLoading) {
     return (
@@ -82,7 +80,7 @@ export default function Verify() {
           </div>
         ) : (
           <div className="space-y-4">
-            {pendingSubmissions.map((task, idx) => (
+            {(pendingSubmissions || []).map((task, idx) => (
               <motion.div
                 key={task.id}
                 initial={{ opacity: 0, y: 20 }}
