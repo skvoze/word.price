@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useTask, useSubmitEvidence, useCompleteTask, useFailTask } from "@/hooks/use-tasks";
+import { useTask, useSubmitEvidence } from "@/hooks/use-tasks";
 import { format } from "date-fns";
 import { ArrowLeft, Clock, Calendar, Coins, CheckCircle2, XCircle, AlertTriangle, UploadCloud, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/BottomNav";
-import { motion } from "framer-motion";
 
 export default function TaskDetails() {
   const [, params] = useRoute("/task/:id");
@@ -16,8 +15,6 @@ export default function TaskDetails() {
   
   const { data: task, isLoading } = useTask(id);
   const submitEvidence = useSubmitEvidence();
-  const completeTask = useCompleteTask();
-  const failTask = useFailTask();
   const { toast } = useToast();
 
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
@@ -164,35 +161,8 @@ export default function TaskDetails() {
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 text-center">
               <h3 className="font-semibold text-blue-500 mb-2">Verification Pending</h3>
               <p className="text-sm text-muted-foreground">
-                Our team (or AI) is reviewing your submission. You will be notified shortly.
+                Our team is reviewing your submission. You will be notified shortly.
               </p>
-            </div>
-          )}
-
-          {/* ADMIN / DEMO CONTROLS */}
-          {(isPending || isSubmitted) && (
-            <div className="mt-8 pt-8 border-t border-dashed border-border/50">
-              <p className="text-center text-xs text-muted-foreground mb-4 uppercase tracking-widest">
-                Demo Controls (Admin)
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
-                  className="border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500"
-                  onClick={() => completeTask.mutate(task.id)}
-                  disabled={completeTask.isPending}
-                >
-                  Simulate Success
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-500"
-                  onClick={() => failTask.mutate(task.id)}
-                  disabled={failTask.isPending}
-                >
-                  Simulate Failure
-                </Button>
-              </div>
             </div>
           )}
         </div>
