@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/BottomNav";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function TaskDetails() {
   const [, params] = useRoute("/task/:id");
@@ -18,6 +26,7 @@ export default function TaskDetails() {
   const { toast } = useToast();
 
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   if (isLoading) {
     return (
@@ -39,7 +48,7 @@ export default function TaskDetails() {
   const handleEvidenceSubmit = async (url: string) => {
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: url });
-      toast({ title: "Evidence Submitted", description: "Waiting for verification." });
+      setShowSubmitDialog(true);
       setUploadUrl(null);
     } catch (error) {
       console.error("Evidence submission error:", error);
@@ -175,6 +184,37 @@ export default function TaskDetails() {
       </main>
 
       <BottomNav />
+
+      {/* Evidence Submission Success Dialog */}
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">Evidence Submitted!</DialogTitle>
+            <DialogDescription className="text-center">
+              Your proof of completion has been uploaded and is waiting for admin verification.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 mb-4">
+              <AlertTriangle className="w-8 h-8 text-blue-500" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Check back later for verification results.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowSubmitDialog(false);
+                setLocation("/");
+              }}
+              className="w-full"
+            >
+              Back to Home
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

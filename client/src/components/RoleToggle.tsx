@@ -17,10 +17,13 @@ export function RoleToggle() {
     const newTelegramId = newRole === "admin" ? "demo_admin_user" : "demo_user_123";
     
     try {
-      // Store new telegram ID in localStorage for fetch interceptor
+      // IMPORTANT: Update localStorage FIRST before API call
       localStorage.setItem("testTelegramId", newTelegramId);
       
-      // Update role for the new user
+      // Clear query cache BEFORE API call so refetch uses new headers
+      queryClient.clear();
+      
+      // Update role for the new user with explicit header
       const res = await fetch("/api/users/role", {
         method: "POST",
         headers: { 
@@ -33,8 +36,8 @@ export function RoleToggle() {
       
       if (!res.ok) throw new Error("Failed to update role");
       
-      // Clear all caches so the new user's data loads fresh
-      queryClient.clear();
+      // Wait a moment for server to process, then refetch with new user
+      await new Promise(resolve => setTimeout(resolve, 100));
       await refetch();
       
       toast({
