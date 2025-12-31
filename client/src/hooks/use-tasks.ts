@@ -6,7 +6,12 @@ export function useTasks() {
   return useQuery({
     queryKey: [api.tasks.list.path],
     queryFn: async () => {
-      const res = await fetch(api.tasks.list.path, { credentials: "include" });
+      const headers: Record<string, string> = {};
+      const testTelegramId = localStorage.getItem("testTelegramId");
+      if (testTelegramId) {
+        headers["x-telegram-id"] = testTelegramId;
+      }
+      const res = await fetch(api.tasks.list.path, { headers, credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch tasks");
       return api.tasks.list.responses[200].parse(await res.json());
     },
@@ -17,7 +22,12 @@ export function useSubmittedTasks() {
   return useQuery({
     queryKey: [api.tasks.submitted.path],
     queryFn: async () => {
-      const res = await fetch(api.tasks.submitted.path, { credentials: "include" });
+      const headers: Record<string, string> = {};
+      const testTelegramId = localStorage.getItem("testTelegramId");
+      if (testTelegramId) {
+        headers["x-telegram-id"] = testTelegramId;
+      }
+      const res = await fetch(api.tasks.submitted.path, { headers, credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch submitted tasks");
       return api.tasks.submitted.responses[200].parse(await res.json());
     },
@@ -28,8 +38,13 @@ export function useTask(id: number) {
   return useQuery({
     queryKey: [api.tasks.get.path, id],
     queryFn: async () => {
+      const headers: Record<string, string> = {};
+      const testTelegramId = localStorage.getItem("testTelegramId");
+      if (testTelegramId) {
+        headers["x-telegram-id"] = testTelegramId;
+      }
       const url = buildUrl(api.tasks.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(url, { headers, credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch task");
       return api.tasks.get.responses[200].parse(await res.json());
@@ -41,10 +56,14 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertTask) => {
-      // Ensure date strings are handled if needed, Zod schema handles parsing
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const testTelegramId = localStorage.getItem("testTelegramId");
+      if (testTelegramId) {
+        headers["x-telegram-id"] = testTelegramId;
+      }
       const res = await fetch(api.tasks.create.path, {
         method: api.tasks.create.method,
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(data),
         credentials: "include",
       });
@@ -68,10 +87,15 @@ export function useSubmitEvidence() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, evidenceUrl }: { id: number; evidenceUrl: string }) => {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const testTelegramId = localStorage.getItem("testTelegramId");
+      if (testTelegramId) {
+        headers["x-telegram-id"] = testTelegramId;
+      }
       const url = buildUrl(api.tasks.submitEvidence.path, { id });
       const res = await fetch(url, {
         method: api.tasks.submitEvidence.method,
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ evidenceUrl }),
         credentials: "include",
       });

@@ -27,6 +27,7 @@ export default function TaskDetails() {
 
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [lastObjectPath, setLastObjectPath] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -144,13 +145,8 @@ export default function TaskDetails() {
                     }),
                   });
                   const { uploadURL, objectPath } = await res.json();
-                  // Store path for submission later (Uppy handles upload to URL)
-                  // But ObjectUploader's onComplete gives us result, we need to extract URL or assume success.
-                  // For this demo, we'll assume the presigned flow works and we just need the 'objectPath' or constructed URL.
-                  // Since we can't easily pass objectPath out from here to onComplete in this specific component signature without custom wrapper logic,
-                  // we will store the last generated objectPath in state.
-                  // In a real app, we'd wrap this tighter.
-                  setUploadUrl(objectPath);
+                  // Store the path for later use in onComplete callback
+                  setLastObjectPath(objectPath);
                   
                   return {
                     method: "PUT",
@@ -159,7 +155,7 @@ export default function TaskDetails() {
                   };
                 }}
                 onComplete={() => {
-                   if (uploadUrl) handleEvidenceSubmit(uploadUrl);
+                   if (lastObjectPath) handleEvidenceSubmit(lastObjectPath);
                 }}
                 buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl text-lg font-semibold shadow-lg shadow-primary/25"
               >
