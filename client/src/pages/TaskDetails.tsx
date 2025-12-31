@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useTask, useSubmitEvidence } from "@/hooks/use-tasks";
 import { format } from "date-fns";
@@ -25,9 +25,7 @@ export default function TaskDetails() {
   const submitEvidence = useSubmitEvidence();
   const { toast } = useToast();
 
-  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  const [lastObjectPath, setLastObjectPath] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -46,11 +44,10 @@ export default function TaskDetails() {
     );
   }
 
-  const handleEvidenceSubmit = async (url: string) => {
+  const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
     try {
-      await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: url });
+      await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
       setShowSubmitDialog(true);
-      setUploadUrl(null);
     } catch (error) {
       console.error("Evidence submission error:", error);
       toast({ 
@@ -59,7 +56,7 @@ export default function TaskDetails() {
         variant: "destructive" 
       });
     }
-  };
+  }, [task.id, submitEvidence, toast]);
 
   // Status visual helpers
   const isPending = task.status === "pending";
@@ -145,17 +142,23 @@ export default function TaskDetails() {
                     }),
                   });
                   const { uploadURL, objectPath } = await res.json();
-                  // Store the path for later use in onComplete callback
-                  setLastObjectPath(objectPath);
                   
                   return {
                     method: "PUT",
                     url: uploadURL,
                     headers: { "Content-Type": file.type },
+                    // Pass objectPath through metadata to access in onComplete
+                    metadata: { objectPath },
                   };
                 }}
-                onComplete={() => {
-                   if (lastObjectPath) handleEvidenceSubmit(lastObjectPath);
+                onComplete={(result) => {
+                  // Extract objectPath from first successful file's metadata
+                  if (result.successful && result.successful.length > 0) {
+                    const objectPath = (result.successful[0].meta as any)?.objectPath;
+                    if (objectPath) {
+                      handleEvidenceSubmit(objectPath);
+                    }
+                  }
                 }}
                 buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl text-lg font-semibold shadow-lg shadow-primary/25"
               >
