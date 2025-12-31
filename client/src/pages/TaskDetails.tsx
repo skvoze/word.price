@@ -40,8 +40,14 @@ export default function TaskDetails() {
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: url });
       toast({ title: "Evidence Submitted", description: "Waiting for verification." });
+      setUploadUrl(null);
     } catch (error) {
-      toast({ title: "Error", description: "Failed to submit evidence", variant: "destructive" });
+      console.error("Evidence submission error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to submit evidence", 
+        variant: "destructive" 
+      });
     }
   };
 

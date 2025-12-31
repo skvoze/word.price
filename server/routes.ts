@@ -51,8 +51,12 @@ export async function registerRoutes(
 
   app.post(api.users.setRole.path, async (req, res) => {
     const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
-    const user = await storage.getUserByTelegramId(telegramId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    let user = await storage.getUserByTelegramId(telegramId);
+    
+    // Create user if doesn't exist (for testing multiple personas)
+    if (!user) {
+      user = await storage.createUser({ telegramId, balance: 10000, role: "user" });
+    }
 
     try {
       const { role } = api.users.setRole.input.parse(req.body);
