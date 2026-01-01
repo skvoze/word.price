@@ -35,17 +35,16 @@ export function RoleToggle() {
       // Clear cache and refetch to get fresh user data with new ID
       queryClient.clear();
       
-      // Wait for cache clear to propagate then navigate and refetch
-      setTimeout(async () => {
-        // Force navigation to appropriate home page to ensure layout recalculates for the new role
-        setLocation(newRole === "admin" ? "/verify" : "/");
-        await refetch();
-        
-        toast({
-          title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
-          description: `You now have ${newRole === "admin" ? "admin" : "user"} permissions.`,
-        });
-      }, 0);
+      // Navigate immediately and refetch in parallel
+      const navigatePromise = setLocation(newRole === "admin" ? "/verify" : "/");
+      const refetchPromise = refetch();
+      
+      await Promise.all([navigatePromise, refetchPromise]);
+      
+      toast({
+        title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
+        description: `You now have ${newRole === "admin" ? "admin" : "user"} permissions.`,
+      });
     } catch (error) {
       toast({
         title: "Error",

@@ -105,6 +105,8 @@ export function useSubmitEvidence() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
     },
   });
 }

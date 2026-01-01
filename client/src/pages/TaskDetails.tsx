@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useTask, useSubmitEvidence } from "@/hooks/use-tasks";
+import { useUser } from "@/hooks/use-user";
 import { format } from "date-fns";
 import { ArrowLeft, Clock, Calendar, Coins, CheckCircle2, XCircle, AlertTriangle, UploadCloud, Loader2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,9 @@ export default function TaskDetails() {
   const { data: task, isLoading } = useTask(id);
   const submitEvidence = useSubmitEvidence();
   const { toast } = useToast();
+
+  const { data: user } = useUser();
+  const isAdmin = user?.role === "admin";
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
@@ -164,7 +168,7 @@ export default function TaskDetails() {
 
         {/* Actions Area */}
         <div className="space-y-4 pt-4">
-          {isPending && (
+          {isPending && !isAdmin && (
             <div className="bg-card border border-border rounded-2xl p-6 text-center">
               <h3 className="font-semibold mb-4">Proof of Completion</h3>
               <ObjectUploader
