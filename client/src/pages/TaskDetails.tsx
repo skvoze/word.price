@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useTask, useSubmitEvidence } from "@/hooks/use-tasks";
 import { format } from "date-fns";
-import { ArrowLeft, Clock, Calendar, Coins, CheckCircle2, XCircle, AlertTriangle, UploadCloud, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Coins, CheckCircle2, XCircle, AlertTriangle, UploadCloud, Loader2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +65,37 @@ export default function TaskDetails() {
   const isCompleted = task.status === "completed";
   const isFailed = task.status === "failed";
 
+  const handleShare = async () => {
+    const shareText = isCompleted 
+      ? `I completed my goal: "${task.title}" and saved my $${(task.amount / 100).toFixed(2)} pledge! 🚀 #Accountability #PledgeApp`
+      : `I pledged $${(task.amount / 100).toFixed(2)} to "${task.title}". Check out my progress! 🎯`;
+    
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Task Pledge Accountability",
+          text: shareText,
+          url: shareUrl,
+        });
+        toast({ title: "Shared successfully!" });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error("Share failed:", err);
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
+        toast({ title: "Link copied!", description: "Share it with your friends to stay accountable." });
+      } catch (err) {
+        toast({ title: "Failed to share", variant: "destructive" });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 sticky top-0 z-40 bg-background/80 backdrop-blur-md">
@@ -83,6 +114,11 @@ export default function TaskDetails() {
           ${isPending ? 'bg-amber-500/10 border-amber-500/20' : ''}
           ${isSubmitted ? 'bg-blue-500/10 border-blue-500/20' : ''}
         `}>
+          <div className="absolute top-4 right-4">
+            <Button variant="ghost" size="icon" onClick={handleShare} className="rounded-full bg-background/20 backdrop-blur-sm hover:bg-background/40">
+              <Share2 className="w-5 h-5" />
+            </Button>
+          </div>
           <div className="relative z-10 flex flex-col items-center gap-3">
             {isCompleted && <CheckCircle2 className="w-12 h-12 text-emerald-500" />}
             {isFailed && <XCircle className="w-12 h-12 text-red-500" />}
