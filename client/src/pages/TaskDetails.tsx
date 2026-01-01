@@ -174,7 +174,13 @@ export default function TaskDetails() {
             <div className="bg-card border border-border rounded-2xl p-6 text-center">
               <h3 className="font-semibold mb-4">Proof of Completion</h3>
               <ObjectUploader
+                maxFileSize={52428800} // 50MB for video
                 onGetUploadParameters={async (file) => {
+                  // Validate file type
+                  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime", "video/webm"];
+                  if (!allowedTypes.includes(file.type)) {
+                    throw new Error("Only images and videos are allowed as evidence.");
+                  }
                   const res = await fetch("/api/uploads/request-url", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

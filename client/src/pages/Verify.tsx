@@ -2,7 +2,7 @@ import { useSubmittedTasks, useCompleteTask, useFailTask } from "@/hooks/use-tas
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, XCircle, FileVideo, FileImage, FileWarning } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -11,9 +11,12 @@ import { motion } from "framer-motion";
 export default function Verify() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { data: pendingSubmissions, isLoading } = useSubmittedTasks();
+  const { data: allSubmissions, isLoading } = useSubmittedTasks();
   const completeTask = useCompleteTask();
   const failTask = useFailTask();
+
+  // Filter only tasks that are still in "submitted" status
+  const pendingSubmissions = allSubmissions?.filter(t => t.status === "submitted") || [];
 
   if (isLoading) {
     return (
@@ -108,7 +111,7 @@ export default function Verify() {
                         <div>
                           <p className="text-muted-foreground">Submitted</p>
                           <p className="font-bold text-foreground">
-                            {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}
+                            {task.createdAt ? formatDistanceToNow(new Date(task.createdAt), { addSuffix: true }) : 'Just now'}
                           </p>
                         </div>
                       </div>
@@ -120,26 +123,41 @@ export default function Verify() {
                         <p className="text-sm font-semibold text-muted-foreground mb-3">Evidence Submitted:</p>
                         <div className="bg-background rounded-lg p-3 border border-border/50 overflow-hidden">
                           {task.evidenceUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <img 
-                              src={task.evidenceUrl} 
-                              alt="Task evidence" 
-                              className="w-full max-h-96 object-cover rounded"
-                            />
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                <FileImage className="w-3 h-3" /> Image Proof
+                              </div>
+                              <img 
+                                src={task.evidenceUrl} 
+                                alt="Task evidence" 
+                                className="w-full max-h-96 object-contain rounded bg-black/5"
+                              />
+                            </div>
                           ) : task.evidenceUrl.match(/\.(mp4|webm|mov|avi)$/i) ? (
-                            <video 
-                              src={task.evidenceUrl} 
-                              controls 
-                              className="w-full max-h-96 rounded"
-                            />
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                <FileVideo className="w-3 h-3" /> Video Proof
+                              </div>
+                              <video 
+                                src={task.evidenceUrl} 
+                                controls 
+                                playsInline
+                                className="w-full max-h-96 rounded bg-black"
+                              />
+                            </div>
                           ) : (
-                            <a 
-                              href={task.evidenceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline break-all text-sm"
-                            >
-                              {task.evidenceUrl}
-                            </a>
+                            <div className="flex flex-col items-center py-4 text-center">
+                              <FileWarning className="w-8 h-8 text-amber-500 mb-2" />
+                              <p className="text-sm font-medium">Unrecognized Format</p>
+                              <a 
+                                href={task.evidenceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline break-all text-xs mt-1"
+                              >
+                                Download Link
+                              </a>
+                            </div>
                           )}
                         </div>
                       </div>

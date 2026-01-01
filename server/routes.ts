@@ -163,25 +163,48 @@ export async function registerRoutes(
 
   // Mock Admin Actions for MVP
   app.post(api.tasks.complete.path, async (req, res) => {
-    const id = Number(req.params.id);
-    const task = await storage.getTask(id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    
-    if (task.status === "completed") return res.json(task);
+    try {
+      const id = Number(req.params.id);
+      const task = await storage.getTask(id);
+      if (!task) return res.status(404).json({ message: "Task not found" });
+      
+      // Prevent re-processing
+      if (task.status === "completed") return res.json(task);
+      if (task.status !== "submitted") {
+        return res.status(400).json({ message: "Task must be in submitted state to approve" });
+      }
 
-    // Return funds to user
-    await storage.updateUserBalance(task.userId, task.amount);
-    
-    const updated = await storage.updateTaskStatus(id, "completed");
-    res.json(updated);
+      // Return funds to user
+      await storage.updateUserBalance(task.userId, task.amount);
+      
+      const updated = await storage.updateTaskStatus(id, "completed");
+      console.log(`[Admin] Task ${id} approved and completed`);
+      res.json(updated);
+    } catch (err) {
+      console.error(`[Admin] Error approving task ${req.params.id}:`, err);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   app.post(api.tasks.fail.path, async (req, res) => {
-    const id = Number(req.params.id);
-    // Funds are already deducted, so we just mark as failed
-    // The money "stays with us" (is burned/kept in escrow)
-    const updated = await storage.updateTaskStatus(id, "failed");
-    res.json(updated);
+    try {
+      const id = Number(req.params.id);
+      const task = await storage.getTask(id);
+      if (!task) return res.status(404).json({ message: "Task not found" });
+
+      // Prevent re-processing
+      if (task.status === "failed") return res.json(task);
+      if (task.status !== "submitted") {
+        return res.status(400).json({ message: "Task must be in submitted state to reject" });
+      }
+
+      const updated = await storage.updateTaskStatus(id, "failed");
+      console.log(`[Admin] Task ${id} rejected and failed`);
+      res.json(updated);
+    } catch (err) {
+      console.error(`[Admin] Error rejecting task ${req.params.id}:`, err);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   return httpServer;
