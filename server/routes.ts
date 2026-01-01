@@ -55,7 +55,7 @@ export async function registerRoutes(
     
     // Create user if doesn't exist (for testing multiple personas)
     if (!user) {
-      user = await storage.createUser({ telegramId, balance: 10000, role: "user" });
+      user = await storage.createUser({ telegramId });
     }
 
     try {

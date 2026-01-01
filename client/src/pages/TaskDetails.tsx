@@ -39,7 +39,7 @@ export default function TaskDetails() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <h2 className="text-2xl font-bold mb-2">Task Not Found</h2>
-        <Button variant="link" onClick={() => setLocation("/")}>Go Home</Button>
+        <Button variant="ghost" onClick={() => setLocation("/")}>Go Home</Button>
       </div>
     );
   }
