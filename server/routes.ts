@@ -140,7 +140,17 @@ export async function registerRoutes(
     try {
       const id = Number(req.params.id);
       const { evidenceUrl } = api.tasks.submitEvidence.input.parse(req.body);
+      
+      // Log the update attempt
+      console.log(`[Evidence] Submitting for task ${id}: ${evidenceUrl}`);
+      
       const task = await storage.submitEvidence(id, evidenceUrl);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      console.log(`[Evidence] Task ${id} status updated to: ${task.status}`);
       res.json(task);
     } catch (err) {
       if (err instanceof z.ZodError) {

@@ -103,9 +103,11 @@ export default function TaskDetails() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 sticky top-0 z-40 bg-background/80 backdrop-blur-md">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="-ml-2">
-          <ArrowLeft className="w-6 h-6" />
-        </Button>
+        {!isAdmin && (
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="-ml-2">
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+        )}
         <h1 className="text-lg font-bold truncate pr-4">{task.title}</h1>
       </header>
 

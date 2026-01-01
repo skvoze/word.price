@@ -35,11 +35,8 @@ export function RoleToggle() {
       // Clear cache and refetch to get fresh user data with new ID
       queryClient.clear();
       
-      // Navigate immediately and refetch in parallel
-      const navigatePromise = setLocation(newRole === "admin" ? "/verify" : "/");
-      const refetchPromise = refetch();
-      
-      await Promise.all([navigatePromise, refetchPromise]);
+      // Use window.location.href for a full page reload to ensure a clean state
+      window.location.href = newRole === "admin" ? "/verify" : "/";
       
       toast({
         title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
