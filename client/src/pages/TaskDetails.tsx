@@ -186,18 +186,21 @@ export default function TaskDetails() {
                   });
                   const { uploadURL, objectPath } = await res.json();
                   
+                  // Store objectPath in file metadata immediately
+                  file.meta = { ...file.meta, objectPath };
+                  
                   return {
                     method: "PUT",
                     url: uploadURL,
                     headers: { "Content-Type": file.type },
-                    // Pass objectPath through metadata to access in onComplete
-                    metadata: { objectPath },
                   };
                 }}
                 onComplete={(result) => {
-                  // Extract objectPath from first successful file's metadata
+                  console.log("Upload result:", result);
+                  // Extract objectPath from successful file meta
                   if (result.successful && result.successful.length > 0) {
-                    const objectPath = (result.successful[0].meta as any)?.objectPath;
+                    const objectPath = result.successful[0].meta?.objectPath as string;
+                    console.log("Extracted objectPath:", objectPath);
                     if (objectPath) {
                       handleEvidenceSubmit(objectPath);
                     }

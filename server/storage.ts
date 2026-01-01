@@ -99,6 +99,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async submitEvidence(id: number, evidenceUrl: string): Promise<Task> {
+    console.log(`[Storage] submitEvidence called for ID ${id} with URL ${evidenceUrl}`);
     const [task] = await db.update(tasks)
       .set({ 
         evidenceUrl,
@@ -106,6 +107,12 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(tasks.id, id))
       .returning();
+    
+    if (task) {
+      console.log(`[Storage] Task ${id} updated successfully:`, JSON.stringify(task));
+    } else {
+      console.error(`[Storage] Task ${id} NOT found for update`);
+    }
     return task;
   }
 }
