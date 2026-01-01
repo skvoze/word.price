@@ -27,6 +27,21 @@ export default function TaskDetails() {
 
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
+  const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
+    if (!task) return;
+    try {
+      await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
+      setShowSubmitDialog(true);
+    } catch (error) {
+      console.error("Evidence submission error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to submit evidence", 
+        variant: "destructive" 
+      });
+    }
+  }, [task?.id, submitEvidence, toast]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -43,21 +58,6 @@ export default function TaskDetails() {
       </div>
     );
   }
-
-  const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
-    if (!task) return;
-    try {
-      await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
-      setShowSubmitDialog(true);
-    } catch (error) {
-      console.error("Evidence submission error:", error);
-      toast({ 
-        title: "Error", 
-        description: error instanceof Error ? error.message : "Failed to submit evidence", 
-        variant: "destructive" 
-      });
-    }
-  }, [task?.id, submitEvidence, toast]);
 
   // Status visual helpers
   const isPending = task.status === "pending";

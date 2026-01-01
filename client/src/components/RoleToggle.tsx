@@ -31,16 +31,21 @@ export function RoleToggle() {
       if (!res.ok) throw new Error("Failed to update role");
       
       localStorage.setItem("testTelegramId", newTelegramId);
+      
+      // Clear cache and refetch to get fresh user data with new ID
       queryClient.clear();
       
-      // Force navigation to home to ensure layout recalculates for the new role
-      setLocation("/");
-      await refetch();
-      
-      toast({
-        title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
-        description: `You now have ${newRole === "admin" ? "admin" : "user"} permissions.`,
-      });
+      // Wait for cache clear to propagate then navigate and refetch
+      setTimeout(async () => {
+        // Force navigation to appropriate home page to ensure layout recalculates for the new role
+        setLocation(newRole === "admin" ? "/verify" : "/");
+        await refetch();
+        
+        toast({
+          title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
+          description: `You now have ${newRole === "admin" ? "admin" : "user"} permissions.`,
+        });
+      }, 0);
     } catch (error) {
       toast({
         title: "Error",
