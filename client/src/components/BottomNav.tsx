@@ -8,15 +8,16 @@ export function BottomNav() {
   const { data: user } = useUser();
   const isAdmin = user?.role === "admin";
 
-  const baseNavItems = [
-    { href: "/", icon: Home, label: "Home" },
-    { href: "/create", icon: PlusCircle, label: "Pledge", highlight: true },
-    { href: "/wallet", icon: Wallet, label: "Wallet" },
-  ];
-
   const navItems = isAdmin 
-    ? [...baseNavItems.slice(0, 2), { href: "/verify", icon: CheckCircle, label: "Verify" }, baseNavItems[2]]
-    : baseNavItems;
+    ? [
+        { href: "/verify", icon: CheckCircle, label: "Verify" },
+        { href: "/admin/history", icon: Home, label: "History" },
+      ]
+    : [
+        { href: "/", icon: Home, label: "Home" },
+        { href: "/create", icon: PlusCircle, label: "Pledge", highlight: true },
+        { href: "/wallet", icon: Wallet, label: "Wallet" },
+      ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-t border-border/50 pb-safe">

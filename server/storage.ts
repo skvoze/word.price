@@ -72,6 +72,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tasks).where(eq(tasks.userId, userId)).orderBy(tasks.createdAt);
   }
 
+  async getAllTasks(): Promise<Task[]> {
+    return await db.select().from(tasks);
+  }
+
   async getAllSubmittedTasks(): Promise<Task[]> {
     return await db.select().from(tasks).where(eq(tasks.status, 'submitted')).orderBy(tasks.createdAt);
   }

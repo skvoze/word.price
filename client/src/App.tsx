@@ -11,6 +11,7 @@ import CreateTask from "@/pages/CreateTask";
 import TaskDetails from "@/pages/TaskDetails";
 import Wallet from "@/pages/Wallet";
 import Verify from "@/pages/Verify";
+import AdminHistory from "@/pages/AdminHistory";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
         <Route path="/task/:id" component={TaskDetails} />
         <Route path="/wallet" component={Wallet} />
         <Route path="/verify" component={Verify} />
+        <Route path="/admin/history" component={AdminHistory} />
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

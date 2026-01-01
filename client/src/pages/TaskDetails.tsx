@@ -45,6 +45,7 @@ export default function TaskDetails() {
   }
 
   const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
+    if (!task) return;
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
       setShowSubmitDialog(true);
@@ -56,7 +57,7 @@ export default function TaskDetails() {
         variant: "destructive" 
       });
     }
-  }, [task.id, submitEvidence, toast]);
+  }, [task?.id, submitEvidence, toast]);
 
   // Status visual helpers
   const isPending = task.status === "pending";

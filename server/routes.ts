@@ -70,6 +70,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/tasks", async (req, res) => {
+    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const user = await storage.getUserByTelegramId(telegramId);
+    if (!user || user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+    
+    const allTasks = await storage.getAllTasks();
+    res.json(allTasks);
+  });
+
   // --- Tasks API ---
 
   app.get(api.tasks.list.path, async (req, res) => {

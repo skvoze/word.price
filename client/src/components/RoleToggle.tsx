@@ -16,7 +16,6 @@ export function RoleToggle() {
     const newTelegramId = newRole === "admin" ? "demo_admin_user" : "demo_user_123";
     
     try {
-      // Update role for the new user
       const res = await fetch("/api/users/role", {
         method: "POST",
         headers: { 
@@ -29,11 +28,11 @@ export function RoleToggle() {
       
       if (!res.ok) throw new Error("Failed to update role");
       
-      // NOW update localStorage with new Telegram ID
       localStorage.setItem("testTelegramId", newTelegramId);
-      
-      // Clear cache and refetch to get fresh user data with new ID
       queryClient.clear();
+      
+      // Force navigation to home to ensure layout recalculates for the new role
+      setLocation("/");
       await refetch();
       
       toast({
