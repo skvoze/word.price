@@ -107,6 +107,8 @@ export function useSubmitEvidence() {
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+      // Force an immediate refetch for the task details
+      queryClient.refetchQueries({ queryKey: [api.tasks.get.path, id] });
     },
   });
 }

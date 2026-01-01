@@ -13,16 +13,27 @@ import Wallet from "@/pages/Wallet";
 import Verify from "@/pages/Verify";
 import AdminHistory from "@/pages/AdminHistory";
 
+import { useUser } from "@/hooks/use-user";
+
 function Router() {
+  const { data: user } = useUser();
+  const isAdmin = user?.role === "admin";
+
   return (
     <AnimatePresence mode="wait">
       <Switch>
-        <Route path="/" component={Home} />
+        {/* User Routes */}
+        <Route path="/">
+          {isAdmin ? <Verify /> : <Home />}
+        </Route>
         <Route path="/create" component={CreateTask} />
         <Route path="/task/:id" component={TaskDetails} />
         <Route path="/wallet" component={Wallet} />
+        
+        {/* Admin Routes */}
         <Route path="/verify" component={Verify} />
         <Route path="/admin/history" component={AdminHistory} />
+        
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

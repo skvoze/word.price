@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, PlusCircle, Wallet, CheckCircle } from "lucide-react";
+import { Home, PlusCircle, Wallet, CheckCircle, History } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUser } from "@/hooks/use-user";
 
@@ -11,7 +11,7 @@ export function BottomNav() {
   const navItems = isAdmin 
     ? [
         { href: "/verify", icon: CheckCircle, label: "Verify" },
-        { href: "/admin/history", icon: Home, label: "History" },
+        { href: "/admin/history", icon: History, label: "History" },
       ]
     : [
         { href: "/", icon: Home, label: "Home" },

@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useTasks } from "@/hooks/use-tasks";
 import { TaskCard } from "@/components/TaskCard";
@@ -6,8 +7,15 @@ import { RoleToggle } from "@/components/RoleToggle";
 import { Loader2, TrendingUp, ShieldCheck, Target } from "lucide-react";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: tasks, isLoading: isLoadingTasks } = useTasks();
+
+  // Redirect admin to verify page
+  if (!isLoadingUser && user?.role === "admin") {
+    setLocation("/verify");
+    return null;
+  }
 
   if (isLoadingUser || isLoadingTasks) {
     return (
