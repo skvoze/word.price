@@ -126,6 +126,8 @@ export function useCompleteTask() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }); // Refund happens
     },
   });
@@ -143,6 +145,8 @@ export function useFailTask() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
     },
   });
 }

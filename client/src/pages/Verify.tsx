@@ -148,19 +148,14 @@ export default function Verify() {
                           ) : (
                             <div className="flex flex-col items-center py-4 text-center">
                               <FileWarning className="w-8 h-8 text-amber-500 mb-2" />
-                              <p className="text-sm font-medium">External Evidence</p>
-                              <div className="bg-amber-500/10 border border-amber-500/20 rounded p-2 mt-2 mb-3 max-w-[200px]">
-                                <p className="text-[10px] text-amber-600 font-medium">
-                                  Warning: This is an external link. Only open if you trust the source.
-                                </p>
-                              </div>
+                              <p className="text-sm font-medium mb-3">External Evidence</p>
                               <a 
                                 href={task.evidenceUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline break-all text-xs"
                               >
-                                View Evidence Source
+                                {task.evidenceUrl}
                               </a>
                             </div>
                           )}
