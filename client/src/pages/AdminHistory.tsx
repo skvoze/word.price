@@ -28,9 +28,8 @@ export default function AdminHistory() {
     );
   }
 
-  const activeTasks = tasks?.filter((t: any) => t.status === "pending" || t.status === "submitted") || [];
-  const completedTasks = tasks?.filter((t: any) => t.status === "completed" || t.status === "failed") || [];
-
+  const activeTasks = tasks?.filter((t: any) => ((t.status === "pending" || t.status === "failed" || t.status === 'submitted')&& new Date(t.deadline) > new Date)|| (t.status === 'submitted'&& new Date(t.deadline) < new Date)) || [];
+  const completedTasks = tasks?.filter((t: any)=> (t.status === "completed")|| (t.status==="failed"&& new Date(t.deadline)<new Date)) || [];
   return (
     <div className="min-h-screen pb-24 bg-background">
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
@@ -58,7 +57,7 @@ export default function AdminHistory() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeTasks.map((task: any) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard key={task.id} task={task} isAdmin={true} />
             ))}
           </div>
         </section>
@@ -75,7 +74,7 @@ export default function AdminHistory() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-80">
             {completedTasks.map((task: any) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard key={task.id} task={task} isAdmin={true} />
             ))}
           </div>
         </section>

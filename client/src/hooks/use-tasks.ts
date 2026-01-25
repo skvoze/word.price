@@ -78,6 +78,7 @@ export function useCreateTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }); // Balance changes
     },
   });
@@ -136,17 +137,24 @@ export function useCompleteTask() {
 export function useFailTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
+    // Теперь функция принимает объект
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
       const url = buildUrl(api.tasks.fail.path, { id });
-      const res = await fetch(url, { method: api.tasks.fail.method, credentials: "include" });
+      const res = await fetch(url, { 
+        method: api.tasks.fail.method, 
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rejectionReason: reason }) // Шлем причину на сервер
+      });
       if (!res.ok) throw new Error("Failed to fail task");
-      return api.tasks.fail.responses[200].parse(await res.json());
+      return res.json();
     },
-    onSuccess: (_, id) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, variables.id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
     },
   });
 }

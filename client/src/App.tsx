@@ -1,10 +1,10 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
-
+import AdminPage from "./pages/AdminPage";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import CreateTask from "@/pages/CreateTask";
@@ -33,7 +33,18 @@ function Router() {
         {/* Admin Routes */}
         <Route path="/verify" component={Verify} />
         <Route path="/admin/history" component={AdminHistory} />
-        
+        <Route path="/admin">
+  {() => {
+    const { data: user, isLoading } = useUser();
+
+    if (isLoading) return null;
+
+    if (user?.role === "admin") {
+      return <AdminPage />;
+    }
+    return <Home />;
+  }}
+</Route>
         <Route component={NotFound} />
       </Switch>
     </AnimatePresence>

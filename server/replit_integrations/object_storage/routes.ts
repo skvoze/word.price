@@ -1,86 +1,74 @@
 import type { Express } from "express";
-import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { v2 as cloudinary } from 'cloudinary';
+import multer from 'multer';
+import * as multerStorageCloudinary from 'multer-storage-cloudinary';
+import { storage as dbStorage } from "../../storage";
 
-/**
- * Register object storage routes for file uploads.
- *
- * This provides example routes for the presigned URL upload flow:
- * 1. POST /api/uploads/request-url - Get a presigned URL for uploading
- * 2. The client then uploads directly to the presigned URL
- *
- * IMPORTANT: These are example routes. Customize based on your use case:
- * - Add authentication middleware for protected uploads
- * - Add file metadata storage (save to database after upload)
- * - Add ACL policies for access control
- */
+const CloudinaryStorage = (multerStorageCloudinary as any).CloudinaryStorage || 
+                          (multerStorageCloudinary as any).default?.CloudinaryStorage || 
+                          (multerStorageCloudinary as any).default;
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  
+  cloudinary: cloudinary, 
+  params: {
+    folder: 'task_guarantor_media',
+    resource_type: 'auto',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'mov', 'webm', 'quicktime'],
+    public_id: (req: any, file: any) => 'file-' + Date.now(),
+  },
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET, });
 export function registerObjectStorageRoutes(app: Express): void {
-  const objectStorageService = new ObjectStorageService();
 
-  /**
-   * Request a presigned URL for file upload.
-   *
-   * Request body (JSON):
-   * {
-   *   "name": "filename.jpg",
-   *   "size": 12345,
-   *   "contentType": "image/jpeg"
-   * }
-   *
-   * Response:
-   * {
-   *   "uploadURL": "https://storage.googleapis.com/...",
-   *   "objectPath": "/objects/uploads/uuid"
-   * }
-   *
-   * IMPORTANT: The client should NOT send the file to this endpoint.
-   * Send JSON metadata only, then upload the file directly to uploadURL.
-   */
-  app.post("/api/uploads/request-url", async (req, res) => {
-    try {
-      const { name, size, contentType } = req.body;
+// Роут для прямой загрузки 
+app.post("/api/uploads/direct", upload.single('file'), async (req: any, res: any) => {
+  console.log("BODY:", req.body);
+  try {
+    console.log("Доступные методы storage:", Object.keys(dbStorage));
+   const rawTaskId = req.query.taskId || req.body.taskId;
+    const taskId = rawTaskId ? Number(rawTaskId) : null;
 
-      if (!name) {
-        return res.status(400).json({
-          error: "Missing required field: name",
-        });
-      }
+    console.log(`--- Получен запрос на загрузку для задачи #${taskId} ---`);
+    
+    if (!req.file) return res.status(400).json({ error: "Файл не получен" });
 
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    // 2. Загружаем в Cloudinary
+    const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const cloudinaryRes = await cloudinary.uploader.upload(base64Image, {
+      folder: 'task_guarantor_media',
+      resource_type: "auto",
+    });
 
-      // Extract object path from the presigned URL for later reference
-      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+    const imageUrl = cloudinaryRes.secure_url;
 
-      res.json({
-        uploadURL,
-        objectPath,
-        // Echo back the metadata for client convenience
-        metadata: { name, size, contentType },
-      });
-    } catch (error) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ error: "Failed to generate upload URL" });
+    // 3. ОБНОВЛЯЕМ существующую запись в базе
+    if (taskId && !isNaN(taskId)) {
+      
+      await dbStorage.submitEvidence(taskId, imageUrl);
+      console.log(`✅ База данных успешно обновлена для задачи ${taskId}`);
+    } else {
+      console.error("⚠️ Ошибка: taskId не передан, ссылка не сохранена в БД");
     }
-  });
 
-  /**
-   * Serve uploaded objects.
-   *
-   * GET /objects/:objectPath(*)
-   *
-   * This serves files from object storage. For public files, no auth needed.
-   * For protected files, add authentication middleware and ACL checks.
-   */
-  app.get("/objects/:objectPath(*)", async (req, res) => {
-    try {
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      await objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error serving object:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.status(404).json({ error: "Object not found" });
-      }
-      return res.status(500).json({ error: "Failed to serve object" });
-    }
-  });
-}
+    res.json({ url: imageUrl, success: true });
+  } catch (error: any) {
+    console.error("❌ Ошибка на сервере:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Заглушка для фронтенда 
+app.post("/api/uploads/request-url", async (req, res) => { res.json({ uploadURL: "/api/uploads/direct", objectPath: "pending", isCloudinary: true }); });
+
+app.get("/objects/:objectPath(*)", async (req, res) => { res.status(404).json({ error: "Use direct links" }); }); }
 

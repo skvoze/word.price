@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import type { UppyFile, UploadResult } from "@uppy/core";
 import DashboardModal from "@uppy/react/dashboard-modal";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
-import AwsS3 from "@uppy/aws-s3";
+import XHRUpload from '@uppy/xhr-upload'
 import { Button } from "@/components/ui/button";
 
 interface ObjectUploaderProps {
@@ -19,7 +19,7 @@ interface ObjectUploaderProps {
   onGetUploadParameters: (
     file: UppyFile<Record<string, unknown>, Record<string, unknown>>
   ) => Promise<{
-    method: "PUT";
+    method: "POST";
     url: string;
     headers?: Record<string, string>;
   }>;
@@ -76,15 +76,30 @@ export function ObjectUploader({
       },
       autoProceed: false,
     })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
-      })
-      .on("complete", (result) => {
-        onComplete?.(result);
-      })
+      .use(XHRUpload, {
+ endpoint: async (fileOrFiles) => {
+    const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+    const params = await onGetUploadParameters(file as any); 
+    return params.url;
+  },
+  method: 'POST',
+  formData: true,
+  fieldName: 'file',
+  headers: {}
+})
   );
+useEffect(() => {
+  if (!onComplete) return;
+  const handleComplete = (result: any) => {
+    onComplete(result);
+  };
 
+  uppy.on('complete', handleComplete);
+
+  return () => {
+    uppy.off('complete', handleComplete);
+  };
+}, [uppy, onComplete]);
   return (
     <div>
       <Button onClick={() => setShowModal(true)} className={buttonClassName}>

@@ -2,8 +2,24 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import helmet from 'helmet';
 
 const app = express();
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src *; " +
+    "script-src * 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src * 'unsafe-inline'; " +
+    "img-src * data: blob: https://res.cloudinary.com; " + 
+    "connect-src * blob:; " + 
+    "worker-src 'self' blob:;"
+  );
+  next();
+});
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -20,7 +36,6 @@ app.use(
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -88,8 +103,8 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true,
+      host: "127.0.0.1",
+      //reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);

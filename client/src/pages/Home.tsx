@@ -25,8 +25,8 @@ export default function Home() {
     );
   }
 
-  const activeTasks = tasks?.filter(t => t.status === "pending" || t.status === "submitted") || [];
-  const completedTasks = tasks?.filter(t => t.status === "completed" || t.status === "failed") || [];
+  const activeTasks = tasks?.filter(t => ((t.status === "pending" || t.status === "failed" || t.status === 'submitted')&& new Date(t.deadline) > new Date)|| (t.status === 'submitted'&& new Date(t.deadline) < new Date)) || [];
+  const completedTasks = tasks?.filter(t => (t.status === "completed")|| (t.status==="failed"&& new Date(t.deadline)<new Date)) || [];
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -38,23 +38,16 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">Current Balance</h1>
+          <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">Текущий Баланс</h1>
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold text-foreground tracking-tight">
-              ${user ? (user.balance / 100).toFixed(2) : "0.00"}
+              {user ? (user.balance / 100).toLocaleString('ru-RU') : "0"} ₽
             </span>
-            <span className="text-sm font-medium text-primary">USD</span>
+            <span className="text-sm font-medium text-primary">РУБ</span>
           </div>
           
           <div className="mt-6 flex gap-4 text-xs font-medium text-muted-foreground">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-lg backdrop-blur-sm">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Secure Pledge
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-lg backdrop-blur-sm">
-              <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
-              Success Rate: 94%
-            </div>
+            
           </div>
         </div>
       </header>
@@ -66,7 +59,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-              Active Goals
+              Активные Задачи
             </h2>
             <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
               {activeTasks.length}
@@ -78,8 +71,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
                 <Target className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-foreground font-medium">No active goals</p>
-              <p className="text-sm text-muted-foreground mt-1">Start a new pledge to stop procrastinating.</p>
+              <p className="text-foreground font-medium">Нет активных задач</p>
+              <p className="text-sm text-muted-foreground mt-1">Начните новую задачу, чтобы прекратить прокрастинацию.</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -93,7 +86,7 @@ export default function Home() {
         {/* History Section */}
         {completedTasks.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground">History</h2>
+            <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground">История</h2>
             <div className="grid gap-4 sm:grid-cols-2 opacity-80 hover:opacity-100 transition-opacity">
               {completedTasks.map((task) => (
                 <TaskCard key={task.id} task={task} />

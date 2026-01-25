@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,14 +12,20 @@ import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { BottomNav } from "@/components/BottomNav";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Calendar } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, Loader2, Calendar as CalendarIcon} from "lucide-react";
 import { z } from "zod";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { ru } from "date-fns/locale";
 
-// Extend schema for local form validation if needed, mainly converting amount
+
 const formSchema = insertTaskSchema.extend({
-  amount: z.coerce.number().min(100, "Minimum pledge is $1.00"), // Min 100 cents
-  deadline: z.coerce.date().min(new Date(), "Deadline must be in the future"),
+  title: z.string().min(3, "Минимум 3 символа").max(100, "Максимум 100 символов"),
+  description: z.string().max(500, "Максимум 500 символов").optional().or(z.literal('')),
+  amount: z.coerce.number().min(100, "Минимальная сумма 100₽"), 
+  deadline: z.coerce.date().min(new Date(), "Дэдлайн должен быть в будущем"),
 });
 
 export default function CreateTask() {
@@ -27,45 +33,54 @@ export default function CreateTask() {
   const { toast } = useToast();
   const { data: user } = useUser();
   const createTask = useCreateTask();
-
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      amount: 500, // Default $5.00
-      userId: user?.id || 0, // Will be overridden by backend or valid context
+      amount: 0,
+      userId: user?.id || 0, 
     },
+    
   });
+useEffect(() => {
+    if (user?.id) {
+      form.setValue("userId", user.id);
+    }
+  }, [user?.id, form]);
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    // Check balance
-    if (user && user.balance < data.amount) {
+    const cleanData = {
+    ...data,
+    title: data.title.trim(),
+    description: data.description?.trim() || "",
+  };
+  if (user && user.balance < cleanData.amount) {
       toast({
-        title: "Insufficient Funds",
-        description: "Please top up your wallet first.",
+        title: "Недостаточно средств",
+        description: "Пожалуйста, пополните кошелек.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      // Pass correct types
       await createTask.mutateAsync({
-        ...data,
-        deadline: new Date(data.deadline).toISOString(), // Ensure ISO string
+        ...cleanData,
+        deadline: new Date(cleanData.deadline).toISOString(),
         userId: user!.id,
-      } as any); // Cast to any to bypass strict Zod type mismatch with string dates if occurring
+      } as any);
       
       toast({
-        title: "Pledge Created!",
-        description: "Good luck! Money is locked until completion.",
+        title: "Задача создана!",
+        description: "Удачи! Деньги заморожены до выполнения.",
       });
       setLocation("/");
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create task",
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Не удалось создать задачу",
         variant: "destructive",
       });
     }
@@ -77,7 +92,7 @@ export default function CreateTask() {
         <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="-ml-2">
           <ArrowLeft className="w-6 h-6" />
         </Button>
-        <h1 className="text-xl font-bold">New Pledge</h1>
+        <h1 className="text-xl font-bold">Новая Задача</h1>
       </header>
 
       <main className="px-4 py-6 max-w-lg mx-auto">
@@ -85,96 +100,141 @@ export default function CreateTask() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
             <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">What do you want to achieve?</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Run 5km, Read a chapter..." className="h-12 text-lg bg-card border-border" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+  control={form.control}
+  name="title"
+  render={({ field }) => (
+    <FormItem>
+      <div className="flex justify-between items-end">
+        <FormLabel className="text-base font-semibold">Чего вы хотите достичь?</FormLabel>
+        <span className={cn(
+          "text-[10px] font-medium mb-1",
+          field.value.length >= 90 ? "text-destructive" : "text-muted-foreground"
+        )}>
+          {field.value.length}/100
+        </span>
+      </div>
+      <FormControl>
+        <Input 
+          placeholder="Например пробежать 5 км..." 
+          className="h-12 text-lg bg-card border-border" 
+          maxLength={100}
+          {...field} 
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+<FormField
+    control={form.control}
+    name="amount"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel className="text-base font-semibold">Сумма</FormLabel>
+        <FormDescription className="text-xs mb-2">
+          Вы получите эти деньги назад только при выполнении задачи.
+        </FormDescription>
+        <FormControl>
+          <div className="space-y-2">
+            <CurrencyInput
+              value={field.value}
+              onValueChange={(val) => field.onChange(val)} // Просто передаем значение
+              // Убрали все проверки на оранжевый цвет, оставили стандартный стиль
+              className="h-12 text-lg bg-card border-border focus:border-primary transition-all"
+              placeholder="0"
             />
+            
+            {/* Маленькая подсказка о доступном балансе вместо оранжевого текста */}
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+              Доступно: {((user?.balance ?? 0) / 100).toLocaleString('ru-RU')} ₽
+            </p>
+          </div>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+            <FormField
+  control={form.control}
+  name="deadline"
+  render={({ field }) => (
+    <FormItem className="flex flex-col">
+      <FormLabel className="text-base font-semibold">Дэдлайн</FormLabel>
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant={"ghost"}
+              className={cn(
+                "h-12 pl-3 text-left font-normal bg-card border-border",
+                !field.value && "text-muted-foreground"
+              )}
+            >
+              {field.value ? (
+                // Добавляем { locale: ru } для отображения даты на кнопке
+                format(field.value, "PPP", { locale: ru })
+              ) : (
+                <span>Выберите дату</span>
+              )}
+              <CalendarIcon className="ml-auto h-5 w-5 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={field.value}
+            // Передаем локаль в сам календарь для перевода месяцев и дней недели
+            locale={ru} 
+            onSelect={(date) => {
+              if (date) {
+                const endOfSelectedDay = new Date(date);
+                endOfSelectedDay.setHours(23, 59, 59, 999);
+                field.onChange(endOfSelectedDay);
+                // ЗАКРЫВАЕМ поповер после выбора
+                setIsCalendarOpen(false); 
+              }
+            }}
+            disabled={(date) =>
+              date < new Date(new Date().setHours(0, 0, 0, 0))
+            }
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
             <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Pledge Amount</FormLabel>
-                  <FormDescription className="text-xs mb-2">
-                    You'll get this back only if you complete the task.
-                  </FormDescription>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="1"
-                        placeholder="5.00"
-                        className="h-12 text-lg bg-card border-border pl-8" 
-                        value={field.value ? field.value / 100 : ""}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value);
-                          field.onChange(isNaN(val) ? 0 : Math.round(val * 100));
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="deadline"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Deadline</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input 
-                        type="datetime-local" 
-                        className="h-12 bg-card border-border pl-10" 
-                        {...field}
-                        value={field.value ? new Date(field.value.getTime() - field.value.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          if (!isNaN(date.getTime())) {
-                            field.onChange(date);
-                          }
-                        }}
-                      />
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Add details about your evidence..." 
-                      className="min-h-[100px] resize-none bg-card border-border"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+  control={form.control}
+  name="description"
+  render={({ field }) => (
+    <FormItem>
+      <div className="flex justify-between items-end">
+        <FormLabel className="text-base font-semibold">Описание (Не обязательно)</FormLabel>
+        <span className={cn(
+          "text-[10px] font-medium mb-1",
+          (field.value?.length || 0) >= 450 ? "text-destructive" : "text-muted-foreground"
+        )}>
+          {field.value?.length || 0}/500
+        </span>
+      </div>
+      <FormControl>
+        <Textarea 
+          placeholder="Добавьте детали для вашей задачи..." 
+          className="min-h-[100px] resize-none bg-card border-border text-base"
+          maxLength={500}
+          {...field}
+          value={field.value || ""}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
             <Button 
               type="submit" 
@@ -184,10 +244,10 @@ export default function CreateTask() {
               {createTask.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating Pledge...
+                  Создание Задачи...
                 </>
               ) : (
-                "Lock Pledge"
+                "Заморозить средства"
               )}
             </Button>
           </form>

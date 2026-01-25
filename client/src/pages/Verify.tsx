@@ -2,14 +2,13 @@ import { useSubmittedTasks, useCompleteTask, useFailTask } from "@/hooks/use-tas
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, ArrowLeft, CheckCircle2, XCircle, FileVideo, FileImage, FileWarning } from "lucide-react";
+import { Loader2, Share2, CheckCircle2, XCircle, FileVideo, FileImage, FileWarning } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
 
 export default function Verify() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { data: allSubmissions, isLoading } = useSubmittedTasks();
   const completeTask = useCompleteTask();
@@ -43,27 +42,28 @@ export default function Verify() {
   };
 
   const handleReject = async (taskId: number) => {
-    try {
-      await failTask.mutateAsync(taskId);
-      toast({
-        title: "Rejected",
-        description: "Task marked as failed. Funds retained.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to reject",
-        variant: "destructive",
-      });
-    }
-  };
+  const reason = window.prompt("Укажите причину отклонения (её увидит пользователь):");
+  if (reason === null) return;
+
+  try {
+
+    await failTask.mutateAsync({ id: taskId, reason }); 
+    toast({
+      title: "Rejected",
+      description: "Причина сохранена, задача отклонена.",
+    });
+  } catch (error) {
+    toast({
+      title: "Error",
+      variant: "destructive",
+      description: "Не удалось отклонить задачу",
+    });
+  }
+};
 
   return (
     <div className="min-h-screen pb-24 bg-background">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-40">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="-ml-2">
-          <ArrowLeft className="w-6 h-6" />
-        </Button>
         <h1 className="text-xl font-bold">Verify Evidence</h1>
         {pendingSubmissions.length > 0 && (
           <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
@@ -93,20 +93,24 @@ export default function Verify() {
                 <Card className="p-6 border-border/50">
                   <div className="space-y-4">
                     {/* Task Info */}
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-bold text-foreground">{task.title}</h3>
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 font-medium dark:text-yellow-400">
-                          Pending Review
-                        </span>
-                      </div>
-                      {task.description && (
+<div>
+  <div className="flex items-start justify-between mb-2 gap-4">
+    <div className="min-w-0 flex-1">
+      <h3 className="text-lg font-bold text-foreground break-words leading-tight">
+        {task.title}
+      </h3>
+      
+    </div>
+    <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 font-medium dark:text-yellow-400">
+      Pending Review
+    </span>
+  </div>                      {task.description && (
                         <p className="text-sm text-muted-foreground">{task.description}</p>
                       )}
                       <div className="mt-3 flex gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Pledge Amount</p>
-                          <p className="font-bold text-foreground">${(task.amount / 100).toFixed(2)}</p>
+                          <p className="font-bold text-foreground">{(task.amount / 100).toFixed(2)} ₽</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Submitted</p>
@@ -122,9 +126,11 @@ export default function Verify() {
                       <div className="bg-secondary/50 rounded-lg p-4 border border-border/50">
                         <p className="text-sm font-semibold text-muted-foreground mb-3">Evidence Submitted:</p>
                         <div className="bg-background rounded-lg p-3 border border-border/50 overflow-hidden">
+                         
                           {task.evidenceUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                              
+                               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                                 <FileImage className="w-3 h-3" /> Image Proof
                               </div>
                               <img 
@@ -132,6 +138,14 @@ export default function Verify() {
                                 alt="Task evidence" 
                                 className="w-full max-h-96 object-contain rounded bg-black/5"
                               />
+                              <Button 
+                                 variant="ghost" 
+                                 size="sm" 
+                                 className="h-7 text-[10px] uppercase font-bold text-primary"
+                                 onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
+                               >
+                                 <Share2 className="w-3 h-3 mr-1" /> Оригинал
+                               </Button>
                             </div>
                           ) : task.evidenceUrl.match(/\.(mp4|webm|mov|avi)$/i) ? (
                             <div className="space-y-2">
@@ -144,6 +158,14 @@ export default function Verify() {
                                 playsInline
                                 className="w-full max-h-96 rounded bg-black"
                               />
+                              <Button 
+                                 variant="ghost" 
+                                 size="sm" 
+                                 className="h-7 text-[10px] uppercase font-bold text-primary"
+                                 onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
+                               >
+                                 <Share2 className="w-3 h-3 mr-1" /> Оригинал
+                               </Button>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center py-4 text-center">
