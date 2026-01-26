@@ -2,13 +2,22 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 const getTelegramId = () => {
   const tg = (window as any).Telegram?.WebApp;
-  console.log("TG Init Data:", tg?.initData);
+  
+  // Это точно должно появиться в логах
+  console.log("=== DEBUG TELEGRAM ===");
+  console.log("WebApp Object exists:", !!tg);
+  console.log("InitData:", tg?.initData);
+  console.log("User Data:", tg?.initDataUnsafe?.user);
 
   if (tg?.initDataUnsafe?.user?.id) {
-    return tg.initDataUnsafe.user.id.toString();
+    const id = tg.initDataUnsafe.user.id.toString();
+    console.log("Found real ID:", id);
+    return id;
   }
   
-  return localStorage.getItem("testTelegramId") || "";
+  const testId = localStorage.getItem("testTelegramId");
+  console.log("Fallback to localStorage ID:", testId);
+  return testId || "";
 };
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
