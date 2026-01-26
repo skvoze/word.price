@@ -1,52 +1,42 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const getTelegramId = () => {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg) {
-    alert("ID найден: " + tg.initDataUnsafe?.user?.id);
-  } else {
-    alert("Telegram SDK не найден!");
-  }
-  // Это точно должно появиться в логах
-  console.log("=== DEBUG TELEGRAM ===");
-  console.log("WebApp Object exists:", !!tg);
-  console.log("InitData:", tg?.initData);
-  console.log("User Data:", tg?.initDataUnsafe?.user);
-
-  if (tg?.initDataUnsafe?.user?.id) {
-    const id = tg.initDataUnsafe.user.id.toString();
-    console.log("Found real ID:", id);
-    return id;
-  }
-  
-  const testId = localStorage.getItem("testTelegramId");
-  console.log("Fallback to localStorage ID:", testId);
-  return testId || "";
-};
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
 }
+const getTelegramId = () => {
+  const tg = (window as any).Telegram?.WebApp;
+  
+  // Берем ID напрямую из того объекта, который мы видели в логах
+  if (tg?.initDataUnsafe?.user?.id) {
+    return tg.initDataUnsafe.user.id.toString();
+  }
+  
+  // Если мы в браузере на ПК, берем тестовый ID
+  return localStorage.getItem("testTelegramId") || "";
+};
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
+  // Важно: создаем объект заголовков правильно
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   
-  const TelegramId = getTelegramId();
-  if (TelegramId) {
-    headers["x-telegram-id"] = TelegramId;
+  const telegramId = getTelegramId();
+  if (telegramId) {
+    headers["x-telegram-id"] = telegramId;
   }
   
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
