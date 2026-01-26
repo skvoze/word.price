@@ -51,14 +51,13 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: Record<string, string> = {};
     
-    // Add test Telegram ID if set
-  const TelegramId = getTelegramId();
-  if (TelegramId) {
-    headers["x-telegram-id"] = TelegramId;
-  }
-  
+    // Используем нашу функцию, которую мы уже отладили
+    const telegramId = getTelegramId(); 
+    if (telegramId) {
+      headers["x-telegram-id"] = telegramId;
+    }
     
-    const res = await fetch(queryKey.join("/") as string, {
+    const res = await fetch("/" + queryKey.join("/"), { // проверь, чтобы путь был верным
       headers,
       credentials: "include",
     });

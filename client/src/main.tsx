@@ -1,4 +1,4 @@
-
+localStorage.removeItem("testTelegramId");
 const tg = (window as any).Telegram?.WebApp;
 if (tg) {
     tg.ready(); // Сообщаем Телеграму, что приложение готово
