@@ -2,7 +2,11 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 const getTelegramId = () => {
   const tg = (window as any).Telegram?.WebApp;
-  
+  if (tg) {
+    alert("ID найден: " + tg.initDataUnsafe?.user?.id);
+  } else {
+    alert("Telegram SDK не найден!");
+  }
   // Это точно должно появиться в логах
   console.log("=== DEBUG TELEGRAM ===");
   console.log("WebApp Object exists:", !!tg);

@@ -481,7 +481,7 @@ const handleWithdrawSubmit = async () => {
             placeholder="0000 0000 0000 0000"
             value={cardNumber}
             onChange={handleCardChange}
-            className={cn(activeInputStyles, "font-mono text-lg w-full pr-14 py-6")}
+            className={cn(activeInputStyles, "font-mono text-lg w-full pl-2 pr-14 py-6")}
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
             <BrandLogo info={cardInfo} />
