@@ -65,7 +65,10 @@ export const getQueryFn: <T>(options: {
     }
     
    
-    const res = await fetch("/" + queryKey.join("/") + "?t=" + Date.now(), { // Добавили ?t=время
+    const path = queryKey.join("/");
+const url = path.startsWith("api") ? `/${path}` : `/api/${path}`;
+
+const res = await fetch(url + "?t=" + Date.now(), {
   headers,
   credentials: "include",
 });
