@@ -4,10 +4,19 @@ import { Transaction } from "@shared/schema";
 
 const getHeaders = () => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const testTelegramId = localStorage.getItem("testTelegramId");
-  if (testTelegramId) {
-    headers["x-telegram-id"] = testTelegramId;
+  const tg = (window as any).Telegram?.WebApp;
+  let telegramId = "";
+
+  if (tg?.initDataUnsafe?.user?.id) {
+    telegramId = tg.initDataUnsafe.user.id.toString();
+  } else {
+    telegramId = localStorage.getItem("testTelegramId") || "";
   }
+
+  if (telegramId) {
+    headers["x-telegram-id"] = telegramId;
+  }
+  
   return headers;
 };
 export function useUser() {
@@ -21,6 +30,7 @@ export function useUser() {
       if (!res.ok) throw new Error("Failed to fetch user");
       return api.users.me.responses[200].parse(await res.json());
     },
+    retry:false,
   });
   
   return { ...query, refetch: query.refetch };
