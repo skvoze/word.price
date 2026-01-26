@@ -1,5 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+const getTelegramId = () => {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.initDataUnsafe?.user?.id) {
+    return tg.initDataUnsafe.user.id.toString();
+  }
+  return localStorage.getItem("testTelegramId") || "";
+};
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -14,10 +21,9 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   
-  // Add test Telegram ID if set
-  const testTelegramId = localStorage.getItem("testTelegramId");
-  if (testTelegramId) {
-    headers["x-telegram-id"] = testTelegramId;
+  const TelegramId = getTelegramId();
+  if (TelegramId) {
+    headers["x-telegram-id"] = TelegramId;
   }
   
   const res = await fetch(url, {
@@ -40,10 +46,11 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
     // Add test Telegram ID if set
-    const testTelegramId = localStorage.getItem("testTelegramId");
-    if (testTelegramId) {
-      headers["x-telegram-id"] = testTelegramId;
-    }
+  const TelegramId = getTelegramId();
+  if (TelegramId) {
+    headers["x-telegram-id"] = TelegramId;
+  }
+  
     
     const res = await fetch(queryKey.join("/") as string, {
       headers,
