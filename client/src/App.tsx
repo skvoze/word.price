@@ -52,10 +52,7 @@ function Router() {
 }
 
 function App() {
-  // Initialize default Telegram ID for testing
-  if (!localStorage.getItem("testTelegramId")) {
-    localStorage.setItem("testTelegramId", "demo_user_123");
-  }
+
 
   return (
     <QueryClientProvider client={queryClient}>
