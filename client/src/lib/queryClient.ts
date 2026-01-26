@@ -58,7 +58,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: Record<string, string> = {};
     
-    // Используем нашу функцию, которую мы уже отладили
+  
     const telegramId = getTelegramId(); 
     if (telegramId) {
       headers["x-telegram-id"] = telegramId;
