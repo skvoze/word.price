@@ -1,15 +1,6 @@
-localStorage.removeItem("testTelegramId");
-const tg = (window as any).Telegram?.WebApp;
-if (tg) {
-    tg.ready(); // Сообщаем Телеграму, что приложение готово
-    tg.expand(); // Разворачиваем на весь экран для удобства
-}
-if (localStorage.getItem("testTelegramId")) {
-    alert("Удаляю старый ID из памяти...");
+if (localStorage.getItem("testTelegramId") === "demo_user_123") {
     localStorage.removeItem("testTelegramId");
-    window.location.reload(); // Перезагружаем страницу после удаления
 }
-console.log(localStorage.getItem);
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";

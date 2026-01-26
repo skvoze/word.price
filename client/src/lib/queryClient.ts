@@ -9,13 +9,18 @@ async function throwIfResNotOk(res: Response) {
 const getTelegramId = () => {
   const tg = (window as any).Telegram?.WebApp;
   
-  // Берем ID напрямую из того объекта, который мы видели в логах
+  // 1. Приоритет №1: Реальный Telegram (наш Vacok с ID 514679635)
   if (tg?.initDataUnsafe?.user?.id) {
     return tg.initDataUnsafe.user.id.toString();
   }
   
-  // Если мы в браузере на ПК, берем тестовый ID
-  return localStorage.getItem("testTelegramId") || "";
+  // 2. Приоритет №2: LocalStorage, но ТОЛЬКО если это не демка
+  const storedId = localStorage.getItem("testTelegramId");
+  if (storedId && storedId !== "demo_user_123") {
+    return storedId;
+  }
+  
+  return ""; // Если ничего нет, возвращаем пустоту, чтобы бэкенд создал ошибку или нового юзера
 };
 
 export async function apiRequest(
