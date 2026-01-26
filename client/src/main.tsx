@@ -9,6 +9,7 @@ if (localStorage.getItem("testTelegramId")) {
     localStorage.removeItem("testTelegramId");
     window.location.reload(); // Перезагружаем страницу после удаления
 }
+console.log(localStorage.getItem);
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
