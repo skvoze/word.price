@@ -62,10 +62,11 @@ export const getQueryFn: <T>(options: {
       headers["x-telegram-id"] = telegramId;
     }
     
-    const res = await fetch("/" + queryKey.join("/"), { // проверь, чтобы путь был верным
-      headers,
-      credentials: "include",
-    });
+   
+    const res = await fetch("/" + queryKey.join("/") + "?t=" + Date.now(), { // Добавили ?t=время
+  headers,
+  credentials: "include",
+});
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
