@@ -5,37 +5,47 @@ import { Transaction } from "@shared/schema";
 const getHeaders = () => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const tg = (window as any).Telegram?.WebApp;
-  let telegramId = "";
-
-  if (tg?.initDataUnsafe?.user?.id) {
-    telegramId = tg.initDataUnsafe.user.id.toString();
-  } else {
-    telegramId = localStorage.getItem("testTelegramId") || "";
-  }
-
-  if (telegramId) {
-    headers["x-telegram-id"] = telegramId;
-  }
   
+  // Берем ID: сначала реальный, потом тестовый
+  const tid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+
+  if (tid) {
+    headers["x-telegram-id"] = tid;
+  }
   return headers;
 };
+
+// Хелпер для проверки наличия ID перед запросом
+const getTid = () => {
+  const tg = (window as any).Telegram?.WebApp;
+  return tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+};
+
 export function useUser() {
-  const query = useQuery({
+  const tid = getTid();
+
+  return useQuery({
     queryKey: [api.users.me.path],
     queryFn: async () => {
+      // Используем нашу общую функцию getHeaders()
       const res = await fetch(api.users.me.path, { 
         headers: getHeaders(), 
         credentials: "include" 
       });
+
+      if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
       return api.users.me.responses[200].parse(await res.json());
     },
-    retry:false,
+    enabled: !!tid, // Ждем появления ID
+    retry: false,
+    staleTime: Infinity
   });
-  
-  return { ...query, refetch: query.refetch };
 }
+
 export function useTransactions() {
+  const tid = getTid();
+
   return useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
     queryFn: async () => {
@@ -46,6 +56,8 @@ export function useTransactions() {
       if (!res.ok) throw new Error("Failed to fetch transactions");
       return await res.json();
     },
+    enabled: !!tid, // ПРАВКА: тоже ждем ID, чтобы не ловить 401
+    retry: false
   });
 }
 export function useAddFunds() {
