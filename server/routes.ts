@@ -10,7 +10,7 @@ import { addFundsSchema } from "@shared/schema";
 
 async function sendTelegramNotification(telegramId: string, message: string) {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
-  if (!BOT_TOKEN || telegramId.startsWith("demo_user")) return;
+  if (!BOT_TOKEN) return;
 
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -30,14 +30,11 @@ async function sendTelegramNotification(telegramId: string, message: string) {
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      // 1. Получаем только те задачи, которые ПЕРВЫЙ РАЗ переходят в статус failed
       const expiredTasks = await storage.getExpiredTasks();
       
       for (const task of expiredTasks) {
-        // 2. Сразу меняем статус в базе (теперь в следующую минуту она не попадет в список)
         await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
 
-        // 3. Отправляем уведомление в Telegram
         if (task.userTelegramId) {
           const text = `<b>⌛ Время вышло!</b>\n\n` +
                        `Срок выполнения задачи "<b>${task.title}</b>" истек.\n` +
@@ -65,7 +62,8 @@ export async function registerRoutes(
   // --- Users API ---
   
   app.get(api.users.me.path, async (req, res) => {
-    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const telegramId = req.headers["x-telegram-id"] as string;
+    if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
     let user = await storage.getUserByTelegramId(telegramId);
     if (!user) user = await storage.createUser({ telegramId });
     res.json(user);
@@ -73,7 +71,8 @@ export async function registerRoutes(
 
   app.post(api.users.addFunds.path, async (req, res) => {
     try {
-      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const telegramId = req.headers["x-telegram-id"] as string;
+      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -127,7 +126,8 @@ app.patch("/api/admin/transactions/:id", async (req, res) => {
 });
  app.post("/api/users/withdraw", async (req, res) => {
   try {
-    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const telegramId = req.headers["x-telegram-id"] as string;
+    if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
     const user = await storage.getUserByTelegramId(telegramId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -185,7 +185,8 @@ const updatedUser = await storage.updateUserBalance(user.id, -amount);
 
   app.get("/api/transactions", async (req, res) => {
     try {
-      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const telegramId = req.headers["x-telegram-id"] as string ;
+      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(401).json({ message: "Not authenticated" });
 
@@ -199,7 +200,8 @@ const updatedUser = await storage.updateUserBalance(user.id, -amount);
   // --- Tasks API ---
 
   app.get(api.tasks.list.path, async (req, res) => {
-    const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+    const telegramId = req.headers["x-telegram-id"] as string ;
+    if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
     const user = await storage.getUserByTelegramId(telegramId);
     if (!user) return res.status(401).json({ message: "Not authenticated" });
     const userTasks = await storage.getTasksByUser(user.id);
@@ -208,7 +210,8 @@ const updatedUser = await storage.updateUserBalance(user.id, -amount);
 
   app.post(api.tasks.create.path, async (req, res) => {
     try {
-      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const telegramId = req.headers["x-telegram-id"] as string ;
+      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(401).json({ message: "Not authenticated" });
 const input = api.tasks.create.input.parse(req.body);
@@ -279,7 +282,8 @@ const input = api.tasks.create.input.parse(req.body);
   // Остальные вспомогательные роуты
   app.get(api.tasks.submitted.path, async (req, res) => {
     try {
-      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const telegramId = req.headers["x-telegram-id"] as string ;
+      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
 
       // Если это админ — отдаем ВООБЩЕ ВСЕ задачи для истории
@@ -332,7 +336,8 @@ const input = api.tasks.create.input.parse(req.body);
   
 app.get("/api/admin/tasks", async (req, res) => {
     try {
-      const telegramId = req.headers["x-telegram-id"] as string || "demo_user_123";
+      const telegramId = req.headers["x-telegram-id"] as string;
+      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user || user.role !== "admin") {
         return res.status(403).json({ message: "У вас нет прав доступа к этому разделу" });
