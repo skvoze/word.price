@@ -2,9 +2,12 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 const getTelegramId = () => {
   const tg = (window as any).Telegram?.WebApp;
+  console.log("TG Init Data:", tg?.initData);
+
   if (tg?.initDataUnsafe?.user?.id) {
     return tg.initDataUnsafe.user.id.toString();
   }
+  
   return localStorage.getItem("testTelegramId") || "";
 };
 async function throwIfResNotOk(res: Response) {
