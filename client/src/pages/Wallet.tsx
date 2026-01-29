@@ -444,13 +444,12 @@ const handleWithdrawSubmit = async () => {
       </div>
     </div>
 
-    {/* СУММА (shrink-0 не дает ей сжиматься) */}
     <div className="text-right shrink-0">
       <p className={cn(
         "font-black text-base", 
         isPositive ? "text-emerald-500" : "text-foreground"
       )}>
-        {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toFixed(0)} ₽
+        {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
       </p>
       <p className="text-[10px] text-muted-foreground font-bold">
         {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
@@ -481,7 +480,7 @@ const handleWithdrawSubmit = async () => {
             placeholder="0000 0000 0000 0000"
             value={cardNumber}
             onChange={handleCardChange}
-            className={cn(activeInputStyles, "font-mono text-lg w-full pl-3 pr-14 py-6")}
+            className={cn(activeInputStyles, "font-mono text-lg w-full pl-4 pr-14 py-6")}
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
             <BrandLogo info={cardInfo} />

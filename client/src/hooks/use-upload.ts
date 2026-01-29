@@ -109,7 +109,6 @@ export function useUpload(options: UseUploadOptions = {}) {
       method: "POST";
       url: string;
       headers?: Record<string, string>;
-      // Добавляем флаг, чтобы Uppy не ругался на отсутствие ETag
       getResponseData?: (responseText: string) => any;
     }> => {
       const response = await fetch("/api/uploads/request-url", {

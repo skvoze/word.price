@@ -20,7 +20,7 @@ const getTid = () => {
 };
 
 export function useTasks() {
-  const tid = getTid(); // ПРАВКА: получаем ID для проверки
+  const tid = getTid(); 
 
   return useQuery({
     queryKey: [api.tasks.list.path],
@@ -32,8 +32,8 @@ export function useTasks() {
       if (!res.ok) throw new Error("Failed to fetch tasks");
       return api.tasks.list.responses[200].parse(await res.json());
     },
-    enabled: !!tid, // ПРАВКА: не запрашивать, пока нет ID
-    retry: false    // ПРАВКА: не спамить при ошибке
+    enabled: !!tid, 
+    retry: false    
   });
 }
 

@@ -106,16 +106,22 @@ app.patch("/api/admin/transactions/:id", async (req, res) => {
     if (isNaN(transactionId)) {
       return res.status(400).json({ message: "Некорректный ID транзакции" });
     }
-
-    // Обновляем транзакцию, передавая и статус, и причину
-    // Тебе нужно будет добавить rejectionReason в метод updateTransactionStatus в storage.ts
     const updated = await storage.updateTransactionStatus(transactionId, status, rejectionReason);
-    
+    const tx = await storage.getTransaction(transactionId);
+    if (tx) {
+      const user = await storage.getUser(tx.userId); // Получаем данные пользователя
+      if (user && user.telegramId) {
+        if (status === 'completed') {
+          await sendTelegramNotification(user.telegramId, 
+            `✅ <b>Выплата одобрена!</b>\n\nСумма <b>${Math.abs(tx.amount) / 100} ₽</b> отправлена на вашу карту. Ожидайте зачисления.`);
+        } else if (status === 'rejected') {
+          await sendTelegramNotification(user.telegramId, 
+            `❌ <b>Отказ в выплате</b>\n\nПричина: ${rejectionReason || "не указана"}.\nСредства возвращены на ваш баланс в приложении.`);
+        }
+      }
+    }
     if (status === 'rejected') {
-      const tx = await storage.getTransaction(transactionId);
       if (!tx) return res.status(404).json({ message: "Транзакция не найдена" });
-
-      // Возврат денег пользователю
       await storage.updateUserBalance(tx.userId, Math.abs(tx.amount));
     }
     
@@ -270,8 +276,6 @@ const input = api.tasks.create.input.parse(req.body);
     const task = await storage.getTask(id);
     if (!task) return res.status(404).json({ message: "Task not found" });
     if (task.status === "failed") return res.json(task);
-
-    // Передаем причину в метод обновления
     const updated = await storage.updateTaskStatus(id, "failed", rejectionReason);
     res.json(updated);
   } catch (err) {
@@ -279,20 +283,15 @@ const input = api.tasks.create.input.parse(req.body);
   }
 });
 
-  // Остальные вспомогательные роуты
   app.get(api.tasks.submitted.path, async (req, res) => {
     try {
       const telegramId = req.headers["x-telegram-id"] as string ;
       if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
-
-      // Если это админ — отдаем ВООБЩЕ ВСЕ задачи для истории
       if (user && user.role === "admin") {
-        const allTasks = await storage.getTasks(); // Этот метод у тебя в storage возвращает всё
+        const allTasks = await storage.getTasks();
         return res.json(allTasks);
       }
-
-      // Если не админ (или для обратной совместимости) — только отправленные
       const submittedTasks = await storage.getAllSubmittedTasks();
       res.json(submittedTasks);
     } catch (err: any) {
@@ -307,7 +306,8 @@ const input = api.tasks.create.input.parse(req.body);
     const task = await storage.submitEvidence(id, evidenceUrl);
     if (!task) return res.status(404).json({ message: "Задача не найдена" });
     await storage.updateTaskStatus(id, "submitted", undefined); 
-
+const ADMIN_ID = "514679635"; 
+  await sendTelegramNotification(ADMIN_ID, `<b>📦 Новое решение!</b>\nПользователь прислал отчет по задаче #${id}. Пора проверять!`);
     res.json(task);
   } catch (err: any) {
     res.status(400).json({ message: err.message || "Ошибка загрузки" });
@@ -348,6 +348,46 @@ app.get("/api/admin/tasks", async (req, res) => {
       res.status(500).json({ message: "Ошибка при загрузке истории задач" });
     }
   });
+  app.post("/api/webhook", async (req, res) => {
+  const { message } = req.body;
+
+  if (message && message.text === "/start") {
+    const chatId = message.chat.id;
+    const firstName = message.from.first_name;
+
+    const welcomeText = `
+<b>Привет, ${firstName}! 👋</b>
+
+Я твой персональный контроллер дисциплины. Моя задача — помочь тебе не бросать начатое.
+
+<b>Как это работает?</b>
+1. Ты создаешь задачу и вносишь <b>залог</b>.
+2. Выполняешь задачу и присылаешь фото-подтверждение.
+3. Я проверяю и <b>возвращаю тебе залог</b>.
+
+Если дедлайн выйдет, а подтверждения не будет — залог сгорает. 
+
+<i>Никакого азарта, только чистая продуктивность!</i> 🚀
+    `;
+
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: welcomeText,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🚀 Открыть приложение", web_app: { url: process.env.APP_URL } }
+          ]]
+        }
+      })
+    });
+  }
+
+  res.sendStatus(200);
+});
   startDeadlineChecker();
   return httpServer;
 }

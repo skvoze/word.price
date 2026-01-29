@@ -74,7 +74,7 @@ export function ObjectUploader({
         maxNumberOfFiles,
         maxFileSize,
       },
-      autoProceed: false,
+      autoProceed: true,
     })
       .use(XHRUpload, {
  endpoint: async (fileOrFiles) => {
@@ -111,6 +111,9 @@ useEffect(() => {
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        animateOpenClose={true}
+        browserBackButtonClose={true}
+        showSelectedFiles={true}
       />
     </div>
   );

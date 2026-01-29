@@ -55,7 +55,7 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
           </div>
           <div className="flex items-center text-primary font-bold">
             <Coins className="w-4 h-4 mr-1.5 opacity-70" />
-            {(task.amount / 100).toFixed(2)} ₽
+            {(task.amount / 100)} ₽
           </div>
         </div>
 {isAdmin && task.userTelegramId && (
