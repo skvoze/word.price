@@ -262,6 +262,11 @@ const input = api.tasks.create.input.parse(req.body);
       });
 
       const updated = await storage.updateTaskStatus(id, "completed");
+      const user = await storage.getUser(task.userId);
+    if (user?.telegramId) {
+      await sendTelegramNotification(user.telegramId, 
+        `🌟 <b>Задание принято!</b>\n\nТвое решение по задаче "<b>${task.title}</b>" одобрено. Залог <b>${task.amount / 100} ₽</b> возвращен на баланс.`);
+    }
       res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -277,6 +282,11 @@ const input = api.tasks.create.input.parse(req.body);
     if (!task) return res.status(404).json({ message: "Task not found" });
     if (task.status === "failed") return res.json(task);
     const updated = await storage.updateTaskStatus(id, "failed", rejectionReason);
+    const user = await storage.getUser(task.userId);
+    if (user?.telegramId) {
+      await sendTelegramNotification(user.telegramId, 
+        `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Залог удержан. Попробуй лучше в следующий раз!</i>`);
+    }
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Internal server error" });
