@@ -203,20 +203,21 @@ useEffect(() => {
             <div className="p-3 border-t border-border flex items-center justify-between bg-muted/30">
               <span className="text-sm font-medium ml-1">Установить время:</span>
               <Input
-                type="time"
-                value={selectedTime}
-                onChange={(e) => {
-                  const time = e.target.value;
-                  setSelectedTime(time);
-                  if (field.value) {
-                    const newDate = new Date(field.value);
-                    const [h, m] = time.split(':');
-                    newDate.setHours(parseInt(h), parseInt(m));
-                    field.onChange(newDate);
-                  }
-                }}
-                className="w-24 h-9 bg-background rounded-md text-sm"
-              />
+  type="time"
+  step="60" 
+  value={selectedTime}
+  onChange={(e) => {
+    const time = e.target.value;
+    setSelectedTime(time);
+    if (field.value) {
+      const newDate = new Date(field.value);
+      const [h, m] = time.split(':');
+      newDate.setHours(parseInt(h), parseInt(m));
+      field.onChange(newDate);
+    }
+  }}
+  className="w-24 h-9 bg-background rounded-md text-sm"
+/>
             </div>
           </PopoverContent>
         </Popover>
