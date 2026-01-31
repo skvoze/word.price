@@ -8,10 +8,13 @@ import { Loader2, CreditCard, History, Wallet as WalletIcon, Clock, Check, Arrow
 import { useToast } from "@/hooks/use-toast";
 import { motion} from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
+
 
 
 const DEFAULT_BRAND_COLOR = "#94a3b8";
@@ -350,16 +353,31 @@ const handleWithdrawSubmit = async () => {
   </p>
 </div>
               
-              <div className="mt-4 text-center px-4">
-  <p className="text-[10px] text-muted-foreground leading-relaxed">
-    Нажимая кнопку «Пополнить», вы подтверждаете свое согласие с нашими{" "}
-    <Link href="/terms" className="text-primary underline underline-offset-2">
-      Условиями использования
-    </Link>{" "}
-    и{" "}
-    <Link href="/privacy" className="text-primary underline underline-offset-2">
-      Политикой конфиденциальности
-    </Link>.
+              <div className="mt-6 px-4 text-center">
+  <p className="text-[11px] text-muted-foreground leading-relaxed">
+    Нажимая «Пополнить», вы соглашаетесь с{" "}
+    
+    <Dialog>
+      <DialogTrigger className="text-primary underline underline-offset-2">правилами сервиса</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-lg">
+        <DialogHeader>
+          <DialogTitle>Условия использования</DialogTitle>
+        </DialogHeader>
+        <Terms />
+      </DialogContent>
+    </Dialog>
+    
+    {" "}и{" "}
+    
+    <Dialog>
+      <DialogTrigger className="text-primary underline underline-offset-2">политикой конфиденциальности</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-lg">
+        <DialogHeader>
+          <DialogTitle>Приватность</DialogTitle>
+        </DialogHeader>
+        <Privacy />
+      </DialogContent>
+    </Dialog>
   </p>
 </div>
             </div>

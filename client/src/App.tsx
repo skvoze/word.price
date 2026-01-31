@@ -59,17 +59,6 @@ function App() {
       <TooltipProvider>
         <div className="antialiased min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
           <Router />
-          <footer className="py-6 border-t bg-muted/30">
-          <div className="container px-4 flex flex-col items-center gap-2">
-            <div className="flex gap-4 text-xs text-muted-foreground">
-              <Link href="/terms" className="hover:underline">Условия использования</Link>
-              <Link href="/privacy" className="hover:underline">Приватность</Link>
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">
-              © 2026 Твой Бот Гарант
-            </p>
-          </div>
-        </footer>
           <Toaster />
         </div>
       </TooltipProvider>

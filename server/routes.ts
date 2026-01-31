@@ -30,19 +30,15 @@ async function sendTelegramNotification(telegramId: string, message: string) {
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      // Используем твой метод, который сразу подтягивает userTelegramId
       const allTasks = await storage.getTasks();
       const now = new Date();
 
       for (const task of allTasks) {
-        // Нам нужны только те задачи, которые еще в работе (pending)
         if (task.status !== "pending") continue;
 
         const deadline = new Date(task.deadline);
         const diffMs = deadline.getTime() - now.getTime();
         const diffMinutes = Math.floor(diffMs / 60000);
-
-        // 1. ПРОВЕРКА ДЕДЛАЙНА (Если время вышло)
         if (diffMs <= 0) {
           await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
           
@@ -51,19 +47,17 @@ function startDeadlineChecker() {
               `<b>⌛ Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Залог удержан.`);
           }
           console.log(`[Deadline Checker] Задача ${task.id} провалена.`);
-          continue; // Переходим к следующей задаче
+          continue; 
         }
 
-        // 2. УВЕДОМЛЕНИЯ (Только если есть Telegram ID)
+
         if (!task.userTelegramId) continue;
 
-        // Ровно за 24 часа
+
         if (diffMinutes === 1440) {
           await sendTelegramNotification(task.userTelegramId, 
             `⚠️ <b>Остались сутки!</b>\n\nДо дедлайна по задаче "<b>${task.title}</b>" осталось 24 часа. Не забудь прислать отчет! 🔥`);
         }
-
-        // Ровно за 1 час
         if (diffMinutes === 60) {
           await sendTelegramNotification(task.userTelegramId, 
             `🚨 <b>Последний час!</b>\n\nУ тебя остался всего 1 час до завершения задачи "<b>${task.title}</b>". Поспеши! 🏃💨`);
@@ -72,20 +66,15 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Error]:", err);
     }
-  }, 60000); // Проверка раз в минуту
+  }, 60000);
 }
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  // Регистрация интеграций
   registerChatRoutes(app);
   registerImageRoutes(app);
   registerObjectStorageRoutes(app);
-
-  // --- Users API ---
-  
   app.get(api.users.me.path, async (req, res) => {
     const telegramId = req.headers["x-telegram-id"] as string;
     if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
@@ -446,6 +435,7 @@ const chatId = message.chat.id;
 <b>🆘 Справка и поддержка</b>
 
 <b>💰 Финансы:</b>
+• Минимальное пополнение: 100 ₽.
 • Минимальный залог: 100 ₽.
 • Вывод средств: Проверка занимает до 24 часов.
 • Возврат залога: Происходит мгновенно после одобрения отчета админом.
@@ -455,7 +445,7 @@ const chatId = message.chat.id;
 • Что если я не успел? Залог сгорает и идет на развитие проекта.
 
 <b>🤖 Техподдержка:</b>
-Если у вас возникли проблемы, напишите @ваш_аккаунт_поддержки.`;
+Если у вас остались вопросы или возникли проблемы, напишите @Vacorik`;
 const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
