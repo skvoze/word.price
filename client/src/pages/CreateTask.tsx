@@ -156,78 +156,75 @@ useEffect(() => {
       </FormItem>
     )}
   />
-            <FormField
+<FormField
   control={form.control}
   name="deadline"
   render={({ field }) => (
     <FormItem className="flex flex-col">
-      <FormLabel className="text-base font-semibold">Дэдлайн</FormLabel>
-      <div className="flex gap-2">
-        {/* Кнопка выбора даты */}
+      <FormLabel className="text-base font-semibold text-foreground/90">Когда дедлайн?</FormLabel>
+      <div className="flex flex-col gap-3">
         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <FormControl>
               <Button
-                variant={"ghost"}
+                variant="outline"
                 className={cn(
-                  "h-12 flex-1 pl-3 text-left font-normal bg-card border border-border rounded-xl",
+                  "h-14 justify-start text-left font-medium bg-card border-border rounded-xl px-4 text-base shadow-sm",
                   !field.value && "text-muted-foreground"
                 )}
               >
+                <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
                 {field.value ? (
-                  format(field.value, "d MMM yyyy", { locale: ru })
+                  format(field.value, "d MMMM, HH:mm", { locale: ru })
                 ) : (
-                  <span>Дата</span>
+                  "Выбрать дату и время"
                 )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
               </Button>
             </FormControl>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border" align="start">
             <Calendar
               mode="single"
               selected={field.value}
               locale={ru}
               onSelect={(date) => {
                 if (date) {
-                  const newDeadline = new Date(date);
-                  const [hours, mins] = selectedTime.split(':');
-                  newDeadline.setHours(parseInt(hours), parseInt(mins), 0, 0);
-                  field.onChange(newDeadline);
-                  setIsCalendarOpen(false);
+                  const newDate = new Date(date);
+                  const [h, m] = selectedTime.split(':');
+                  newDate.setHours(parseInt(h), parseInt(m), 0, 0);
+                  field.onChange(newDate);
+                  // Не закрываем сразу, чтобы юзер мог поправить время ниже
                 }
               }}
-              disabled={(date) =>
-                date < new Date(new Date().setHours(0, 0, 0, 0))
-              }
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              initialFocus
             />
+            {/* Выбор времени ПРЯМО ВНУТРИ выпадающего календаря */}
+            <div className="p-3 border-t border-border flex items-center justify-between bg-muted/30">
+              <span className="text-sm font-medium ml-1">Установить время:</span>
+              <Input
+                type="time"
+                value={selectedTime}
+                onChange={(e) => {
+                  const time = e.target.value;
+                  setSelectedTime(time);
+                  if (field.value) {
+                    const newDate = new Date(field.value);
+                    const [h, m] = time.split(':');
+                    newDate.setHours(parseInt(h), parseInt(m));
+                    field.onChange(newDate);
+                  }
+                }}
+                className="w-24 h-9 bg-background rounded-md text-sm"
+              />
+            </div>
           </PopoverContent>
         </Popover>
-
-        {/* Поле выбора времени */}
-        <div className="relative w-32">
-          <Input
-            type="time"
-            value={selectedTime}
-            onChange={(e) => {
-              const time = e.target.value;
-              setSelectedTime(time);
-              if (field.value) {
-                const newDate = new Date(field.value);
-                const [h, m] = time.split(':');
-                newDate.setHours(parseInt(h), parseInt(m));
-                field.onChange(newDate);
-              }
-            }}
-            className="h-12 bg-card border-border rounded-xl text-center font-medium focus:ring-primary appearance-none"
-          />
-        </div>
       </div>
       <FormMessage />
     </FormItem>
   )}
 />
-
             <FormField
   control={form.control}
   name="description"

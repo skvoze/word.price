@@ -204,7 +204,6 @@ async getTransactionsByUserId(userId: number): Promise<Transaction[]> {
 async getTransactionsByType(type: string) {
   return await db
     .select({
-      // Все поля транзакции
       id: transactions.id,
       userId: transactions.userId,
       amount: transactions.amount,
@@ -218,14 +217,12 @@ async getTransactionsByType(type: string) {
 
     })
     .from(transactions)
-    .leftJoin(users, eq(transactions.userId, users.id)) // Присоединяем таблицу юзеров
-    .where(eq(transactions.type, type))
+    .leftJoin(users, eq(transactions.userId, users.id))
     .orderBy(desc(transactions.createdAt));
 }
 async getExpiredTasks(): Promise<any[]> {
   const now = new Date();
-  // Выбираем только те задачи, которые просрочены, но статус всё еще 'pending'
-  // Это гарантирует, что мы обработаем каждую задачу только ОДИН раз
+
   return await db
     .select({
       id: tasks.id,

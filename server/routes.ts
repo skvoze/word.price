@@ -38,29 +38,36 @@
         const deadline = new Date(task.deadline);
         const diffMs = deadline.getTime() - now.getTime();
         const diffMinutes = Math.floor(diffMs / 60000);
+
+        // 1. ПРОВЕРКА ПРОСРОЧКИ (срабатывает, если время вышло)
         if (diffMs <= 0) {
           await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
           if (task.userTelegramId) {
             await sendTelegramNotification(task.userTelegramId, 
-              `⌛ <b>Время вышло!</b>\n\nСрок по задаче "<b>${task.title}</b>" истек. Залог удержан.`);
+              `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Залог удержан.`);
           }
-          continue;
-        }
-        if (!task.userTelegramId) continue;
-        if (diffMinutes === 60) {
-          await sendTelegramNotification(task.userTelegramId, 
-            `🚨 <b>Остался всего 1 час!</b>\nПоднажми, чтобы успеть сдать отчет по задаче "${task.title}".`);
+          continue; // Сразу переходим к следующей задаче
         }
 
+        // 2. УВЕДОМЛЕНИЯ (только если есть Telegram ID)
+        if (!task.userTelegramId) continue;
+
+        // Ровно за 24 часа
         if (diffMinutes === 1440) {
           await sendTelegramNotification(task.userTelegramId, 
-            `⚠️ <b>Остались сутки!</b>\nНе забудь подготовить отчет по задаче "${task.title}".`);
+            `⚠️ <b>Остались сутки!</b>\nДо дедлайна по задаче "<b>${task.title}</b>" осталось 24 часа.`);
+        }
+
+        // Ровно за 1 час
+        if (diffMinutes === 60) {
+          await sendTelegramNotification(task.userTelegramId, 
+            `🚨 <b>Последний шанс!</b>\nУ тебя остался всего 1 час на задачу "<b>${task.title}</b>".`);
         }
       }
     } catch (err) {
       console.error("[Deadline Checker Error]:", err);
     }
-  }, 60000); // Раз в минуту
+  }, 60000); 
 }
   export async function registerRoutes(
     httpServer: Server,
