@@ -34,6 +34,7 @@ export default function CreateTask() {
   const { data: user } = useUser();
   const createTask = useCreateTask();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedTime, setSelectedTime] = useState("23:59");
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -162,6 +163,24 @@ useEffect(() => {
     <FormItem className="flex flex-col">
       <FormLabel className="text-base font-semibold">Дэдлайн</FormLabel>
       <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <div className="mt-4 flex items-center justify-between bg-card p-3 rounded-lg border border-border">
+  <span className="text-sm font-medium">Время дедлайна:</span>
+  <Input
+    type="time"
+    value={selectedTime}
+    onChange={(e) => {
+      const time = e.target.value;
+      setSelectedTime(time);
+      if (field.value) {
+        const newDate = new Date(field.value);
+        const [h, m] = time.split(':');
+        newDate.setHours(parseInt(h), parseInt(m));
+        field.onChange(newDate);
+      }
+    }}
+    className="w-32 h-10"
+  />
+</div>
         <PopoverTrigger asChild>
           <FormControl>
             <Button
@@ -188,14 +207,13 @@ useEffect(() => {
             // Передаем локаль в сам календарь для перевода месяцев и дней недели
             locale={ru} 
             onSelect={(date) => {
-              if (date) {
-                const endOfSelectedDay = new Date(date);
-                endOfSelectedDay.setHours(23, 59, 59, 999);
-                field.onChange(endOfSelectedDay);
-                // ЗАКРЫВАЕМ поповер после выбора
-                setIsCalendarOpen(false); 
-              }
-            }}
+  if (date) {
+    const newDeadline = new Date(date);
+    const [hours, mins] = selectedTime.split(':');
+    newDeadline.setHours(parseInt(hours), parseInt(mins), 0, 0);
+    field.onChange(newDeadline);
+  }
+}}
             disabled={(date) =>
               date < new Date(new Date().setHours(0, 0, 0, 0))
             }
