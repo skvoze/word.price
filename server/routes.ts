@@ -358,14 +358,21 @@ app.get("/api/admin/tasks", async (req, res) => {
       res.status(500).json({ message: "Ошибка при загрузке истории задач" });
     }
   });
-  app.post("/api/webhook", async (req, res) => {
-  const { message } = req.body;
+ app.post("/api/webhook", async (req, res) => {
+  try {
+    const { message } = req.body;
+    console.log("[Webhook] Received message:", message?.text, "from:", message?.from?.id);
 
-  if (message && message.text === "/start") {
-    const chatId = message.chat.id;
-    const firstName = message.from.first_name;
+    if (message && message.text === "/start") {
+      const chatId = message.chat.id;
+      const firstName = message.from.first_name || "пользователь";
+      const appUrl = process.env.APP_URL;
 
-    const welcomeText = `
+      if (!appUrl) {
+        console.error("[Webhook Error] APP_URL is not defined in environment variables");
+      }
+
+      const welcomeText = `
 <b>Привет, ${firstName}! 👋</b>
 
 Я твой персональный контроллер дисциплины. Моя задача — помочь тебе не бросать начатое.
@@ -378,24 +385,34 @@ app.get("/api/admin/tasks", async (req, res) => {
 Если дедлайн выйдет, а подтверждения не будет — залог сгорает. 
 
 <i>Никакого азарта, только чистая продуктивность!</i> 🚀
-    `;
+      `;
 
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: welcomeText,
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "🚀 Открыть приложение", web_app: { url: process.env.APP_URL } }
-          ]]
-        }
-      })
-    });
+      const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: welcomeText,
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[
+              { 
+                text: "🚀 Открыть приложение", 
+                web_app: { url: appUrl } 
+              }
+            ]]
+          }
+        })
+      });
+
+      const result = await response.json();
+      if (!result.ok) {
+        console.error("[Webhook Error] Telegram API returned error:", result);
+      }
+    }
+  } catch (err) {
+    console.error("[Webhook Error] Internal crash:", err);
   }
-
   res.sendStatus(200);
 });
   startDeadlineChecker();
