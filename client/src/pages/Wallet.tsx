@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label";
+import { Link } from "wouter";
 
 
 const DEFAULT_BRAND_COLOR = "#94a3b8";
@@ -349,9 +350,18 @@ const handleWithdrawSubmit = async () => {
   </p>
 </div>
               
-              <p className="text-[10px] text-center text-muted-foreground px-4 leading-tight">
-                При пополнении, вы соглашаетесь с нашими Условиями использования. Средства используются исключительно для задач.
-              </p>
+              <div className="mt-4 text-center px-4">
+  <p className="text-[10px] text-muted-foreground leading-relaxed">
+    Нажимая кнопку «Пополнить», вы подтверждаете свое согласие с нашими{" "}
+    <Link href="/terms" className="text-primary underline underline-offset-2">
+      Условиями использования
+    </Link>{" "}
+    и{" "}
+    <Link href="/privacy" className="text-primary underline underline-offset-2">
+      Политикой конфиденциальности
+    </Link>.
+  </p>
+</div>
             </div>
           </Card>
         </div>

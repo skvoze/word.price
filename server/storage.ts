@@ -192,7 +192,9 @@ export class DatabaseStorage implements IStorage {
     .returning();
   return transaction;
 }
-
+async getTasksByStatus(status: string): Promise<Task[]> {
+  return await db.select().from(tasks).where(eq(tasks.status, status));
+}
 async getTransactionsByUserId(userId: number): Promise<Transaction[]> {
   return await db.select()
     .from(transactions)

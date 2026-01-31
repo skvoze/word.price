@@ -30,19 +30,44 @@ async function sendTelegramNotification(telegramId: string, message: string) {
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      const expiredTasks = await storage.getExpiredTasks();
-      
-      for (const task of expiredTasks) {
-        await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
+      // Используем твой метод, который сразу подтягивает userTelegramId
+      const allTasks = await storage.getTasks();
+      const now = new Date();
 
-        if (task.userTelegramId) {
-          const text = `<b>⌛ Время вышло!</b>\n\n` +
-                       `Срок выполнения задачи "<b>${task.title}</b>" истек.\n` +
-                       `Залог за выполнение задачи удержан.`;
-          await sendTelegramNotification(task.userTelegramId, text);
+      for (const task of allTasks) {
+        // Нам нужны только те задачи, которые еще в работе (pending)
+        if (task.status !== "pending") continue;
+
+        const deadline = new Date(task.deadline);
+        const diffMs = deadline.getTime() - now.getTime();
+        const diffMinutes = Math.floor(diffMs / 60000);
+
+        // 1. ПРОВЕРКА ДЕДЛАЙНА (Если время вышло)
+        if (diffMs <= 0) {
+          await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
+          
+          if (task.userTelegramId) {
+            await sendTelegramNotification(task.userTelegramId, 
+              `<b>⌛ Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Залог удержан.`);
+          }
+          console.log(`[Deadline Checker] Задача ${task.id} провалена.`);
+          continue; // Переходим к следующей задаче
         }
-        
-        console.log(`[Deadline Checker] Задача ${task.id} отмечена как failed и пользователь уведомлен.`);
+
+        // 2. УВЕДОМЛЕНИЯ (Только если есть Telegram ID)
+        if (!task.userTelegramId) continue;
+
+        // Ровно за 24 часа
+        if (diffMinutes === 1440) {
+          await sendTelegramNotification(task.userTelegramId, 
+            `⚠️ <b>Остались сутки!</b>\n\nДо дедлайна по задаче "<b>${task.title}</b>" осталось 24 часа. Не забудь прислать отчет! 🔥`);
+        }
+
+        // Ровно за 1 час
+        if (diffMinutes === 60) {
+          await sendTelegramNotification(task.userTelegramId, 
+            `🚨 <b>Последний час!</b>\n\nУ тебя остался всего 1 час до завершения задачи "<b>${task.title}</b>". Поспеши! 🏃💨`);
+        }
       }
     } catch (err) {
       console.error("[Deadline Checker Error]:", err);
@@ -362,30 +387,32 @@ app.get("/api/admin/tasks", async (req, res) => {
   try {
     const { message } = req.body;
     console.log("[Webhook] Received message:", message?.text, "from:", message?.from?.id);
-
-    if (message && message.text === "/start") {
-      const chatId = message.chat.id;
+const chatId = message.chat.id;
       const firstName = message.from.first_name || "пользователь";
       const appUrl = process.env.APP_URL;
+    if (message && message.text === "/start") {
+      
 
       if (!appUrl) {
         console.error("[Webhook Error] APP_URL is not defined in environment variables");
       }
-
       const welcomeText = `
 <b>Привет, ${firstName}! 👋</b>
 
-Я твой персональный контроллер дисциплины. Моя задача — помочь тебе не бросать начатое.
+Я помогу тебе доводить дела до конца.
 
-<b>Как это работает?</b>
-1. Ты создаешь задачу и вносишь <b>залог</b>.
-2. Выполняешь задачу и присылаешь фото-подтверждение.
-3. Я проверяю и <b>возвращаю тебе залог</b>.
+<b>💡 Рекомендации при использовании:</b>
+
+1. Выбирайте сумму так, чтобы она заставляла тебя выполнить поставленную задачу, ведь иначе тебе будет жалко потерять свои деньги.
+2. Если захочешь обмануть при подтверждении выполнения задачи, помни ты в первую очередь обманываешь себя.
+3. Если возникнут вопросы пишите команду /help.
 
 Если дедлайн выйдет, а подтверждения не будет — залог сгорает. 
 
-<i>Никакого азарта, только чистая продуктивность!</i> 🚀
-      `;
+<b>С чего начать?</b>
+Просто нажми кнопку ниже и создавай первую задачу!
+
+Удачи, я в тебя верю! 🚀`;
 
       const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
@@ -409,6 +436,49 @@ app.get("/api/admin/tasks", async (req, res) => {
       if (!result.ok) {
         console.error("[Webhook Error] Telegram API returned error:", result);
       }
+    }
+    else if (message.text === "/help") {
+
+      if (!appUrl) {
+        console.error("[Webhook Error] APP_URL is not defined in environment variables");
+      }
+      const helpText = `
+<b>🆘 Справка и поддержка</b>
+
+<b>💰 Финансы:</b>
+• Минимальный залог: 100 ₽.
+• Вывод средств: Проверка занимает до 24 часов.
+• Возврат залога: Происходит мгновенно после одобрения отчета админом.
+
+<b>📝 Задачи:</b>
+• Как сдать? Зайдите в задачу и нажмите "Загрузить доказательства".
+• Что если я не успел? Залог сгорает и идет на развитие проекта.
+
+<b>🤖 Техподдержка:</b>
+Если у вас возникли проблемы, напишите @ваш_аккаунт_поддержки.`;
+const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: helpText,
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[
+              { 
+                text: "🚀 Открыть приложение", 
+                web_app: { url: appUrl } 
+              }
+            ]]
+          }
+        })
+      });
+
+      const result = await response.json();
+      if (!result.ok) {
+        console.error("[Webhook Error] Telegram API returned error:", result);
+      }
+     
     }
   } catch (err) {
     console.error("[Webhook Error] Internal crash:", err);
