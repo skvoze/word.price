@@ -128,104 +128,34 @@ useEffect(() => {
 />
 
 <FormField
-  control={form.control}
-  name="deadline"
-  render={({ field }) => (
-    <FormItem className="flex flex-col">
-      <FormLabel className="text-base font-semibold">Когда дедлайн?</FormLabel>
-      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-        <PopoverTrigger asChild>
-          <FormControl>
-            {/* Используем div вместо Button, чтобы убить белую обводку навсегда */}
-            <div
-              onClick={() => setIsCalendarOpen(true)}
-              className={cn(
-                "h-14 w-full flex items-center justify-start bg-card border border-border rounded-xl px-4 text-base cursor-pointer transition-all",
-                "hover:border-primary/50 active:scale-[0.98]",
-                !field.value && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
-              {field.value ? (
-                format(field.value, "d MMMM, HH:mm", { locale: ru })
-              ) : (
-                "Выбрать дату и время"
-              )}
-            </div>
-          </FormControl>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border bg-popover" align="start">
-<Calendar
-  mode="single"
-  selected={field.value}
-  locale={ru}
-  onSelect={(date) => {
-    if (date) {
-      const newDate = new Date(date);
-      const [h, m] = selectedTime.split(':').map(Number);
-      newDate.setHours(h, m, 0, 0);
-      field.onChange(newDate);
-    }
-  }}
-  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-
-  classNames={{
-    day_selected: "bg-primary text-primary-foreground rounded-full !rounded-full opacity-100",
-    day_today: "border-2 border-primary bg-transparent text-foreground rounded-full",
-    day: "h-9 w-9 p-0 font-normal flex items-center justify-center rounded-full hover:bg-muted transition-all",
-  }}
-  styles={{
-    day: { borderRadius: '50%' }
-  }}
-/>
-
-          <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
-            <select 
-              value={selectedTime.split(':')[0]} 
-              onChange={(e) => {
-                const h = e.target.value;
-                const m = selectedTime.split(':')[1];
-                setSelectedTime(`${h}:${m}`);
-                if (field.value) {
-                  const d = new Date(field.value);
-                  d.setHours(parseInt(h));
-                  field.onChange(d);
-                }
-              }}
-              className="bg-background border border-border rounded-lg p-2 text-lg font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none text-center min-w-[64px]"
-            >
-              {Array.from({ length: 24 }).map((_, i) => (
-                <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
-              ))}
-            </select>
-
-            <span className="text-xl font-bold">:</span>
-
-            <select 
-              value={selectedTime.split(':')[1]} 
-              onChange={(e) => {
-                const m = e.target.value;
-                const h = selectedTime.split(':')[0];
-                setSelectedTime(`${h}:${m}`);
-                if (field.value) {
-                  const d = new Date(field.value);
-                  d.setMinutes(parseInt(m));
-                  field.onChange(d);
-                }
-              }}
-              className="bg-background border border-border rounded-lg p-2 text-lg font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none text-center min-w-[64px]"
-            >
-              {["00", "15", "30", "45"].map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+    control={form.control}
+    name="amount"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel className="text-base font-semibold">Сумма</FormLabel>
+        <FormDescription className="text-xs mb-2">
+          Вы получите эти деньги назад только при выполнении задачи.
+        </FormDescription>
+        <FormControl>
+          <div className="space-y-2">
+            <CurrencyInput
+              value={field.value}
+              onValueChange={(val) => field.onChange(val)} // Просто передаем значение
+              // Убрали все проверки на оранжевый цвет, оставили стандартный стиль
+              className="h-12 text-lg bg-card border-border focus:border-primary transition-all"
+              placeholder="0"
+            />
+            
+            {/* Маленькая подсказка о доступном балансе вместо оранжевого текста */}
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+              Доступно: {((user?.balance ?? 0) / 100).toLocaleString('ru-RU')} ₽
+            </p>
           </div>
-        </PopoverContent>
-      </Popover>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
 <FormField
   control={form.control}
   name="deadline"
