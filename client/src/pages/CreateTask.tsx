@@ -182,7 +182,7 @@ useEffect(() => {
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border bg-popover outline-none" align="start">
-          <Calendar
+<Calendar
   mode="single"
   selected={field.value}
   locale={ru}
@@ -196,15 +196,15 @@ useEffect(() => {
   }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
   classNames={{
-    day_selected: "bg-primary text-primary-foreground !rounded-full opacity-100 italic-none",
-    day_today: "border-2 border-primary bg-transparent text-foreground !rounded-full",
-    day: cn(
-      "h-9 w-9 p-0 font-normal flex items-center justify-center !rounded-full transition-all hover:bg-muted"
-    ),
-    cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+    day_selected: "!bg-primary !text-primary-foreground rounded-full opacity-100 hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+    day_today: "border-2 border-primary bg-transparent text-foreground rounded-full",
+    day: "h-9 w-9 p-0 font-normal flex items-center justify-center rounded-full hover:bg-muted transition-all",
   }}
-/>
-          <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
+  styles={{
+    day: { borderRadius: '50%' }
+  }}
+/> 
+       <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
             <select 
               value={selectedTime.split(':')[0]} 
