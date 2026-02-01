@@ -195,15 +195,31 @@ useEffect(() => {
     }
   }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+  
+  // Принудительные стили для конкретных состояний
+  modifiersStyles={{
+    selected: { 
+      backgroundColor: 'hsl(var(--primary))', 
+      color: 'white',
+      borderRadius: '50%', // Идеальный круг
+      width: '36px',
+      height: '36px'
+    },
+    today: { 
+      border: '2px solid hsl(var(--primary))',
+      borderRadius: '50%',
+      backgroundColor: 'transparent'
+    }
+  }}
+
   classNames={{
-    day_selected: "!bg-primary !text-primary-foreground rounded-full opacity-100 hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-    day_today: "border-2 border-primary bg-transparent text-foreground rounded-full",
-    day: "h-9 w-9 p-0 font-normal flex items-center justify-center rounded-full hover:bg-muted transition-all",
+    day: "h-9 w-9 p-0 font-normal flex items-center justify-center rounded-full hover:bg-muted transition-all outline-none ring-0",
+    day_selected: "opacity-100", 
   }}
   styles={{
     day: { borderRadius: '50%' }
   }}
-/> 
+/>
        <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
             <select 
