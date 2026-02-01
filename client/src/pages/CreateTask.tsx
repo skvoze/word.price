@@ -199,26 +199,33 @@ useEffect(() => {
               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               initialFocus
             />
-            {/* Выбор времени ПРЯМО ВНУТРИ выпадающего календаря */}
             <div className="p-3 border-t border-border flex items-center justify-between bg-muted/30">
-              <span className="text-sm font-medium ml-1">Установить время:</span>
-              <Input
-  type="time"
-  step="60" 
-  value={selectedTime}
-  onChange={(e) => {
-    const time = e.target.value;
-    setSelectedTime(time);
-    if (field.value) {
-      const newDate = new Date(field.value);
-      const [h, m] = time.split(':');
-      newDate.setHours(parseInt(h), parseInt(m));
-      field.onChange(newDate);
-    }
-  }}
-  className="w-24 h-9 bg-background rounded-md text-sm"
-/>
-            </div>
+  <span className="text-sm font-medium ml-1">Установить время:</span>
+  <Input
+    type="text"
+    placeholder="23:59"
+    value={selectedTime}
+    onChange={(e) => {
+      let val = e.target.value.replace(/\D/g, "");
+      if (val.length > 4) val = val.slice(0, 4);
+      let formattedTime = val;
+      if (val.length >= 3) {
+        formattedTime = val.slice(0, 2) + ":" + val.slice(2);
+      }
+      setSelectedTime(formattedTime);
+      if (formattedTime.length === 5) {
+        const [h, m] = formattedTime.split(':').map(Number);
+        if (h < 24 && m < 60 && field.value) {
+          const newDate = new Date(field.value);
+          newDate.setHours(h, m);
+          field.onChange(newDate);
+        }
+      }
+    }}
+    className="w-20 h-9 bg-background rounded-md text-sm text-center font-bold"
+    maxLength={5}
+  />
+</div>
           </PopoverContent>
         </Popover>
       </div>
