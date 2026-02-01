@@ -183,24 +183,27 @@ useEffect(() => {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border bg-popover outline-none" align="start">
           <Calendar
-            mode="single"
-            selected={field.value}
-            locale={ru}
-            onSelect={(date) => {
-              if (date) {
-                const newDate = new Date(date);
-                const [h, m] = selectedTime.split(':').map(Number);
-                newDate.setHours(h, m, 0, 0);
-                field.onChange(newDate);
-              }
-            }}
-            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-            classNames={{
-              day_selected: "bg-primary text-primary-foreground !rounded-full opacity-100",
-              day_today: "border-2 border-primary bg-transparent text-foreground !rounded-full",
-              day: "h-9 w-9 p-0 font-normal flex items-center justify-center !rounded-full hover:bg-muted transition-all",
-            }}
-          />
+  mode="single"
+  selected={field.value}
+  locale={ru}
+  onSelect={(date) => {
+    if (date) {
+      const newDate = new Date(date);
+      const [h, m] = selectedTime.split(':').map(Number);
+      newDate.setHours(h, m, 0, 0);
+      field.onChange(newDate);
+    }
+  }}
+  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+  classNames={{
+    day_selected: "bg-primary text-primary-foreground !rounded-full opacity-100 italic-none",
+    day_today: "border-2 border-primary bg-transparent text-foreground !rounded-full",
+    day: cn(
+      "h-9 w-9 p-0 font-normal flex items-center justify-center !rounded-full transition-all hover:bg-muted"
+    ),
+    cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+  }}
+/>
           <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
             <select 

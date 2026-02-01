@@ -52,7 +52,18 @@
 .rdp-day_selected, .rdp-day_today {
   border-radius: 50% !important;
 }
+.rdp-day, 
+.rdp-day_selected, 
+.rdp-button {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
 
+/* Убираем синее выделение текста при клике */
+.rdp-button:focus-visible {
+  outline: none !important;
+  ring: 0 !important;
+}
 @layer base {
   * {
     @apply border-border;
