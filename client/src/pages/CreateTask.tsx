@@ -166,23 +166,23 @@ useEffect(() => {
         <PopoverTrigger asChild>
           <FormControl>
             <Button
-              variant="outline"
-              className={cn(
-                "h-14 justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base",
-                "focus:outline-none focus:ring-0 focus-visible:ring-0 ring-0 outline-none", 
-                !field.value && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
-              {field.value ? (
-                format(field.value, "d MMMM, HH:mm", { locale: ru })
-              ) : (
-                "Выбрать дату и время"
-              )}
-            </Button>
+  variant="outline"
+  className={cn(
+    "h-14 justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base shadow-sm",
+    "focus:ring-1 focus:ring-primary focus-visible:ring-1 focus-visible:ring-primary outline-none ring-offset-0", 
+    !field.value && "text-muted-foreground"
+  )}
+>
+  <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
+  {field.value ? (
+    format(field.value, "d MMMM, HH:mm", { locale: ru })
+  ) : (
+    "Выбрать дату и время"
+  )}
+</Button>
           </FormControl>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border" align="start">
+        <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border outline-none" align="start">
           <Calendar
             mode="single"
             selected={field.value}
@@ -212,7 +212,7 @@ useEffect(() => {
                   field.onChange(d);
                 }
               }}
-              className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold"
+              className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none"
             >
               {Array.from({ length: 24 }).map((_, i) => {
                 const val = i.toString().padStart(2, '0');
@@ -235,7 +235,7 @@ useEffect(() => {
                   field.onChange(d);
                 }
               }}
-              className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold"
+              className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none"
             >
               {["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map((m) => (
                 <option key={m} value={m}>{m}</option>
