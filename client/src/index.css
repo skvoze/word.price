@@ -42,6 +42,16 @@
   --tg-blue: #007aff;
   --tg-separator: #38383a;
 }
+[data-radix-popper-content-wrapper], 
+[data-state="open"],
+[data-state="closed"] {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.rdp-day_selected, .rdp-day_today {
+  border-radius: 50% !important;
+}
 
 @layer base {
   * {
