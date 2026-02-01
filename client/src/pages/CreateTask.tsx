@@ -169,7 +169,7 @@ useEffect(() => {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-14 justify-start text-left font-medium bg-card border-border rounded-xl px-4 text-base shadow-sm",
+                  "h-14 justify-start text-left font-medium bg-card border-border rounded-xl px-4 text-base shadow-sm focus:ring-0 focus-visible:ring-0",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -183,50 +183,68 @@ useEffect(() => {
             </FormControl>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border" align="start">
-            <Calendar
-              mode="single"
-              selected={field.value}
-              locale={ru}
-              onSelect={(date) => {
-                if (date) {
-                  const newDate = new Date(date);
-                  const [h, m] = selectedTime.split(':');
-                  newDate.setHours(parseInt(h), parseInt(m), 0, 0);
-                  field.onChange(newDate);
-                  // Не закрываем сразу, чтобы юзер мог поправить время ниже
-                }
-              }}
-              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-              initialFocus
-            />
-            <div className="p-3 border-t border-border flex items-center justify-between bg-muted/30">
-  <span className="text-sm font-medium ml-1">Установить время:</span>
-  <Input
-    type="text"
-    placeholder="23:59"
-    value={selectedTime}
-    onChange={(e) => {
-      let val = e.target.value.replace(/\D/g, "");
-      if (val.length > 4) val = val.slice(0, 4);
-      let formattedTime = val;
-      if (val.length >= 3) {
-        formattedTime = val.slice(0, 2) + ":" + val.slice(2);
-      }
-      setSelectedTime(formattedTime);
-      if (formattedTime.length === 5) {
-        const [h, m] = formattedTime.split(':').map(Number);
-        if (h < 24 && m < 60 && field.value) {
-          const newDate = new Date(field.value);
-          newDate.setHours(h, m);
-          field.onChange(newDate);
-        }
+  <Calendar
+    mode="single"
+    selected={field.value}
+    locale={ru}
+    onSelect={(date) => {
+      if (date) {
+        const newDate = new Date(date);
+        const [h, m] = selectedTime.split(':');
+        newDate.setHours(parseInt(h), parseInt(m), 0, 0);
+        field.onChange(newDate);
       }
     }}
-    className="w-20 h-9 bg-background rounded-md text-sm text-center font-bold"
-    maxLength={5}
+    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
   />
-</div>
-          </PopoverContent>
+  <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
+    <div className="flex flex-col items-center">
+      <span className="text-[10px] uppercase text-muted-foreground mb-1">Часы</span>
+      <select 
+        value={selectedTime.split(':')[0]} 
+        onChange={(e) => {
+          const newH = e.target.value;
+          const newTime = `${newH}:${selectedTime.split(':')[1]}`;
+          setSelectedTime(newTime);
+          if (field.value) {
+            const d = new Date(field.value);
+            d.setHours(parseInt(newH));
+            field.onChange(d);
+          }
+        }}
+        className="bg-background border rounded p-1 text-lg font-bold outline-none"
+      >
+        {Array.from({ length: 24 }).map((_, i) => (
+          <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+        ))}
+      </select>
+    </div>
+
+    <span className="text-xl font-bold mt-4">:</span>
+
+    <div className="flex flex-col items-center">
+      <span className="text-[10px] uppercase text-muted-foreground mb-1">Минуты</span>
+      <select 
+        value={selectedTime.split(':')[1]} 
+        onChange={(e) => {
+          const newM = e.target.value;
+          const newTime = `${selectedTime.split(':')[0]}:${newM}`;
+          setSelectedTime(newTime);
+          if (field.value) {
+            const d = new Date(field.value);
+            d.setMinutes(parseInt(newM));
+            field.onChange(d);
+          }
+        }}
+        className="bg-background border rounded p-1 text-lg font-bold outline-none"
+      >
+        {["00", "15", "30", "45"].map((m) => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+    </div>
+  </div>
+</PopoverContent>
         </Popover>
       </div>
       <FormMessage />
