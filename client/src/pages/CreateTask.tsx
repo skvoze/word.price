@@ -167,9 +167,10 @@ useEffect(() => {
           <FormControl>
 <Button
   variant="outline"
+  style={{ boxShadow: 'none' }} 
   className={cn(
-    "h-14 w-full justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base transition-all",
-    "focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0 outline-none", // Полный сброс
+    "h-14 w-full justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base",
+    "focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-primary active:border-primary outline-none", 
     !field.value && "text-muted-foreground"
   )}
 >
@@ -183,7 +184,7 @@ useEffect(() => {
           </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border outline-none" align="start">
-          <Calendar
+<Calendar
   mode="single"
   selected={field.value}
   locale={ru}
@@ -195,20 +196,18 @@ useEffect(() => {
       field.onChange(newDate);
     }
   }}
-  modifiersStyles={{
-    today: { 
-      border: '2px solid hsl(var(--primary))',
-      backgroundColor: 'transparent',
-      color: 'inherit'
-    },
-    selected: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))'
-    }
-  }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-/>
-          
+  classNames={{
+    day_selected: "bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+    day_today: "border-2 border-primary bg-transparent text-foreground rounded-full",
+    day: cn(
+      "h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-full flex items-center justify-center"
+    ),
+  }}
+  styles={{
+    day: { borderRadius: '50%' } 
+  }}
+/>          
           <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
             <select 
