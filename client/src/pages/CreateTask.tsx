@@ -165,11 +165,11 @@ useEffect(() => {
       <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <FormControl>
-            <Button
+<Button
   variant="outline"
   className={cn(
-    "h-14 justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base shadow-sm",
-    "focus:ring-1 focus:ring-primary focus-visible:ring-1 focus-visible:ring-primary outline-none ring-offset-0", 
+    "h-14 w-full justify-start text-left font-medium bg-card border border-border rounded-xl px-4 text-base transition-all",
+    "focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0 outline-none", // Полный сброс
     !field.value && "text-muted-foreground"
   )}
 >
@@ -184,19 +184,30 @@ useEffect(() => {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border outline-none" align="start">
           <Calendar
-            mode="single"
-            selected={field.value}
-            locale={ru}
-            onSelect={(date) => {
-              if (date) {
-                const newDate = new Date(date);
-                const [h, m] = selectedTime.split(':').map(Number);
-                newDate.setHours(h, m, 0, 0);
-                field.onChange(newDate);
-              }
-            }}
-            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-          />
+  mode="single"
+  selected={field.value}
+  locale={ru}
+  onSelect={(date) => {
+    if (date) {
+      const newDate = new Date(date);
+      const [h, m] = selectedTime.split(':').map(Number);
+      newDate.setHours(h, m, 0, 0);
+      field.onChange(newDate);
+    }
+  }}
+  modifiersStyles={{
+    today: { 
+      border: '2px solid hsl(var(--primary))',
+      backgroundColor: 'transparent',
+      color: 'inherit'
+    },
+    selected: {
+      backgroundColor: 'hsl(var(--primary))',
+      color: 'hsl(var(--primary-foreground))'
+    }
+  }}
+  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+/>
           
           <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
