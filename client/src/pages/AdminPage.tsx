@@ -50,8 +50,9 @@ export default function AdminPage() {
 
   if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
 
-  const pending = withdrawals?.filter(t => t.status === "pending") || [];
-  const history = withdrawals?.filter(t => t.status !== "pending") || [];
+ const allWithdrawals = withdrawals?.filter(t => t.type === "withdraw") || [];
+  const pending = allWithdrawals.filter(t => t.status === "pending");
+  const history = allWithdrawals.filter(t => t.status !== "pending");
 if (error) {
   return (
     <div className="container mx-auto py-20 text-center">
@@ -80,8 +81,7 @@ if (error) {
   <div className="p-6 bg-zinc-900 border border-white/5 rounded-2xl">
     <p className="text-sm text-zinc-500">Всего выплачено</p>
     <p className="text-2xl font-bold text-emerald-500">
-      {(history.filter(t => t.status === 'completed').reduce((acc, curr) => acc + Math.abs(curr.amount), 0) / 100).toLocaleString()} ₽
-    </p>
+{(history.filter(t => t.status === 'completed').reduce((acc, curr) => acc + Math.abs(curr.amount), 0) / 100).toLocaleString()} ₽    </p>
   </div>
 </div>
       <Tabs defaultValue="new">
@@ -122,122 +122,124 @@ if (error) {
 
     {/* 4. Карта */}
 <TableCell>
-  <div className="flex flex-col gap-1.5">
-    <div className="flex items-center gap-2">
-      <code className="font-mono bg-zinc-900 border border-white/5 px-2 py-1 rounded text-amber-200 text-sm">
-        {tx.metadata?.cardNumber || "Нет номера"}
-      </code>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="h-8 w-8 text-zinc-500 hover:text-white"
-        onClick={() => copyCard(tx.metadata?.cardNumber || "")}
-      >
-        <Copy className="h-4 w-4" />
-      </Button>
-    </div>
-    
-    {/* Вывод комментария пользователя */}
-    {tx.metadata?.userNote && (
-      <div className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10 w-fit">
-        <span className="font-bold uppercase text-[9px] opacity-70">Заметка:</span>
-        <span className="font-medium italic">{tx.metadata.userNote}</span>
-      </div>
-    )}
-  </div>
-</TableCell>
-
-    {/* 5. Действия */}
-    <TableCell className="text-right">
-      <div className="flex justify-end gap-2">
-        <Button 
-          size="sm" 
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          disabled={statusMutation.isPending}
-          onClick={() => statusMutation.mutate({ id: tx.id, status: "completed" })}
-        >
-          <CheckCircle className="h-4 w-4 mr-1" /> Выплатить
-        </Button>
-       <Button 
-  size="sm" 
-  variant="outline"
-  disabled={statusMutation.isPending}
-  onClick={() => {
-    const reason = window.prompt("Укажите причину отказа:");
-    if (reason !== null) {
-      statusMutation.mutate({ id: tx.id, status: "rejected", rejectionReason: reason });
-    }
-  }}
->
-  <XCircle className="h-4 w-4 mr-1" /> Отказать
-</Button>
-      </div>
-    </TableCell>
-  </TableRow>
-))}
-                {pending.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Нет новых заявок</TableCell></TableRow>
-                )}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <code className="font-mono bg-zinc-900 border border-amber-500/20 px-2 py-1 rounded text-amber-200 text-sm">
+                            {tx.metadata?.cardNumber || "Номер не указан"}
+                          </code>
+                          <Button 
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            onClick={() => copyCard(tx.metadata?.cardNumber || "")}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        
+                        {/* Улучшенное отображение комментария */}
+                        {(tx.metadata?.userNote || tx.description) && (
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-2">
+                            <p className="text-[10px] uppercase text-blue-400 font-bold mb-0.5">Комментарий пользователя:</p>
+                            <p className="text-xs text-blue-100 italic">
+                              {tx.metadata?.userNote || tx.description}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => statusMutation.mutate({ id: tx.id, status: "completed" })}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" /> Одобрить
+                        </Button>
+                        <Button 
+                          size="sm" variant="destructive"
+                          onClick={() => {
+                            const reason = window.prompt("Причина отказа:");
+                            if (reason) statusMutation.mutate({ id: tx.id, status: "rejected", rejectionReason: reason });
+                          }}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" /> Отказать
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
         </TabsContent>
 
-       <TabsContent value="history">
-  <div className="border rounded-lg border-white/5 bg-zinc-900/50">
+<TabsContent value="history">
+  <div className="border rounded-lg border-white/5 bg-zinc-900/50 overflow-hidden">
     <Table>
-      <TableHeader>
+      <TableHeader className="bg-zinc-900/30">
         <TableRow className="border-white/5 hover:bg-transparent">
           <TableHead>Дата</TableHead>
           <TableHead>Пользователь</TableHead>
           <TableHead>Сумма</TableHead>
-          <TableHead>Карта</TableHead>
+          <TableHead>Реквизиты</TableHead>
           <TableHead className="text-right">Статус</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {history.map((tx: any) => (
           <TableRow key={tx.id} className="border-white/5">
-            <TableCell className="text-zinc-500">
-              {new Date(tx.createdAt).toLocaleDateString('ru-RU')}
+            <TableCell className="text-zinc-500 text-xs">
+              {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('ru-RU') : '—'}
             </TableCell>
             <TableCell className="text-zinc-300">
-              {/* Если в метаданных нет telegramId, выводим userId */}
-              {tx.metadata?.telegramId || `TelegramID: ${tx.telegramId} ID: ${tx.userId}`}
+              <span className="text-[10px] text-zinc-600 block">ID: {tx.userId}</span>
+              {tx.telegramId || "User"}
             </TableCell>
             <TableCell className="font-bold">
               {Math.abs(tx.amount / 100).toLocaleString()} ₽
             </TableCell>
-           <TableCell className="font-mono text-xs text-zinc-500">
-  <div className="flex flex-col gap-1">
-    <span>{tx.metadata?.cardNumber ? `${tx.metadata.cardNumber}` : "—"}</span>
-    {tx.metadata?.userNote && (
-      <span className="text-[10px] text-zinc-400 italic">
-        Заметка: {tx.metadata.userNote}
-      </span>
-    )}
-  </div>
-</TableCell>
-            <TableCell className="text-right">
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  tx.status === 'completed' 
-                    ? "border-emerald-500/50 text-emerald-500 bg-emerald-500/5" 
-                    : "border-red-500/50 text-red-500 bg-red-500/5"
+            <TableCell>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-xs text-zinc-400">
+                  {tx.metadata?.cardNumber || "—"}
+                </span>
+                {/* Комментарий пользователя в истории */}
+                {(tx.metadata?.userNote || tx.description) && (
+                  <span className="text-[10px] text-zinc-500 italic truncate max-w-[200px]">
+                    Note: {tx.metadata?.userNote || tx.description}
+                  </span>
                 )}
-              >
-                {tx.status === 'completed' ? 'Выплачено' : 'Отклонено'}
-              </Badge>
-              {/* Если есть причина отказа — выводим её мелким текстом под статусом */}
-              {tx.rejectionReason && (
-                <p className="text-[10px] text-red-400 mt-1 max-w-[150px] ml-auto">
-                  {tx.rejectionReason}
-                </p>
-              )}
+              </div>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex flex-col items-end gap-1">
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider px-2 py-0",
+                    tx.status === 'completed' 
+                      ? "border-emerald-500/50 text-emerald-500 bg-emerald-500/5" 
+                      : "border-red-500/50 text-red-500 bg-red-500/5"
+                  )}
+                >
+                  {tx.status === 'completed' ? 'Выплачено' : 'Отклонено'}
+                </Badge>
+                {/* Если админ указал причину отказа при отклонении */}
+                {tx.rejectionReason && (
+                  <p className="text-[10px] text-red-400 italic max-w-[150px]">
+                    Причина: {tx.rejectionReason}
+                  </p>
+                )}
+              </div>
             </TableCell>
           </TableRow>
         ))}
+        {history.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+              История выплат пуста
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   </div>
