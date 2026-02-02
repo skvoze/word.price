@@ -5,7 +5,7 @@ import { type InsertTask } from "@shared/schema";
 const getHeaders = () => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const tg = (window as any).Telegram?.WebApp;
-  const tid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+  const tid = tg?.initDataUnsafe?.user?.id?.toString();
 
   if (tid) {
     headers["x-telegram-id"] = tid;
@@ -16,7 +16,7 @@ const getHeaders = () => {
 // Вспомогательная переменная для проверок
 const getTid = () => {
   const tg = (window as any).Telegram?.WebApp;
-  return tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+  return tg?.initDataUnsafe?.user?.id?.toString();
 };
 
 export function useTasks() {

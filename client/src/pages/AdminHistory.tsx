@@ -10,10 +10,6 @@ export default function AdminHistory() {
     queryKey: ["/api/admin/tasks"],
     queryFn: async () => {
       const headers: Record<string, string> = {};
-      const testTelegramId = localStorage.getItem("testTelegramId");
-      if (testTelegramId) {
-        headers["x-telegram-id"] = testTelegramId;
-      }
       const res = await fetch("/api/admin/tasks", { headers });
       if (!res.ok) throw new Error("Failed to fetch admin tasks");
       return await res.json();

@@ -19,7 +19,7 @@ import { useUser } from "@/hooks/use-user";
 function Router() {
   const { data: user } = useUser();
   const isAdmin = user?.role === "admin";
-
+localStorage.removeItem("testTelegramId");
   return (
     <AnimatePresence mode="wait">
       <Switch>

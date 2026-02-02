@@ -5,20 +5,16 @@ import { Transaction } from "@shared/schema";
 const getHeaders = () => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const tg = (window as any).Telegram?.WebApp;
-  
-  // Берем ID: сначала реальный, потом тестовый
-  const tid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+  const tid = tg?.initDataUnsafe?.user?.id?.toString();
 
   if (tid) {
     headers["x-telegram-id"] = tid;
   }
   return headers;
 };
-
-// Хелпер для проверки наличия ID перед запросом
 const getTid = () => {
   const tg = (window as any).Telegram?.WebApp;
-  return tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+  return tg?.initDataUnsafe?.user?.id?.toString();
 };
 
 export function useUser() {
@@ -27,7 +23,6 @@ export function useUser() {
   return useQuery({
     queryKey: [api.users.me.path],
     queryFn: async () => {
-      // Используем нашу общую функцию getHeaders()
       const res = await fetch(api.users.me.path, { 
         headers: getHeaders(), 
         credentials: "include" 
