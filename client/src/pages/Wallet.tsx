@@ -548,7 +548,9 @@ const handleWithdrawSubmit = async () => {
     )} 
     placeholder="0"
   />
-  <div className="space-y-2">
+  
+</div>
+<div className="space-y-2">
   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-2">
     Получатель / Банк (необязательно)
   </Label>
@@ -565,8 +567,6 @@ const handleWithdrawSubmit = async () => {
     Поможет нам быстрее проверить верность реквизитов
   </p>
 </div>
-</div>
-
   {user && withdrawAmount > user.balance && (
     <p className="text-[10px] text-destructive font-black uppercase text-center tracking-wider">
       Недостаточно средств

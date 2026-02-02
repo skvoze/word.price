@@ -108,8 +108,13 @@
       }
     });
   app.get("/api/admin/withdrawals", async (req, res) => {
-    // Тут должна быть проверка: if (req.user.role !== 'admin') return res.sendStatus(403);
-    const transactions = await storage.getTransactionsByType("withdraw");
+const telegramId = req.headers["x-telegram-id"] as string;
+  if (!telegramId) return res.status(401).send("Unauthorized");
+  const user = await storage.getUserByTelegramId(telegramId);
+  if (!user || user.role !== 'admin') {
+    console.log(`[Access Denied] User ${telegramId} tried to access admin withdrawals`);
+    return res.status(403).json({ message: "У вас нет прав администратора" });
+  }    const transactions = await storage.getTransactionsByType("withdraw");
     res.json(transactions);
   });
 
@@ -189,7 +194,14 @@
     metadata: { cardNumber: cleanCard }
   });
 
-
+const ADMIN_ID = "514679635"; // Твой ID
+await sendTelegramNotification(ADMIN_ID, 
+  `<b>💰 Новая заявка на вывод!</b>\n\n` +
+  `Пользователь: <code>${telegramId}</code>\n` +
+  `Сумма: <b>${amount / 100} ₽</b>\n` +
+  `Карта: <code>${cleanCard}</code>\n` +
+  `${metadata?.userNote ? `Заметка: <i>${metadata.userNote}</i>` : ""}`
+);
   const updatedUser = await storage.updateUserBalance(user.id, -amount);
       res.json({ 
         user: updatedUser, 
@@ -393,9 +405,9 @@
 
   <b>💡 Рекомендации при использовании:</b>
 
-  1. Выбирай сумму так, чтобы она заставляла тебя выполнить поставленную задачу, ведь иначе тебе будет жалко потерять свои деньги.
+  1. Выбирай сумму так, чтобы тебе было жалко её потерять и она будет тебя мотивировать выполнить задачу.
   2. При создании задачи укажите в описании как будет подтверждаться выполнение.
-  3. Если захочешь обмануть при подтверждении выполнения задачи, помни ты в первую очередь обманываешь себя.
+  3. Если захочешь обмануть при подтверждении выполнения задачи, помни, ты в первую очередь обманываешь себя.
   4. Если возникнут вопросы пишите команду /help.
 
   Если дедлайн выйдет, а подтверждения не будет — залог сгорает. 

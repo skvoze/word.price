@@ -1,72 +1,33 @@
 import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Shield, User } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
 export function RoleToggle() {
-  const { data: user, refetch } = useUser();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  const { data: user } = useUser();
+  const [location, setLocation] = useLocation();
 
-  const handleToggleRole = async () => {
-    if (!user) return;
-    
-    const newRole = user.role === "admin" ? "user" : "admin";
-    const newTelegramId = newRole === "admin" ? "demo_admin_user" : "demo_user_123";
-    
-    try {
-      const res = await fetch("/api/users/role", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-telegram-id": newTelegramId,
-        },
-        body: JSON.stringify({ role: newRole }),
-        credentials: "include",
-      });
-      
-      if (!res.ok) throw new Error("Failed to update role");
-      
-      localStorage.setItem("testTelegramId", newTelegramId);
-      
-      queryClient.clear();
-      window.location.href = newRole === "admin" ? "/admin" : "/";
-      
-      toast({
-        title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
-        description: `You now have ${newRole === "admin" ? "admin" : "user"} permissions.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to change role",
-        variant: "destructive",
-      });
-    }
-  };
+  // Если пользователь не админ, кнопку вообще не показываем
+  if (!user || user.role !== "admin") return null;
 
-  if (!user) return null;
+  const isAdminPage = location === "/admin";
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleToggleRole}
-      data-testid="button-toggle-role"
-      className="text-xs font-medium"
+      onClick={() => setLocation(isAdminPage ? "/" : "/admin")}
+      className="text-xs font-medium border border-border/40 bg-secondary/20"
     >
-      {user.role === "admin" ? (
+      {isAdminPage ? (
         <>
-          <Shield className="w-4 h-4 mr-1" />
-          Withdraws
+          <User className="w-4 h-4 mr-1 text-blue-500" />
+          Верификация
         </>
       ) : (
         <>
-          <User className="w-4 h-4 mr-1" />
-          User
+          <Shield className="w-4 h-4 mr-1 text-amber-500" />
+          Выплаты (Админ)
         </>
       )}
     </Button>
