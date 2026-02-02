@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@/hooks/use-user";
 import { api } from "@shared/routes";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -6,14 +7,22 @@ import { RoleToggle } from "@/components/RoleToggle";
 import { Loader2, Target, History } from "lucide-react";
 
 export default function AdminHistory() {
-  const { data: tasks, isLoading } = useQuery({
+  const { data: user } = useUser();
+  const { data: tasks, isLoading,error } = useQuery({
     queryKey: ["/api/admin/tasks"],
     queryFn: async () => {
+      const telegramId = user?.telegramId;
+      if (!telegramId) {
+        throw new Error("Telegram ID not found");
+      }
       const headers: Record<string, string> = {};
-      const res = await fetch("/api/admin/tasks", { headers });
-      if (!res.ok) throw new Error("Failed to fetch admin tasks");
-      return await res.json();
-    }
+      const res = await fetch("/api/admin/tasks", { headers:{"x-telegram-id": telegramId} });
+if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to fetch admin tasks");
+      }      return await res.json();
+    },
+    enabled: !!user,
   });
 
   if (isLoading) {
