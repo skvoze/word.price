@@ -166,12 +166,12 @@ useEffect(() => {
         <PopoverTrigger asChild>
           <FormControl>
             <div
-              className={cn(
-                "h-12 w-full flex items-center justify-start bg-card border border-border rounded-xl px-4 text-base cursor-pointer transition-all",
-                "hover:border-primary/50 active:scale-[0.98] outline-none ring-0", // Убрали onClick
-                !field.value && "text-muted-foreground"
-              )}
-            >
+className={cn(
+  "h-12 w-full flex items-center justify-start bg-card border border-border rounded-lg px-4 text-base cursor-pointer transition-all", // Поменял на rounded-lg
+  "hover:border-primary/50 active:scale-[0.98] outline-none",
+  !field.value && "text-muted-foreground"
+)}            
+>
               <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
               {field.value ? (
                 format(field.value, "d MMMM, HH:mm", { locale: ru })
@@ -195,6 +195,21 @@ useEffect(() => {
     }
   }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+  modifiersStyles={{
+    selected: { 
+      backgroundColor: 'hsl(var(--primary))', 
+      color: 'white' 
+    },
+    today: { 
+      border: '2px solid hsl(var(--primary))', 
+      backgroundColor: 'transparent', 
+      color: 'inherit' 
+    }
+  }}
+  classNames={{
+    day_selected: "opacity-100", 
+    day_today: "font-bold text-primary", 
+  }}
 />
        <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
