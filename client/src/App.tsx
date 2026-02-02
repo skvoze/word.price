@@ -19,8 +19,7 @@ import { useUser } from "@/hooks/use-user";
 function Router() {
   const { data: user } = useUser();
   const isAdmin = user?.role === "admin";
-localStorage.removeItem("testTelegramId");
-  return (
+    return (
     <AnimatePresence mode="wait">
       <Switch>
         {/* User Routes */}
@@ -35,16 +34,7 @@ localStorage.removeItem("testTelegramId");
         <Route path="/verify" component={Verify} />
         <Route path="/admin/history" component={AdminHistory} />
         <Route path="/admin">
-  {() => {
-    const { data: user, isLoading } = useUser();
-
-    if (isLoading) return null;
-
-    if (user?.role === "admin") {
-      return <AdminPage />;
-    }
-    return <Home />;
-  }}
+  {!user ? null : user.role === "admin" ? <AdminPage /> : <Redirect to="/" />}
 </Route>
         <Route component={NotFound} />
       </Switch>

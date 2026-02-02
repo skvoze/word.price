@@ -13,11 +13,10 @@ import { useUser } from "@/hooks/use-user";
 export default function AdminPage() {
   const { toast } = useToast();
   const { data: user } = useUser();
-
-  // 1. Загружаем все заявки на вывод
-  const { data: withdrawals, isLoading } = useQuery<Transaction[]>({
+  const { data: withdrawals, isLoading,error } = useQuery<Transaction[]>({
     queryKey: ["/api/admin/withdrawals"],
     queryFn: async () => {
+      console.log("Fetching withdrawals for:", user?.telegramId);
       const res = await fetch("/api/admin/withdrawals", {
         headers: {
           "x-telegram-id": user?.telegramId || ""
@@ -26,7 +25,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Ошибка доступа");
       return res.json();
     },
-    enabled: !!user, 
+    enabled: !!user?.telegramId
   });
 
 
@@ -53,7 +52,16 @@ export default function AdminPage() {
 
   const pending = withdrawals?.filter(t => t.status === "pending") || [];
   const history = withdrawals?.filter(t => t.status !== "pending") || [];
-
+if (error) {
+  return (
+    <div className="container mx-auto py-20 text-center">
+      <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl inline-block">
+        <h2 className="text-red-500 font-bold mb-2">Доступ ограничен</h2>
+        <p className="text-zinc-400 text-sm">{error.message}</p>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="container mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold mb-8">Управление выплатами</h1>
