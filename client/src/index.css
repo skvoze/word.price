@@ -49,46 +49,9 @@
   box-shadow: none !important;
 }
 
-.rdp-day_selected, .rdp-day_today {
-  border-radius: 50% !important;
-}
-.rdp-day, 
-.rdp-day_selected, 
-.rdp-button {
-  border-radius: 9999px !important;
-  overflow: hidden !important;
-}
-
-.rdp-day {
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.2s ease;
-}
-
-.selection-fix, 
-.rdp-day_selected {
-  background-color: hsl(var(--primary)) !important;
-  color: white !important;
-  border-radius: 50% !important;
-}
-
-.today-fix, 
-.rdp-day_today {
-  border: 2px solid hsl(var(--primary)) !important;
-  background-color: transparent !important;
-  color: inherit !important;
-  border-radius: 50% !important;
-}
-.rdp-button:focus, 
-.rdp-button:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
 .rdp-button:focus-visible {
   outline: none !important;
-  ring: 0 !important;
+  box-shadow: none !important;
 }
 @layer base {
   * {

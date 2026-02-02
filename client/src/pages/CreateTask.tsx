@@ -167,7 +167,7 @@ useEffect(() => {
           <FormControl>
             <div
               className={cn(
-                "h-14 w-full flex items-center justify-start bg-card border border-border rounded-xl px-4 text-base cursor-pointer transition-all",
+                "h-12 w-full flex items-center justify-start bg-card border border-border rounded-xl px-4 text-base cursor-pointer transition-all",
                 "hover:border-primary/50 active:scale-[0.98] outline-none ring-0", // Убрали onClick
                 !field.value && "text-muted-foreground"
               )}
@@ -195,10 +195,6 @@ useEffect(() => {
     }
   }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-  classNames={{
-    day_selected: "selection-fix", 
-    day_today: "today-fix",
-  }}
 />
        <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
             {/* Часы */}
