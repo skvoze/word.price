@@ -195,29 +195,9 @@ useEffect(() => {
     }
   }}
   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-  
-  // Принудительные стили для конкретных состояний
-  modifiersStyles={{
-    selected: { 
-      backgroundColor: 'hsl(var(--primary))', 
-      color: 'white',
-      borderRadius: '50%', // Идеальный круг
-      width: '36px',
-      height: '36px'
-    },
-    today: { 
-      border: '2px solid hsl(var(--primary))',
-      borderRadius: '50%',
-      backgroundColor: 'transparent'
-    }
-  }}
-
   classNames={{
-    day: "h-9 w-9 p-0 font-normal flex items-center justify-center rounded-full hover:bg-muted transition-all outline-none ring-0",
-    day_selected: "opacity-100", 
-  }}
-  styles={{
-    day: { borderRadius: '50%' }
+    day_selected: "selection-fix", 
+    day_today: "today-fix",
   }}
 />
        <div className="flex items-center justify-center gap-4 p-4 border-t border-border bg-muted/20">
