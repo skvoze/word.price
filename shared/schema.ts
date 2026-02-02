@@ -33,7 +33,7 @@ export const transactions = pgTable("transactions", {
   status: text("status").notNull().default("completed"), 
   rejectionReason: text("rejection_reason"),
   description: text("description"),
-  metadata: jsonb("metadata").$type<{ cardNumber?: string; bankName?: string }>(),
+  metadata: jsonb("metadata").$type<{ cardNumber?: string; bankName?: string;userNote?: string; }>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, balance: true, createdAt: true, role: true });

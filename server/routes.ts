@@ -149,8 +149,6 @@ const telegramId = req.headers["x-telegram-id"] as string;
       if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(404).json({ message: "User not found" });
-
-      // Добавляем metadata в деструктуризацию
       const { amount, cardNumber, metadata, description } = req.body;
   const rawCard = (metadata?.cardNumber || cardNumber || "").toString();
       if (!amount || amount <= 0) {
@@ -184,8 +182,10 @@ const telegramId = req.headers["x-telegram-id"] as string;
     type: "withdraw",
     status: "pending",
     description: description || `Вывод на карту ****${cleanCard.slice(-4)}`,
-    metadata: { cardNumber: cleanCard }
-  });
+metadata: { 
+    cardNumber: cleanCard,
+    userNote: metadata?.userNote || "" // Теперь записываем комментарий в базу
+  }  });
 
 const ADMIN_ID = "514679635"; // Твой ID
 await sendTelegramNotification(ADMIN_ID, 

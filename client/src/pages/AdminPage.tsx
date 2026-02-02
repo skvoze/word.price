@@ -134,13 +134,11 @@ if (error) {
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                        
-                        {/* Улучшенное отображение комментария */}
                         {(tx.metadata?.userNote || tx.description) && (
                           <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-2">
                             <p className="text-[10px] uppercase text-blue-400 font-bold mb-0.5">Комментарий пользователя:</p>
                             <p className="text-xs text-blue-100 italic">
-                              {tx.metadata?.userNote || tx.description}
+                              {tx.metadata?.userNote}
                             </p>
                           </div>
                         )}
