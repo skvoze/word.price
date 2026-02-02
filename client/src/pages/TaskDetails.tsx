@@ -153,8 +153,6 @@ const isExpired = new Date(task.deadline) < new Date();
             <p className="text-sm font-medium uppercase tracking-wide opacity-80">
               {isCompleted ? "Средства возвращены" : isFailed ? "Средтсва потеряны" : isSubmitted ? "На рассмотрении" : "Замороженные средства"}
             </p>
-
-            {/* Блок с причиной отказа (только если есть rejectionReason) */}
             {isFailed && task.rejectionReason && (
               <div className="mt-4 p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-full">
                 <p className="text-[10px] text-red-600 font-black uppercase mb-1">Причина отказа:</p>
@@ -224,7 +222,6 @@ const isExpired = new Date(task.deadline) < new Date();
     </div>
     
     <div className="bg-background rounded-lg p-3 border border-border/50 overflow-hidden">
-      {/* Используем опциональную цепочку ?. для match и includes */}
       {(task.evidenceUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i) || task.evidenceUrl?.includes("image/upload")) ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
@@ -344,8 +341,7 @@ const isExpired = new Date(task.deadline) < new Date();
       }
     }
   }}
-  buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl text-lg font-semibold shadow-lg shadow-primary/25"
->
+buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/25 transition-all active:scale-[0.95]">
   <UploadCloud className="w-5 h-5 mr-2 inline" />
   {isFailed ? "Загрузить новое" : "Загрузить доказательство"}
 </ObjectUploader>

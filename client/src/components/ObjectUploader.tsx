@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState,useEffect,useRef } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import type { UppyFile, UploadResult } from "@uppy/core";
@@ -7,6 +7,7 @@ import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
 import XHRUpload from '@uppy/xhr-upload'
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -61,60 +62,95 @@ interface ObjectUploaderProps {
  */
 export function ObjectUploader({
   maxNumberOfFiles = 1,
-  maxFileSize = 10485760, // 10MB default
+  maxFileSize = 10485760,
   onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [uppy] = useState(() =>
     new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-      },
+      restrictions: { maxNumberOfFiles, maxFileSize },
       autoProceed: true,
+    }).use(XHRUpload, {
+      // Типизируем как any, чтобы избежать глубокого конфликта Record vs Meta
+      endpoint: async (fileOrFiles: any) => {
+        const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+        const params = await onGetUploadParameters(file);
+        return params.url;
+      },
+      method: 'POST',
+      formData: true,
+      fieldName: 'file',
     })
-      .use(XHRUpload, {
- endpoint: async (fileOrFiles) => {
-    const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
-    const params = await onGetUploadParameters(file as any); 
-    return params.url;
-  },
-  method: 'POST',
-  formData: true,
-  fieldName: 'file',
-  headers: {}
-})
   );
-useEffect(() => {
-  if (!onComplete) return;
-  const handleComplete = (result: any) => {
-    onComplete(result);
+
+  useEffect(() => {
+    // Используем 'any' для результата, чтобы прокинуть его в onComplete
+    const handleComplete = (result: any) => {
+      setIsUploading(false);
+      onComplete?.(result);
+    };
+
+    const handleUpload = () => setIsUploading(true);
+    const handleError = () => setIsUploading(false);
+
+    uppy.on('upload', handleUpload);
+    uppy.on('complete', handleComplete);
+    uppy.on('error', handleError);
+
+    return () => {
+      if ((uppy as any).close) {
+        (uppy as any).close();
+      }
+    };
+  }, [uppy, onComplete]);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click(); // Эмулируем нажатие на скрытый инпут
   };
 
-  uppy.on('complete', handleComplete);
-
-  return () => {
-    uppy.off('complete', handleComplete);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      try {
+        uppy.addFile({
+          source: 'file input',
+          name: file.name,
+          type: file.type,
+          data: file,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+    e.target.value = ""; // Сбрасываем инпут для повторных загрузок
   };
-}, [uppy, onComplete]);
+
   return (
-    <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
-        {children}
-      </Button>
-
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-        animateOpenClose={true}
-        browserBackButtonClose={true}
-        showSelectedFiles={true}
+    <div className="w-full">
+      {/* Скрытый нативный инпут */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*,video/*"
       />
+      
+      <Button 
+        onClick={handleButtonClick} 
+        className={buttonClassName}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+        ) : null}
+        {isUploading ? "Загрузка..." : children}
+      </Button>
     </div>
   );
 }
