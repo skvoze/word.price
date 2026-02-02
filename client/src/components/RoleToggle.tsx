@@ -32,11 +32,8 @@ export function RoleToggle() {
       
       localStorage.setItem("testTelegramId", newTelegramId);
       
-      // Clear cache and refetch to get fresh user data with new ID
       queryClient.clear();
-      
-      // Use window.location.href for a full page reload to ensure a clean state
-      window.location.href = newRole === "admin" ? "/verify" : "/";
+      window.location.href = newRole === "admin" ? "/admin" : "/";
       
       toast({
         title: `Switched to ${newRole === "admin" ? "Admin" : "User"} Mode`,
@@ -64,7 +61,7 @@ export function RoleToggle() {
       {user.role === "admin" ? (
         <>
           <Shield className="w-4 h-4 mr-1" />
-          Admin
+          Withdraws
         </>
       ) : (
         <>

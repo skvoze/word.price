@@ -101,21 +101,31 @@ export default function AdminPage() {
     </TableCell>
 
     {/* 4. Карта */}
-    <TableCell>
-      <div className="flex items-center gap-2">
-        <code className="font-mono bg-zinc-900 border border-white/5 px-2 py-1 rounded text-amber-200">
-          {tx.metadata?.cardNumber || "Нет номера"}
-        </code>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-zinc-500 hover:text-white"
-          onClick={() => copyCard(tx.metadata?.cardNumber || "")}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
+<TableCell>
+  <div className="flex flex-col gap-1.5">
+    <div className="flex items-center gap-2">
+      <code className="font-mono bg-zinc-900 border border-white/5 px-2 py-1 rounded text-amber-200 text-sm">
+        {tx.metadata?.cardNumber || "Нет номера"}
+      </code>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-8 w-8 text-zinc-500 hover:text-white"
+        onClick={() => copyCard(tx.metadata?.cardNumber || "")}
+      >
+        <Copy className="h-4 w-4" />
+      </Button>
+    </div>
+    
+    {/* Вывод комментария пользователя */}
+    {tx.metadata?.userNote && (
+      <div className="flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10 w-fit">
+        <span className="font-bold uppercase text-[9px] opacity-70">Заметка:</span>
+        <span className="font-medium italic">{tx.metadata.userNote}</span>
       </div>
-    </TableCell>
+    )}
+  </div>
+</TableCell>
 
     {/* 5. Действия */}
     <TableCell className="text-right">
@@ -178,9 +188,16 @@ export default function AdminPage() {
             <TableCell className="font-bold">
               {Math.abs(tx.amount / 100).toLocaleString()} ₽
             </TableCell>
-            <TableCell className="font-mono text-xs text-zinc-500">
-              {tx.metadata?.cardNumber ? `${tx.metadata.cardNumber}` : "—"}
-            </TableCell>
+           <TableCell className="font-mono text-xs text-zinc-500">
+  <div className="flex flex-col gap-1">
+    <span>{tx.metadata?.cardNumber ? `${tx.metadata.cardNumber}` : "—"}</span>
+    {tx.metadata?.userNote && (
+      <span className="text-[10px] text-zinc-400 italic">
+        Заметка: {tx.metadata.userNote}
+      </span>
+    )}
+  </div>
+</TableCell>
             <TableCell className="text-right">
               <Badge 
                 variant="outline" 

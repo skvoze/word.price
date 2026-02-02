@@ -68,6 +68,7 @@ export default function Wallet() {
  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 const [withdrawAmount, setWithdrawAmount] = useState(0);
 const [cardNumber, setCardNumber] = useState("");
+const [withdrawNote, setWithdrawNote] = useState("");
 const activeInputStyles = cn(
   "h-16 transition-all duration-300 rounded-2xl text-center bg-secondary/40",
   "border-2 border-transparent", 
@@ -221,7 +222,8 @@ const handleWithdrawSubmit = async () => {
   description: `Вывод на карту ****${cleanCardNumber.slice(-4)}`,
   metadata: { 
     cardNumber: cleanCardNumber,
-    cardBrand: cardInfo?.brandAlias || 'unknown'
+    cardBrand: cardInfo?.brandAlias || 'unknown',
+    userNote: withdrawNote
   }
 });
 
@@ -229,6 +231,7 @@ const handleWithdrawSubmit = async () => {
     setIsWithdrawOpen(false);
     setWithdrawAmount(0);
     setCardNumber("");
+    setWithdrawNote("");
   } catch (error: any) {
     toast({ title: "Ошибка сервера", description: error.message, variant: "destructive" });
   }
@@ -545,6 +548,23 @@ const handleWithdrawSubmit = async () => {
     )} 
     placeholder="0"
   />
+  <div className="space-y-2">
+  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-2">
+    Получатель / Банк (необязательно)
+  </Label>
+  <Input 
+    placeholder="Напр: Т-Банк, Иван И."
+    value={withdrawNote}
+    onChange={(e) => setWithdrawNote(e.target.value)}
+    className={cn(
+      activeInputStyles, 
+      "h-12 text-sm text-left px-6 py-2 bg-secondary/20 focus:bg-secondary/40"
+    )}
+  />
+  <p className="text-[9px] text-muted-foreground italic px-2">
+    Поможет нам быстрее проверить верность реквизитов
+  </p>
+</div>
 </div>
 
   {user && withdrawAmount > user.balance && (
