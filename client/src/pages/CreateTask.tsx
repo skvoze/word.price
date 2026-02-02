@@ -141,9 +141,9 @@ useEffect(() => {
 <CurrencyInput
   value={field.value}
   onValueChange={(val) => field.onChange(val)}
-  className="h-12 text-lg bg-card border-border focus:border-primary focus:ring-0 outline-none transition-all"
+  className="h-12 text-lg bg-card border-border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all outline-none"
   placeholder="0"
-/>            
+/>           
             {/* Маленькая подсказка о доступном балансе вместо оранжевого текста */}
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
               Доступно: {((user?.balance ?? 0) / 100).toLocaleString('ru-RU')} ₽
