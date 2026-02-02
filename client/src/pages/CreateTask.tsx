@@ -116,11 +116,11 @@ useEffect(() => {
       </div>
       <FormControl>
         <Input 
-          placeholder="Например пробежать 5 км..." 
-          className="h-12 text-lg bg-card border-border" 
-          maxLength={100}
-          {...field} 
-        />
+  placeholder="Например пробежать 5 км..." 
+  className="h-12 text-lg bg-card border-border focus-visible:ring-0 focus:border-primary focus-visible:ring-offset-0 transition-all" 
+  maxLength={100}
+  {...field} 
+/>
       </FormControl>
       <FormMessage />
     </FormItem>
@@ -138,14 +138,12 @@ useEffect(() => {
         </FormDescription>
         <FormControl>
           <div className="space-y-2">
-            <CurrencyInput
-              value={field.value}
-              onValueChange={(val) => field.onChange(val)} // Просто передаем значение
-              // Убрали все проверки на оранжевый цвет, оставили стандартный стиль
-              className="h-12 text-lg bg-card border-border focus:border-primary transition-all"
-              placeholder="0"
-            />
-            
+<CurrencyInput
+  value={field.value}
+  onValueChange={(val) => field.onChange(val)}
+  className="h-12 text-lg bg-card border-border focus:border-primary focus:ring-0 outline-none transition-all"
+  placeholder="0"
+/>            
             {/* Маленькая подсказка о доступном балансе вместо оранжевого текста */}
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
               Доступно: {((user?.balance ?? 0) / 100).toLocaleString('ru-RU')} ₽
@@ -165,21 +163,16 @@ useEffect(() => {
       <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <FormControl>
-            <div
-className={cn(
-  "h-12 w-full flex items-center justify-start bg-card border border-border rounded-lg px-4 text-base cursor-pointer transition-all", // Поменял на rounded-lg
-  "hover:border-primary/50 active:scale-[0.98] outline-none",
-  !field.value && "text-muted-foreground"
-)}            
+<div
+  className={cn(
+    "h-12 w-full flex items-center justify-start bg-card border rounded-lg px-4 text-base cursor-pointer transition-all outline-none",
+    isCalendarOpen ? "border-primary ring-0" : "border-border hover:border-primary/50",
+    !field.value && "text-muted-foreground"
+  )}
 >
-              <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
-              {field.value ? (
-                format(field.value, "d MMMM, HH:mm", { locale: ru })
-              ) : (
-                "Выбрать дату и время"
-              )}
-            </div>
-          </FormControl>
+  <CalendarIcon className="mr-3 h-5 w-5 text-primary/70" />
+  {field.value ? format(field.value, "d MMMM, HH:mm", { locale: ru }) : "Выбрать дату и время"}
+</div>          </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-border bg-popover outline-none" align="start">
 <Calendar
@@ -201,7 +194,7 @@ className={cn(
       color: 'white' 
     },
     today: { 
-      border: '2px solid hsl(var(--primary))', 
+      border: 'solid hsl(var(--primary))', 
       backgroundColor: 'transparent', 
       color: 'inherit' 
     }
@@ -277,12 +270,12 @@ className={cn(
       </div>
       <FormControl>
         <Textarea 
-          placeholder="Добавьте детали для вашей задачи..." 
-          className="min-h-[100px] resize-none bg-card border-border text-base"
-          maxLength={500}
-          {...field}
-          value={field.value || ""}
-        />
+  placeholder="Например как будете подтверждать выполнение задачи..." 
+  className="min-h-[100px] resize-none bg-card border-border text-base focus-visible:ring-0 focus:border-primary focus-visible:ring-offset-0 transition-all"
+  maxLength={500}
+  {...field}
+  value={field.value || ""}
+/>
       </FormControl>
       <FormMessage />
     </FormItem>
