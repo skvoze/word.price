@@ -8,16 +8,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, Copy, ExternalLink } from "lucide-react";
+import { useUser } from "@/hooks/use-user";
 
 export default function AdminPage() {
   const { toast } = useToast();
+  const { data: user } = useUser();
 
   // 1. Загружаем все заявки на вывод
   const { data: withdrawals, isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/admin/withdrawals"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/withdrawals", {
+        headers: {
+          "x-telegram-id": user?.telegramId || ""
+        }
+      });
+      if (!res.ok) throw new Error("Ошибка доступа");
+      return res.json();
+    },
+    enabled: !!user, 
   });
 
-  // 2. Мутация для смены статуса
+
   const statusMutation = useMutation({
   mutationFn: async ({ id, status, rejectionReason }: { id: number; status: string; rejectionReason?: string }) => {
     const res = await apiRequest("PATCH", `/api/admin/transactions/${id}`, { 
