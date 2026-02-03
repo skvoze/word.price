@@ -119,15 +119,21 @@ const telegramId = req.headers["x-telegram-id"] as string;
       if (isNaN(transactionId)) {
         return res.status(400).json({ message: "Некорректный ID транзакции" });
       }
-      const updated = await storage.updateTransactionStatus(transactionId, status, rejectionReason);
       const tx = await storage.getTransaction(transactionId);
+      if (!tx) return res.status(404).json({ message: "Транзакция не найдена" });
+    if (tx.status !== 'pending') {
+      return res.json(tx);
+    }
+      const updated = await storage.updateTransactionStatus(transactionId, status, rejectionReason);
       if (tx) {
-        const user = await storage.getUser(tx.userId); // Получаем данные пользователя
+        const user = await storage.getUser(tx.userId); 
         if (user && user.telegramId) {
           if (status === 'completed') {
+            const clearAmount = Math.abs(tx.amount) * 0.95 / 100;
             await sendTelegramNotification(user.telegramId, 
-              `✅ <b>Выплата одобрена!</b>\n\nСумма <b>${Math.abs(tx.amount) / 100} ₽</b> отправлена на вашу карту. Ожидайте зачисления.`);
+              `✅ <b>Выплата одобрена!</b>\n\nСумма <b>${clearAmount.toLocaleString()} ₽</b> (с учетом комиссии) отправлена на вашу карту. Ожидайте зачисления.`);
           } else if (status === 'rejected') {
+            await storage.updateUserBalance(tx.userId, Math.abs(tx.amount));
             await sendTelegramNotification(user.telegramId, 
               `❌ <b>Отказ в выплате</b>\n\nПричина: ${rejectionReason || "не указана"}.\nСредства возвращены на ваш баланс в приложении.`);
           }
@@ -184,10 +190,10 @@ const telegramId = req.headers["x-telegram-id"] as string;
     description: description || `Вывод на карту ****${cleanCard.slice(-4)}`,
 metadata: { 
     cardNumber: cleanCard,
-    userNote: metadata?.userNote || "" // Теперь записываем комментарий в базу
+    userNote: metadata?.userNote || "" 
   }  });
 
-const ADMIN_ID = "514679635"; // Твой ID
+const ADMIN_ID = "514679635";
 await sendTelegramNotification(ADMIN_ID, 
   `<b>💰 Новая заявка на вывод!</b>\n\n` +
   `Пользователь: <code>${telegramId}</code>\n` +

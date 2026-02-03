@@ -61,7 +61,7 @@ export default function Terms() {
           <div className="bg-black/20 p-4 rounded-xl space-y-1 font-mono text-[12px]">
             <p>Статус: Самозанятый / [Коновалов Василий Андреевич]</p>
             <p>ИНН: [594204795787]</p>
-            <p>Email для поддержки: [cena.slova.support@gmail.com]</p>
+            <p>Email для поддержки: [cena.slova.help@gmail.com]</p>
             <p className="mt-4 text-zinc-500 italic">
               К оплате принимаются банковские карты РФ. Обработка платежей осуществляется ЮKassa (ООО НКО «ЮМани»).
             </p>

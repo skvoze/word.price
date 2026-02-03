@@ -46,7 +46,7 @@ export default function Privacy() {
 
         <section className="pt-6 border-t border-white/10 mt-6">
           <p className="text-zinc-500 text-xs italic">
-            Контакт для связи по вопросам данных: <b>cena.slova.support@gmail.com</b>
+            Контакт для связи по вопросам данных: <b>cena.slova.help@gmail.com</b>
             <br />
             Редакция от: {new Date().toLocaleDateString()}
           </p>

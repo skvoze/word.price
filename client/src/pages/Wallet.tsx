@@ -406,7 +406,7 @@ const handleWithdrawSubmit = async () => {
   <div className="bg-zinc-500/5 border border-zinc-500/10 rounded-[2rem] p-4 text-center">
     <p className="text-[10px] uppercase font-black text-zinc-500 mb-1 tracking-widest">Выведено</p>
     <p className="text-xl font-bold text-zinc-600">
-      {(stats.totalOut / 100).toLocaleString('ru-RU')} ₽
+      {(stats.totalOut * 0.95 / 100).toLocaleString('ru-RU')} ₽
     </p>
   </div>
 </div>
@@ -457,8 +457,6 @@ const handleWithdrawSubmit = async () => {
       )}>
         {isPositive ? <Check className="w-6 h-6" /> : isPledge ? <Clock className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6 rotate-45" />}
       </div>
-
-      {/* ТЕКСТ (обернут в min-w-0) */}
       <div className="min-w-0 flex-1"> 
         <p className="text-sm font-bold text-foreground leading-tight truncate">
           {tx.description}
@@ -476,16 +474,22 @@ const handleWithdrawSubmit = async () => {
     </div>
 
     <div className="text-right shrink-0">
-      <p className={cn(
-        "font-black text-base", 
-        isPositive ? "text-emerald-500" : "text-foreground"
-      )}>
-        {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
-      </p>
-      <p className="text-[10px] text-muted-foreground font-bold">
-        {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
-      </p>
-    </div>
+  <p className={cn(
+    "font-black text-base", 
+    isPositive ? "text-emerald-500" : "text-foreground"
+  )}>
+    {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
+  </p>
+  {tx.type === "withdraw" && tx.status !== "rejected" && (
+    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight">
+      Получите: {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString('ru-RU')} ₽
+    </p>
+  )}
+
+  <p className="text-[10px] text-muted-foreground font-bold">
+    {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
+  </p>
+</div>
   </div>
       );
     }))}
@@ -509,6 +513,7 @@ const handleWithdrawSubmit = async () => {
         <div className="relative">
           <Input 
             placeholder="0000 0000 0000 0000"
+            inputMode="numeric"
             value={cardNumber}
             onChange={handleCardChange}
             className={cn(activeInputStyles, "font-mono text-lg w-full pl-6 pr-14 py-6")}

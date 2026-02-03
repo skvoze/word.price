@@ -69,19 +69,26 @@ if (error) {
 {/* Блок статистики */}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
   <div className="p-6 bg-zinc-900 border border-white/5 rounded-2xl">
-    <p className="text-sm text-zinc-500">Ожидает выплат</p>
+    <p className="text-sm text-zinc-500">Ожидает выплат (грязными)</p>
     <p className="text-2xl font-bold text-amber-500">
       {(pending.reduce((acc, curr) => acc + Math.abs(curr.amount), 0) / 100).toLocaleString()} ₽
     </p>
+    {/* Добавляем расчет чистыми */}
+    <p className="text-[10px] text-amber-500/50 mt-1 uppercase font-bold">
+      К отправке (~5%): {(pending.reduce((acc, curr) => acc + Math.abs(curr.amount), 0) * 0.95 / 100).toLocaleString()} ₽
+    </p>
   </div>
+  
   <div className="p-6 bg-zinc-900 border border-white/5 rounded-2xl">
     <p className="text-sm text-zinc-500">Заявок в очереди</p>
     <p className="text-2xl font-bold text-white">{pending.length}</p>
   </div>
+
   <div className="p-6 bg-zinc-900 border border-white/5 rounded-2xl">
-    <p className="text-sm text-zinc-500">Всего выплачено</p>
+    <p className="text-sm text-zinc-500">Всего выплачено (чистыми)</p>
     <p className="text-2xl font-bold text-emerald-500">
-{(history.filter(t => t.status === 'completed').reduce((acc, curr) => acc + Math.abs(curr.amount), 0) / 100).toLocaleString()} ₽    </p>
+      {(history.filter(t => t.status === 'completed').reduce((acc, curr) => acc + (Math.abs(curr.amount) * 0.95), 0) / 100).toLocaleString()} ₽
+    </p>
   </div>
 </div>
       <Tabs defaultValue="new">
