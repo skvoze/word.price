@@ -396,7 +396,6 @@ const handleWithdrawSubmit = async () => {
     </h3>
   </div>
 <div className="grid grid-cols-2 gap-4 mb-6">
-  {/* Блок Пополнений */}
   <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-4 text-center">
     <p className="text-[10px] uppercase font-black text-primary/60 mb-1 tracking-widest">Внесено</p>
     <p className="text-xl font-bold text-primary">
@@ -410,7 +409,6 @@ const handleWithdrawSubmit = async () => {
     </p>
   </div>
 </div>
-  {/* Кнопки фильтров */}
   <div className="flex gap-2 px-2 overflow-x-auto no-scrollbar pb-1">
     {[
       { id: 'all', label: 'Все' },
@@ -442,14 +440,12 @@ const handleWithdrawSubmit = async () => {
          </p>
       </div>
     ) : (filteredTransactions.map((tx) => {
-      // --- ЛОГИКА ОПРЕДЕЛЕНИЯ СТИЛЯ ---
       const isPledge = tx.type === "task_pledge";
       const isPositive = tx.amount > 0;
 
       return (
         <div key={tx.id} className="group flex items-center justify-between p-4 rounded-3xl bg-card border border-border/40 hover:border-primary/20 transition-all active:scale-[0.98] gap-4">
     <div className="flex items-center gap-4 min-w-0 flex-1">
-      {/* ИКОНКА */}
       <div className={cn(
         "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
         isPositive ? "bg-emerald-500/10 text-emerald-500" : 

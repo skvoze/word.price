@@ -5,11 +5,11 @@
 @tailwind utilities;
 
 :root {
-  /* Telegram Dark Theme inspired palette */
-  --background: 240 5% 11%;      /* #1c1c1e */
-  --foreground: 0 0% 100%;       /* #ffffff */
   
-  --card: 240 4% 18%;            /* #2c2c2e */
+  --background: 240 5% 11%;      
+  --foreground: 0 0% 100%;       
+  
+  --card: 240 4% 18%;            
   --card-foreground: 0 0% 100%;
   
   --popover: 240 4% 18%;

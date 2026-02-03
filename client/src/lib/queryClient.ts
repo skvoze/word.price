@@ -8,8 +8,6 @@ async function throwIfResNotOk(res: Response) {
 }
 const getTelegramId = () => {
   const tg = (window as any).Telegram?.WebApp;
-  
-  // Логируем попытку получения ID
   console.log("Checking TG ID...");
 
   if (tg?.initDataUnsafe?.user?.id) {
@@ -18,7 +16,7 @@ const getTelegramId = () => {
     return realId;
   }
   
-  // Если мы здесь, значит Telegram SDK не отдал ID
+
   const fallbackId = localStorage.getItem("testTelegramId");
   console.log("FALLBACK: Using localStorage ID", fallbackId);
   
