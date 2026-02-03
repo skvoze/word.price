@@ -550,6 +550,28 @@ const handleWithdrawSubmit = async () => {
   />
   
 </div>
+{withdrawAmount >= 10000 && (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-secondary/30 rounded-2xl p-4 border border-white/5 space-y-2"
+    >
+      <div className="flex justify-between text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+        <span>Сумма запроса:</span>
+        <span>{(withdrawAmount / 100).toLocaleString()} ₽</span>
+      </div>
+      <div className="flex justify-between text-[10px] uppercase font-bold text-red-400/80 tracking-wider">
+        <span>Комиссия за перевод (5%):</span>
+        <span>-{(withdrawAmount * 0.05 / 100).toLocaleString()} ₽</span>
+      </div>
+      <div className="flex justify-between items-center pt-2 border-t border-white/5">
+        <span className="text-xs font-bold">К ПОЛУЧЕНИЮ:</span>
+        <span className="text-xl font-black text-emerald-500">
+          {(withdrawAmount * 0.95 / 100).toLocaleString()} ₽
+        </span>
+      </div>
+    </motion.div>
+  )}
 <div className="space-y-2">
   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-2">
     Получатель / Банк (необязательно)

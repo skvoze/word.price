@@ -116,9 +116,16 @@ if (error) {
     </TableCell>
 
     {/* 3. Сумма */}
-    <TableCell className="font-bold text-white">
-      {Math.abs(tx.amount / 100).toLocaleString()} ₽
-    </TableCell>
+    <TableCell className="font-medium">
+  <div className="flex flex-col">
+    <span className="font-bold text-zinc-300">
+      {(tx.amount / 100).toLocaleString()} ₽
+    </span>
+    <span className="text-[10px] text-emerald-500 font-bold">
+      Чистыми: {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString()} ₽
+    </span>
+  </div>
+</TableCell>
 
     {/* 4. Карта */}
 <TableCell>

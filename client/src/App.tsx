@@ -10,9 +10,6 @@ import TaskDetails from "@/pages/TaskDetails";
 import Wallet from "@/pages/Wallet";
 import Verify from "@/pages/Verify";
 import AdminHistory from "@/pages/AdminHistory";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
-import { Link } from "wouter";
 
 import { useUser } from "@/hooks/use-user";
 
