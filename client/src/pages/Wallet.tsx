@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { Loader2, CreditCard, History, Wallet as WalletIcon, Clock, Check, ArrowUpRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion} from "framer-motion";
+import { motion,AnimatePresence} from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"; 
@@ -20,8 +20,6 @@ import Privacy from "@/pages/Privacy";
 const DEFAULT_BRAND_COLOR = "#94a3b8";
 const BrandLogo = ({ info }: { info: any }) => {
   const [hasError, setHasError] = useState(false);
-
-  // Сбрасываем ошибку при смене типа карты
   useEffect(() => {
     setHasError(false);
   }, [info?.brandAlias, info?.brandLogo]);
@@ -71,6 +69,7 @@ const [cardNumber, setCardNumber] = useState("");
 const [withdrawNote, setWithdrawNote] = useState("");
 const [isRedirecting, setIsRedirecting] = useState(false);
 const [isTopUpConfirmOpen, setIsTopUpConfirmOpen] = useState(false);
+const [expandedTx, setExpandedTx] = useState<number | null>(null);
 const activeInputStyles = cn(
   "h-16 transition-all duration-300 rounded-2xl text-center bg-secondary/40",
   "border-2 border-transparent", 
@@ -119,17 +118,15 @@ const cardInfo = useMemo(() => {
   };
 
  const getBrand = (num: string) => {
-  // Мир от Icons8
   if (num.startsWith('2')) return { 
     alias: 'mir', 
     logo: 'https://img.icons8.com/color/48/mir.png' 
   };
-  // Visa от Icons8
   if (num.startsWith('4')) return { 
     alias: 'visa', 
     logo: 'https://img.icons8.com/color/48/visa.png' 
   };
-  // Mastercard (оставляем надежный вариант)
+
   if (num.startsWith('5')) return { 
     alias: 'mastercard', 
     logo: 'https://img.icons8.com/color/48/mastercard.png' 
@@ -361,7 +358,7 @@ const handleWithdrawSubmit = async () => {
     </svg>
     Пополнить Баланс
   </Button>
-  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground">
+  <p className="text-[10px] font-black text-center uppercase tracking-[0.1em] text-muted-foreground">
       Безопасная оплата через ЮKassa
     </p>
 </div>
@@ -450,59 +447,92 @@ const handleWithdrawSubmit = async () => {
          </p>
       </div>
     ) : (filteredTransactions.map((tx) => {
-      const isPledge = tx.type === "task_pledge";
-      const isPositive = tx.amount > 0;
+  const isPledge = tx.type === "task_pledge";
+  const isPositive = tx.amount > 0;
+  const isExpanded = expandedTx === tx.id;
 
-      return (
-        <div key={tx.id} className="group flex items-center justify-between p-4 rounded-3xl bg-card border border-border/40 hover:border-primary/20 transition-all active:scale-[0.98] gap-3">
-  <div className="flex items-center gap-3 min-w-0 flex-1">
-    <div className={cn(
-      "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
-      isPositive ? "bg-emerald-500/10 text-emerald-500" : 
-      isPledge ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
-    )}>
-      {isPositive ? <Check className="w-5 h-5" /> : isPledge ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
-    </div>
-    
-    <div className="min-w-0 flex-1"> 
-      <p className="text-sm font-bold text-foreground leading-tight truncate">
-  {(tx.description || "").replace("Вывод на карту", "Карта")}
-</p>
-      <p className={cn(
-        "text-[9px] uppercase font-black tracking-wider mt-0.5",
-        tx.status === "pending" ? "text-amber-500" : 
-        tx.status === "completed" ? "text-emerald-500" : "text-red-500"
-      )}>
-        {tx.status === "pending" && "• Ожидает"}
-        {tx.status === "completed" && (isPledge ? "• Залог" : "• Готово")}
-        {tx.status === "rejected" && "• Отмена"}
-      </p>
-    </div>
-  </div>
+  return (
+    <motion.div 
+      key={tx.id} 
+      layout
+      onClick={() => setExpandedTx(isExpanded ? null : tx.id)}
+      className={cn(
+        "group overflow-hidden rounded-[2rem] bg-card border border-border/40 transition-all cursor-pointer",
+        isExpanded ? "border-primary/40 ring-1 ring-primary/10 shadow-lg" : "hover:border-primary/20"
+      )}
+    >
+      {/* Основная часть (всегда видна) */}
+      <div className="p-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={cn(
+            "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
+            isPositive ? "bg-emerald-500/10 text-emerald-500" : 
+            isPledge ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
+          )}>
+            {isPositive ? <Check className="w-5 h-5" /> : isPledge ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
+          </div>
+          
+          <div className="min-w-0 flex-1"> 
+            <p className="text-sm font-bold text-foreground leading-tight truncate">
+              {/* Короткое название для списка */}
+              {tx.type === 'withdraw' ? "Вывод на карту" : (tx.description || "Операция")}
+            </p>
+            <p className={cn(
+              "text-[9px] uppercase font-black tracking-wider mt-0.5",
+              tx.status === "pending" ? "text-amber-500" : 
+              tx.status === "completed" ? "text-emerald-500" : "text-red-500"
+            )}>
+              {tx.status === "pending" && "• В обработке"}
+              {tx.status === "completed" && (isPledge ? "• Залог" : "• Выполнено")}
+              {tx.status === "rejected" && "• Отклонено"}
+            </p>
+          </div>
+        </div>
 
-  <div className="text-right shrink-0 flex flex-col items-end justify-center min-w-[80px]">
-    <p className={cn(
-      "font-black text-sm", 
-      isPositive ? "text-emerald-500" : "text-foreground"
-    )}>
-      {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
-    </p>
-    
-    {/* Сумма к получению: делаем шрифт еще меньше, чтобы не распирало блок */}
-    {tx.type === "withdraw" && tx.status !== "rejected" && (
-      <p className="text-[8px] text-emerald-500 font-black uppercase tracking-tighter leading-none mt-1">
-        {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString('ru-RU')} ₽ к зачислению
-      </p>
-    )}
-
-    <p className="text-[9px] text-muted-foreground font-bold mt-0.5">
-      {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
-    </p>
-  </div>
-</div>
-  
-      );
-    }))}
+        <div className="text-right shrink-0">
+          <p className={cn("font-black text-sm", isPositive ? "text-emerald-500" : "text-foreground")}>
+            {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
+          </p>
+          <p className="text-[9px] text-muted-foreground font-bold mt-0.5">
+            {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
+          </p>
+        </div>
+      </div>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="px-4 pb-4 border-t border-border/20 bg-secondary/10"
+          >
+            <div className="pt-3 space-y-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="font-bold text-foreground/60 uppercase text-[9px] block mb-1 tracking-widest">Описание:</span>
+                {tx.description || "Детали отсутствуют"}
+              </p>
+              
+              <div className="flex justify-between items-end pt-2">
+                <div>
+                  <span className="font-bold text-foreground/60 uppercase text-[9px] block mb-1 tracking-widest">ID Транзакции:</span>
+                  <code className="text-[10px] text-primary/70">#TX-{tx.id.toString().padStart(6, '0')}</code>
+                </div>
+                {tx.type === "withdraw" && tx.status !== "rejected" && (
+                  <div className="text-right bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                    <span className="text-[8px] font-black text-emerald-600 uppercase block leading-none mb-1">К зачислению:</span>
+                    <span className="text-sm font-black text-emerald-600">
+                      {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString('ru-RU')} ₽
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}))}
   </div>
 </div>
       </main>
