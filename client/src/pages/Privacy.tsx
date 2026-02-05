@@ -48,7 +48,7 @@ export default function Privacy() {
           <p className="text-zinc-500 text-xs italic">
             Контакт для связи по вопросам данных: <b>cena.slova.help@gmail.com</b>
             <br />
-            Редакция от: {new Date().toLocaleDateString()}
+            Редакция от: 05.02.2026
           </p>
         </section>
       </Card>

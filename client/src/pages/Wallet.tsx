@@ -581,8 +581,6 @@ const handleWithdrawSubmit = async () => {
           </div>
         </div>
       </div>
-
-      {/* Поле Суммы */}
       <div className="space-y-2">
   <div className="flex justify-between items-center px-2">
     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Сумма вывода</Label>
