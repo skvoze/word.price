@@ -188,10 +188,9 @@ const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setIsTopUpConfirmOpen(true);
 };
 const handleFinalTopUp = async () => {
-  setIsRedirecting(true); // Включаем лоадер
+  setIsRedirecting(true); 
   
   try {
-    // Имитируем задержку для "создания платежной сессии"
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     await addFunds.mutateAsync(topUpAmount);
@@ -359,7 +358,7 @@ const handleWithdrawSubmit = async () => {
     Пополнить Баланс
   </Button>
   <p className="text-[10px] font-black text-center uppercase tracking-[0.1em] text-muted-foreground">
-      Безопасная оплата через ЮKassa
+      Безопасное пополнение через ЮKassa
     </p>
 </div>
               
@@ -461,7 +460,6 @@ const handleWithdrawSubmit = async () => {
         isExpanded ? "border-primary/40 ring-1 ring-primary/10 shadow-lg" : "hover:border-primary/20"
       )}
     >
-      {/* Основная часть (всегда видна) */}
       <div className="p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className={cn(
@@ -474,7 +472,6 @@ const handleWithdrawSubmit = async () => {
           
           <div className="min-w-0 flex-1"> 
             <p className="text-sm font-bold text-foreground leading-tight truncate">
-              {/* Короткое название для списка */}
               {tx.type === 'withdraw' ? "Вывод на карту" : (tx.description || "Операция")}
             </p>
             <p className={cn(
@@ -507,10 +504,31 @@ const handleWithdrawSubmit = async () => {
             className="px-4 pb-4 border-t border-border/20 bg-secondary/10"
           >
             <div className="pt-3 space-y-2">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="font-bold text-foreground/60 uppercase text-[9px] block mb-1 tracking-widest">Описание:</span>
-                {tx.description || "Детали отсутствуют"}
-              </p>
+              <div className="space-y-2">
+  <div>
+    <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block mb-1">
+      Детали операции
+    </span>
+    <p className="text-xs font-medium text-foreground leading-relaxed">
+      {tx.description || (tx.type === 'topup' ? "Пополнение баланса через ЮKassa" : "Операция в сервисе")}
+    </p>
+  </div>
+  {tx.status === "rejected" && (
+    <motion.div 
+      initial={{ opacity: 0, x: -10 }} 
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-red-500/10 p-3 rounded-2xl border border-red-500/20"
+    >
+      <span className="text-[9px] font-black uppercase text-red-500 tracking-widest block mb-1">
+        Причина отказа:
+      </span>
+      <p className="text-xs font-bold text-red-600 leading-tight">
+
+        {tx.rejectionReason || "Неверные реквизиты или ограничения банка"}
+      </p>
+    </motion.div>
+  )}
+</div>
               
               <div className="flex justify-between items-end pt-2">
                 <div>

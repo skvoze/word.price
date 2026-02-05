@@ -284,7 +284,7 @@ await sendTelegramNotification(ADMIN_ID,
           amount: task.amount,
           type: "task_refund",
           status: "completed",
-          description: `Возврат залога: ${task.title}`
+          description: `Возврат залога за задачу: ${task.title}`
         });
 
         const updated = await storage.updateTaskStatus(id, "completed");
