@@ -566,7 +566,6 @@ const handleWithdrawSubmit = async () => {
     </DialogHeader>
 
     <div className="space-y-6 py-4">
-      {/* Поле Карты */}
       <div className="space-y-2">
         <div className="relative">
           <Input 
@@ -656,7 +655,13 @@ const handleWithdrawSubmit = async () => {
     </p>
   )}
 </div>
-
+      <div className="px-2">
+    <p className="text-[10px] text-zinc-500 leading-tight">
+      <span className="text-amber-500 font-bold uppercase mr-1">Внимание:</span> 
+      Тщательно проверьте номер карты. Согласно п. 4. Оферты, перевод на неверно указанные реквизиты 
+      не подлежит возврату. Вывод осуществляется до 24 часов.
+    </p>
+  </div>
       <Button 
         className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all active:scale-95"
         onClick={handleWithdrawSubmit}
