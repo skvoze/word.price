@@ -14,9 +14,9 @@ export function BottomNav() {
         { href: "/admin/history", icon: History, label: "History" },
       ]
     : [
-        { href: "/", icon: Home, label: "Home" },
-        { href: "/create", icon: PlusCircle, label: "Pledge", highlight: true },
-        { href: "/wallet", icon: Wallet, label: "Wallet" },
+        { href: "/", icon: Home, label: "Главаня" },
+        { href: "/create", icon: PlusCircle, label: "Задача", highlight: true },
+        { href: "/wallet", icon: Wallet, label: "Кошелёк" },
       ];
 
   return (

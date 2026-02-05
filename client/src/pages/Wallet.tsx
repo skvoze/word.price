@@ -359,11 +359,11 @@ const handleWithdrawSubmit = async () => {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M21.5 2L1.5 11.5L8.5 14.5L10.5 21.5L14 17.5L19 21.5L21.5 2Z" fill="white"/>
     </svg>
-    Пополнить через Telegram
+    Пополнить Баланс
   </Button>
-  <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest font-semibold opacity-60">
-    Powered by Telegram Gateway
-  </p>
+  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground">
+      Безопасная оплата через ЮKassa
+    </p>
 </div>
               
               <div className="mt-6 px-4 text-center">
@@ -454,49 +454,53 @@ const handleWithdrawSubmit = async () => {
       const isPositive = tx.amount > 0;
 
       return (
-        <div key={tx.id} className="group flex items-center justify-between p-4 rounded-3xl bg-card border border-border/40 hover:border-primary/20 transition-all active:scale-[0.98] gap-4">
-    <div className="flex items-center gap-4 min-w-0 flex-1">
-      <div className={cn(
-        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-        isPositive ? "bg-emerald-500/10 text-emerald-500" : 
-        isPledge ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
-      )}>
-        {isPositive ? <Check className="w-6 h-6" /> : isPledge ? <Clock className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6 rotate-45" />}
-      </div>
-      <div className="min-w-0 flex-1"> 
-        <p className="text-sm font-bold text-foreground leading-tight truncate">
-          {tx.description}
-        </p>
-        <p className={cn(
-          "text-[10px] uppercase font-bold tracking-wider mt-0.5",
-          tx.status === "pending" ? "text-amber-500" : 
-          tx.status === "completed" ? "text-emerald-500" : "text-red-500"
-        )}>
-          {tx.status === "pending" && "• В обработке"}
-          {tx.status === "completed" && (isPledge ? "• Залог удержан" : "• Выполнено")}
-          {tx.status === "rejected" && "• Отклонено"}
-        </p>
-      </div>
+        <div key={tx.id} className="group flex items-center justify-between p-4 rounded-3xl bg-card border border-border/40 hover:border-primary/20 transition-all active:scale-[0.98] gap-3">
+  <div className="flex items-center gap-3 min-w-0 flex-1">
+    <div className={cn(
+      "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
+      isPositive ? "bg-emerald-500/10 text-emerald-500" : 
+      isPledge ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
+    )}>
+      {isPositive ? <Check className="w-5 h-5" /> : isPledge ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
     </div>
-
-    <div className="text-right shrink-0">
-  <p className={cn(
-    "font-black text-base", 
-    isPositive ? "text-emerald-500" : "text-foreground"
-  )}>
-    {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
-  </p>
-  {tx.type === "withdraw" && tx.status !== "rejected" && (
-    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight">
-      Получите: {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString('ru-RU')} ₽
-    </p>
-  )}
-
-  <p className="text-[10px] text-muted-foreground font-bold">
-    {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
-  </p>
-</div>
+    
+    <div className="min-w-0 flex-1"> 
+      <p className="text-sm font-bold text-foreground leading-tight truncate">
+  {(tx.description || "").replace("Вывод на карту", "Карта")}
+</p>
+      <p className={cn(
+        "text-[9px] uppercase font-black tracking-wider mt-0.5",
+        tx.status === "pending" ? "text-amber-500" : 
+        tx.status === "completed" ? "text-emerald-500" : "text-red-500"
+      )}>
+        {tx.status === "pending" && "• Ожидает"}
+        {tx.status === "completed" && (isPledge ? "• Залог" : "• Готово")}
+        {tx.status === "rejected" && "• Отмена"}
+      </p>
+    </div>
   </div>
+
+  <div className="text-right shrink-0 flex flex-col items-end justify-center min-w-[80px]">
+    <p className={cn(
+      "font-black text-sm", 
+      isPositive ? "text-emerald-500" : "text-foreground"
+    )}>
+      {isPositive ? "+" : "-"}{(Math.abs(tx.amount) / 100).toLocaleString('ru-RU')} ₽
+    </p>
+    
+    {/* Сумма к получению: делаем шрифт еще меньше, чтобы не распирало блок */}
+    {tx.type === "withdraw" && tx.status !== "rejected" && (
+      <p className="text-[8px] text-emerald-500 font-black uppercase tracking-tighter leading-none mt-1">
+        {(Math.abs(tx.amount) * 0.95 / 100).toLocaleString('ru-RU')} ₽ к зачислению
+      </p>
+    )}
+
+    <p className="text-[9px] text-muted-foreground font-bold mt-0.5">
+      {tx.createdAt ? formatDate(tx.createdAt) : "Сегодня"}
+    </p>
+  </div>
+</div>
+  
       );
     }))}
   </div>
@@ -639,7 +643,7 @@ const handleWithdrawSubmit = async () => {
           <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-2">
             <CreditCard className="w-8 h-8 text-[#24A1DE]" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-center italic uppercase tracking-tighter text-zinc-800">Подтверждение</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-center uppercase tracking-tight text-white">Подтверждение</DialogTitle>
         </DialogHeader>
 
         <div className="py-4">
@@ -650,8 +654,6 @@ const handleWithdrawSubmit = async () => {
             </span>
           </div>
         </div>
-
-        {/* Блок с наставлением про СБП */}
         <div className="mb-6 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
           <div className="mt-1 bg-emerald-500 rounded-full p-1">
             <Check className="w-3 h-3 text-white" />
