@@ -69,6 +69,8 @@ export default function Wallet() {
 const [withdrawAmount, setWithdrawAmount] = useState(0);
 const [cardNumber, setCardNumber] = useState("");
 const [withdrawNote, setWithdrawNote] = useState("");
+const [isRedirecting, setIsRedirecting] = useState(false);
+const [isTopUpConfirmOpen, setIsTopUpConfirmOpen] = useState(false);
 const activeInputStyles = cn(
   "h-16 transition-all duration-300 rounded-2xl text-center bg-secondary/40",
   "border-2 border-transparent", 
@@ -177,31 +179,39 @@ const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }, 0);
   };
 
-  const handleTopUp = async () => {
-    if (topUpAmount < 10000) {
-      toast({ 
-        title: "Минимальная сумма", 
-        description: "Минимум для пополнения 100₽", 
-        variant: "destructive" 
-      });
-      return;
-    }
-
-    try {
-      await addFunds.mutateAsync(topUpAmount);
-      toast({ 
-        title: "Баланс пополнен", 
-        description: `${(topUpAmount / 100)} ₽ начислено на ваш баланс.` 
-      });
-      setTopUpAmount(0);
-    } catch (error) {
-      toast({ 
-        title: "Превышен лимит баланса", 
-        description: "Максимальный лимит баланса 10 000 000 ₽", 
-        variant: "destructive" 
-      });
-    }
-  };
+  const onTopUpClick = () => {
+  if (topUpAmount < 10000) {
+    toast({ 
+      title: "Минимальная сумма", 
+      description: "Минимум для пополнения 100₽", 
+      variant: "destructive" 
+    });
+    return;
+  }
+  setIsTopUpConfirmOpen(true);
+};
+const handleFinalTopUp = async () => {
+  setIsRedirecting(true); // Включаем лоадер
+  
+  try {
+    // Имитируем задержку для "создания платежной сессии"
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    await addFunds.mutateAsync(topUpAmount);
+    
+    toast({ 
+      title: "Перенаправление...", 
+      description: "Открываем страницу оплаты ЮKassa" 
+    });
+    
+    setIsTopUpConfirmOpen(false);
+    setTopUpAmount(0);
+  } catch (error) {
+    toast({ title: "Ошибка", variant: "destructive" });
+  } finally {
+    setIsRedirecting(false);
+  }
+};
 const handleWithdrawSubmit = async () => {
   const cleanCardNumber = cardNumber.replace(/\s/g, "");
   if (cleanCardNumber.length !== 16 || (cardInfo && !cardInfo.isValid)) {
@@ -342,7 +352,7 @@ const handleWithdrawSubmit = async () => {
               <div className="space-y-4">
   <Button 
     className="w-full h-14 text-lg font-bold bg-[#24A1DE] hover:bg-[#208bbf] text-white rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 transition-all active:scale-95"
-    onClick={handleTopUp}
+    onClick={onTopUpClick}
     disabled={topUpAmount <= 0}
   >
 
@@ -608,6 +618,72 @@ const handleWithdrawSubmit = async () => {
   </DialogContent>
 </Dialog>
       <BottomNav />
+     <Dialog open={isTopUpConfirmOpen} onOpenChange={(open) => !isRedirecting && setIsTopUpConfirmOpen(open)}>
+  <DialogContent className="rounded-[2.5rem] max-w-[90vw] sm:max-w-md border-none bg-card p-8">
+    {isRedirecting ? (
+      <div className="py-12 flex flex-col items-center justify-center space-y-6">
+        <div className="relative">
+          <Loader2 className="w-16 h-16 animate-spin text-primary opacity-20" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <CreditCard className="w-6 h-6 text-primary animate-pulse" />
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="text-xl font-bold italic uppercase tracking-tighter">Связь с банком...</h3>
+          <p className="text-sm text-muted-foreground">Создаем защищенную сессию оплаты</p>
+        </div>
+      </div>
+    ) : (
+      <>
+        <DialogHeader className="space-y-3">
+          <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-2">
+            <CreditCard className="w-8 h-8 text-[#24A1DE]" />
+          </div>
+          <DialogTitle className="text-2xl font-bold text-center italic uppercase tracking-tighter text-zinc-800">Подтверждение</DialogTitle>
+        </DialogHeader>
+
+        <div className="py-4">
+          <div className="bg-secondary/30 rounded-[2rem] p-6 border border-primary/10 flex flex-col items-center shadow-inner">
+            <span className="text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em] mb-1 opacity-60">Сумма к зачислению</span>
+            <span className="text-4xl font-black text-primary">
+              {(topUpAmount / 100).toLocaleString('ru-RU')} ₽
+            </span>
+          </div>
+        </div>
+
+        {/* Блок с наставлением про СБП */}
+        <div className="mb-6 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
+          <div className="mt-1 bg-emerald-500 rounded-full p-1">
+            <Check className="w-3 h-3 text-white" />
+          </div>
+          <p className="text-[11px] font-medium leading-relaxed text-emerald-700/80">
+            <strong>Совет:</strong> Выбирайте оплату через <span className="text-emerald-600 font-bold uppercase">СБП</span> на странице банка. Это самый быстрый способ без ввода данных карты.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <Button 
+            className="w-full h-14 rounded-2xl text-lg font-black italic uppercase bg-[#24A1DE] hover:bg-[#208bbf] shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            onClick={handleFinalTopUp}
+          >
+            Оплатить
+          </Button>
+          
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 opacity-30 grayscale scale-75">
+               <img src="https://img.icons8.com/color/48/visa.png" className="h-6" alt="visa" />
+               <img src="https://img.icons8.com/color/48/mastercard.png" className="h-6" alt="mc" />
+               <img src="https://img.icons8.com/color/48/mir.png" className="h-6" alt="mir" />
+            </div>
+            <p className="text-[9px] text-center text-muted-foreground leading-tight px-6 uppercase font-bold tracking-widest opacity-40">
+              Безопасность ЮKassa • 256-bit SSL
+            </p>
+          </div>
+        </div>
+      </>
+    )}
+  </DialogContent>
+</Dialog>
     </div>
   );
 }
