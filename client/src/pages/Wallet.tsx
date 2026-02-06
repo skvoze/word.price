@@ -696,13 +696,18 @@ const handleWithdrawSubmit = async () => {
         </DialogHeader>
 
         <div className="py-4">
-          <div className="bg-secondary/30 rounded-[2rem] p-6 border border-primary/10 flex flex-col items-center shadow-inner">
-            <span className="text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em] mb-1 opacity-60">Сумма к зачислению</span>
-            <span className="text-4xl font-black text-primary">
-              {(topUpAmount / 100).toLocaleString('ru-RU')} ₽
-            </span>
-          </div>
-        </div>
+  <div className="bg-secondary/30 rounded-[2rem] p-6 border border-primary/10 flex flex-col items-center shadow-inner">
+    <span className="text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em] mb-1 opacity-60">
+      Пополнение баланса
+    </span>
+    <span className="text-4xl font-black text-primary">
+      {(topUpAmount / 100).toLocaleString('ru-RU')} ₽
+    </span>
+    <p className="text-[9px] text-muted-foreground mt-3 font-medium text-center leading-tight px-2">
+      Средства будут использованы в качестве гарантийного обеспечения выполнения ваших задач
+    </p>
+  </div>
+</div>
         <div className="mb-6 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
           <div className="mt-1 bg-emerald-500 rounded-full p-1">
             <Check className="w-3 h-3 text-white" />
