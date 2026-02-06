@@ -347,14 +347,12 @@ const handleWithdrawSubmit = async () => {
 </div>
               <div className="space-y-4">
   <Button 
-    className="w-full h-14 text-lg font-bold bg-[#24A1DE] hover:bg-[#208bbf] text-white rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 transition-all active:scale-95"
+    className="w-full h-14 text-lg font-black uppercase bg-gradient-to-r from-blue-600 to-primary hover:opacity-90 text-white rounded-2xl gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
     onClick={onTopUpClick}
     disabled={topUpAmount <= 0}
   >
 
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21.5 2L1.5 11.5L8.5 14.5L10.5 21.5L14 17.5L19 21.5L21.5 2Z" fill="white"/>
-    </svg>
+   <CreditCard className="w-6 h-6" />
     Пополнить Баланс
   </Button>
   <p className="text-[10px] font-black text-center uppercase tracking-[0.1em] text-muted-foreground">
