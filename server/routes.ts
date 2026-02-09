@@ -42,7 +42,7 @@
           await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
           if (task.userTelegramId) {
             await sendTelegramNotification(task.userTelegramId, 
-              `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Залог удержан.`);
+              `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Услуги мониторинга считаются оказанными, резерв удержан.`);
           }
           continue; 
         }
@@ -249,7 +249,7 @@ await sendTelegramNotification(ADMIN_ID,
   const input = api.tasks.create.input.parse(req.body);
       
       if (input.amount < 10000) { 
-          return res.status(400).json({ message: "Минимальный залог — 100 ₽" });
+          return res.status(400).json({ message: "Минимальный резерв — 100 ₽" });
       }
         if (user.balance < input.amount) {
           return res.status(400).json({ message: "Insufficient balance" });
@@ -261,7 +261,7 @@ await sendTelegramNotification(ADMIN_ID,
           amount: -input.amount,
           type: "task_pledge",
           status: "completed",
-          description: `Залог за задачу: ${input.title}`
+          description: `Резерв за услуги мониторинга: ${input.title}`
         });
 
         const task = await storage.createTask({ ...input, userId: user.id });
@@ -284,14 +284,14 @@ await sendTelegramNotification(ADMIN_ID,
           amount: task.amount,
           type: "task_refund",
           status: "completed",
-          description: `Возврат залога за задачу: ${task.title}`
+          description: `Возврат резерва за выполнение задачи: ${task.title}`
         });
 
         const updated = await storage.updateTaskStatus(id, "completed");
         const user = await storage.getUser(task.userId);
       if (user?.telegramId) {
         await sendTelegramNotification(user.telegramId, 
-          `🌟 <b>Задание принято!</b>\n\nТвое решение по задаче "<b>${task.title}</b>" одобрено. Залог <b>${task.amount / 100} ₽</b> возвращен на баланс.`);
+          `🌟 <b>Задание принято!</b>\n\nТвое решение по задаче "<b>${task.title}</b>" одобрено. Сумма резерва <b>${task.amount / 100} ₽</b> возвращена на баланс.`);
       }
         res.json(updated);
       } catch (err: any) {
@@ -311,7 +311,7 @@ await sendTelegramNotification(ADMIN_ID,
       const user = await storage.getUser(task.userId);
       if (user?.telegramId) {
         await sendTelegramNotification(user.telegramId, 
-          `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Залог удержан. Попробуй лучше в следующий раз!</i>`);
+          `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Услуги мониторинга оплачены из резерва. Постарайся лучше в следующий раз!</i>`);
       }
       res.json(updated);
     } catch (err) {
@@ -409,7 +409,7 @@ await sendTelegramNotification(ADMIN_ID,
   3. Если захочешь обмануть при подтверждении выполнения задачи, помни, ты в первую очередь обманываешь себя.
   4. Если возникнут вопросы пишите команду /help.
 
-  Если дедлайн выйдет, а подтверждения не будет — залог сгорает. 
+  Если дедлайн выйдет, а подтверждения не будет — Резерв удерживается в счет оплаты услуг. 
 
   <b>С чего начать?</b>
   Просто нажми кнопку ниже и создавай первую задачу!
@@ -448,14 +448,14 @@ await sendTelegramNotification(ADMIN_ID,
   <b>🆘 Справка и поддержка</b>
 
   <b>💰 Финансы:</b>
-  • Минимальное пополнение: 100 ₽.
-  • Минимальный залог: 100 ₽.
+  • Минимальная сумма активации мониторинга: 100 ₽.
+  • Минимальный резерв: 100 ₽.
   • Вывод средств: Проверка занимает до 24 часов.
-  • Возврат залога: Происходит мгновенно после одобрения отчета админом.
+  • Возврат резерва: Происходит мгновенно после одобрения отчета админом.
 
   <b>📝 Задачи:</b>
   • Как сдать? Зайдите в задачу и нажмите "Загрузить доказательства".
-  • Что если я не успел? Залог сгорает и идет на развитие проекта.
+  • Что если я не успел? Резерв удерживается в счет оплаты услуг.
 
   <b>🤖 Техподдержка:</b>
   Если у вас остались вопросы или возникли проблемы, напишите @Vacorik`;

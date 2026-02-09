@@ -197,7 +197,7 @@ const handleFinalTopUp = async () => {
     
     toast({ 
       title: "Перенаправление...", 
-      description: "Открываем страницу оплаты ЮKassa" 
+      description: "Открываем страницу оплаты " 
     });
     
     setIsTopUpConfirmOpen(false);
@@ -353,11 +353,8 @@ const handleWithdrawSubmit = async () => {
   >
 
    <CreditCard className="w-6 h-6" />
-    Пополнить Баланс
+    Активировать мониторинг задач
   </Button>
-  <p className="text-[10px] font-black text-center uppercase tracking-[0.1em] text-muted-foreground">
-      Безопасное пополнение через ЮKassa
-    </p>
 </div>
               
               <div className="mt-6 px-4 text-center">
@@ -478,7 +475,7 @@ const handleWithdrawSubmit = async () => {
               tx.status === "completed" ? "text-emerald-500" : "text-red-500"
             )}>
               {tx.status === "pending" && "• В обработке"}
-              {tx.status === "completed" && (isPledge ? "• Залог" : "• Выполнено")}
+              {tx.status === "completed" && (isPledge ? "• Резерв" : "• Выполнено")}
               {tx.status === "rejected" && "• Отклонено"}
             </p>
           </div>
@@ -508,7 +505,7 @@ const handleWithdrawSubmit = async () => {
       Детали операции
     </span>
     <p className="text-xs font-medium text-foreground leading-relaxed">
-      {tx.description || (tx.type === 'topup' ? "Пополнение баланса через ЮKassa" : "Операция в сервисе")}
+      {tx.description || (tx.type === 'topup' ? "Пополнение баланса" : "Операция в сервисе")}
     </p>
   </div>
   {tx.status === "rejected" && (
@@ -619,7 +616,7 @@ const handleWithdrawSubmit = async () => {
         <span>{(withdrawAmount / 100).toLocaleString()} ₽</span>
       </div>
       <div className="flex justify-between text-[10px] uppercase font-bold text-red-400/80 tracking-wider">
-        <span>Комиссия за перевод (5%):</span>
+        <span>Сервисный сбор (5%):</span>
         <span>-{(withdrawAmount * 0.05 / 100).toLocaleString()} ₽</span>
       </div>
       <div className="flex justify-between items-center pt-2 border-t border-white/5">
@@ -698,13 +695,14 @@ const handleWithdrawSubmit = async () => {
         <div className="py-4">
   <div className="bg-secondary/30 rounded-[2rem] p-6 border border-primary/10 flex flex-col items-center shadow-inner">
     <span className="text-[10px] uppercase font-black text-muted-foreground tracking-[0.2em] mb-1 opacity-60">
-      Пополнение баланса
+      Сумма активации
     </span>
     <span className="text-4xl font-black text-primary">
       {(topUpAmount / 100).toLocaleString('ru-RU')} ₽
     </span>
     <p className="text-[9px] text-muted-foreground mt-3 font-medium text-center leading-tight px-2">
-      Средства будут использованы в качестве гарантийного обеспечения выполнения ваших задач
+      Средства зачисляются на ваш баланс для обеспечения выполнения личных задач. 
+      Система начнет мониторинг сразу после подтверждения.
     </p>
   </div>
 </div>
@@ -732,7 +730,7 @@ const handleWithdrawSubmit = async () => {
                <img src="https://img.icons8.com/color/48/mir.png" className="h-6" alt="mir" />
             </div>
             <p className="text-[9px] text-center text-muted-foreground leading-tight px-6 uppercase font-bold tracking-widest opacity-40">
-              Безопасность ЮKassa • 256-bit SSL
+              Безопасность • 256-bit SSL
             </p>
           </div>
         </div>
