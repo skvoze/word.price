@@ -15,10 +15,10 @@ export const users = pgTable("users", {
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), // In a real app, this would reference users.id
+  userId: integer("user_id").notNull(), 
   title: text("title").notNull(),
   description: text("description"),
-  amount: integer("amount").notNull(), // Pledge amount in cents
+  amount: integer("amount").notNull(), 
   deadline: timestamp("deadline").notNull(),
   status: text("status").notNull().default("pending"), // pending, submitted, completed, failed
   rejectionReason: text("rejection_reason"),

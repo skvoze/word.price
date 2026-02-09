@@ -1,4 +1,4 @@
-  import type { Express } from "express";
+  import type { Express,Request, Response, NextFunction } from "express";
   import type { Server } from "http";
   import { storage } from "../server/storage";
   import { api } from "@shared/routes";
@@ -6,7 +6,43 @@
   import { registerImageRoutes } from "./replit_integrations/image";
   import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
   import { addFundsSchema } from "@shared/schema";
+  import crypto from "crypto";
 
+  function validateTelegramInitData(initData: string): { success: boolean; user?: any } {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN || !initData) return { success: false };
+
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get("hash");
+  urlParams.delete("hash");
+  const dataCheckString = Array.from(urlParams.entries())
+    .map(([key, value]) => `${key}=${value}`)
+    .sort()
+    .join("\n");
+
+  const secretKey = crypto.createHmac("sha256", "WebAppData").update(BOT_TOKEN).digest();
+  const calculatedHash = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
+
+  if (calculatedHash !== hash) return { success: false };
+
+  const user = JSON.parse(urlParams.get("user") || "{}");
+  return { success: true, user };
+}
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const initData = req.headers["x-telegram-init-data"] as string;
+  
+  // Для тестов можно оставить x-telegram-id, но в продакшене ТОЛЬКО initData
+  if (!initData) return res.status(401).json({ message: "Auth required" });
+
+  const { success, user: tgUser } = validateTelegramInitData(initData);
+  if (!success) return res.status(403).json({ message: "Invalid auth data" });
+
+  let user = await storage.getUserByTelegramId(tgUser.id.toString());
+  if (!user) user = await storage.createUser({ telegramId: tgUser.id.toString() });
+
+  (req as any).user = user;
+  next();
+}
   async function sendTelegramNotification(telegramId: string, message: string) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
     if (!BOT_TOKEN) return;
@@ -69,17 +105,16 @@
     registerChatRoutes(app);
     registerImageRoutes(app);
     registerObjectStorageRoutes(app);
-    app.get(api.users.me.path, async (req, res) => {
-      const telegramId = req.headers["x-telegram-id"] as string;
-      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
-      let user = await storage.getUserByTelegramId(telegramId);
-      if (!user) user = await storage.createUser({ telegramId });
-      res.json(user);
+    app.get(api.users.me.path,authMiddleware, async (req: any, res) => {
+      res.json(req.user);
     });
-
-    app.post(api.users.addFunds.path, async (req, res) => {
+    app.post(api.users.addFunds.path,authMiddleware, async (req: any, res) => {
+      const isPaymentCallback = req.headers["x-provider-signature"]; 
+    if (!isPaymentCallback) {
+      return res.status(403).json({ message: "Direct deposit not allowed" });
+    }
       try {
-        const telegramId = req.headers["x-telegram-id"] as string;
+        const telegramId = req.user.telegramId;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
         const user = await storage.getUserByTelegramId(telegramId);
         if (!user) return res.status(404).json({ message: "User not found" });
@@ -100,8 +135,8 @@
         res.status(400).json({ message: err.message || "Ошибка пополнения" });
       }
     });
-  app.get("/api/admin/withdrawals", async (req, res) => {
-const telegramId = req.headers["x-telegram-id"] as string;
+  app.get("/api/admin/withdrawals",authMiddleware, async (req: any, res) => {
+const telegramId = req.user.telegramId;
   if (!telegramId) return res.status(401).send("Unauthorized");
   const user = await storage.getUserByTelegramId(telegramId);
   if (!user || user.role !== 'admin') {
@@ -111,7 +146,7 @@ const telegramId = req.headers["x-telegram-id"] as string;
     res.json(transactions);
   });
 
-  app.patch("/api/admin/transactions/:id", async (req, res) => {
+  app.patch("/api/admin/transactions/:id",authMiddleware, async (req: any, res) => {
     try {
       const { status, rejectionReason } = req.body; 
       const transactionId = Number(req.params.id);
@@ -149,75 +184,71 @@ const telegramId = req.headers["x-telegram-id"] as string;
       res.status(500).json({ message: err.message });
     }
   });
-  app.post("/api/users/withdraw", async (req, res) => {
-    try {
-      const telegramId = req.headers["x-telegram-id"] as string;
-      if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
-      const user = await storage.getUserByTelegramId(telegramId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      const { amount, cardNumber, metadata, description } = req.body;
-  const rawCard = (metadata?.cardNumber || cardNumber || "").toString();
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ message: "Сумма должна быть больше нуля" });
-      }
-      if (amount < 10000) {
+  app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
+  try {
+    const user = req.user; 
+    const { amount, cardNumber, metadata } = req.body;
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Сумма должна быть больше нуля" });
+    }
+    if (amount < 10000) {
       return res.status(400).json({ message: "Минимальная сумма вывода — 100 ₽" });
     }
-      const cleanCard = rawCard.replace(/\D/g, ""); 
+    const rawCard = (metadata?.cardNumber || cardNumber || "").toString();
+    const cleanCard = rawCard.replace(/\D/g, ""); 
 
-  if (cleanCard.length !== 16) {
-    return res.status(400).json({ 
-      message: `Номер карты должен содержать 16 цифр (получено: ${cleanCard.length})` 
-    });
-  }
-      
-      // Проверка карты (теперь поддерживаем и старый формат cardNumber, и новый metadata)
-      const finalCardNumber = metadata?.cardNumber || cardNumber;
-      if (!finalCardNumber || finalCardNumber.length < 16) {
-        return res.status(400).json({ message: "Некорректный номер карты" });
-      }
-
-      if (user.balance < amount) {
-        return res.status(400).json({ message: "Недостаточно средств" });
-      }
-
-
-      const transaction = await storage.createTransaction({
-    userId: user.id,
-    amount: -amount,
-    type: "withdraw",
-    status: "pending",
-    description: description || `Вывод на карту ****${cleanCard.slice(-4)}`,
-metadata: { 
-    cardNumber: cleanCard,
-    userNote: metadata?.userNote || "" 
-  }  });
-
-const ADMIN_ID = "514679635";
-await sendTelegramNotification(ADMIN_ID, 
-  `<b>💰 Новая заявка на вывод!</b>\n\n` +
-  `Пользователь: <code>${telegramId}</code>\n` +
-  `Сумма: <b>${amount / 100} ₽</b>\n` +
-  `Карта: <code>${cleanCard}</code>\n` +
-  `${metadata?.userNote ? `Заметка: <i>${metadata.userNote}</i>` : ""}`
-);
-  const updatedUser = await storage.updateUserBalance(user.id, -amount);
-      res.json({ 
-        user: updatedUser, 
-        transactionId: transaction.id,
-        message: "Заявка на вывод создана" 
+    if (cleanCard.length !== 16) {
+      return res.status(400).json({ 
+        message: `Номер карты должен содержать 16 цифр` 
       });
-
-    } catch (err: any) {
-      console.error("Withdraw error:", err);
-      res.status(500).json({ message: "Ошибка сервера при обработке вывода" });
     }
-  });
+    if (user.balance < amount) {
+      return res.status(400).json({ message: "Недостаточно средств на балансе" });
+    }
+    const transactions = await storage.getTransactionsByUserId(user.id);
+    const hasPending = transactions.some(t => t.type === "withdraw" && t.status === "pending");
+    if (hasPending) {
+      return res.status(400).json({ message: "У вас уже есть активная заявка на вывод. Дождитесь её обработки." });
+    }
+
+    const transaction = await storage.createTransaction({
+      userId: user.id,
+      amount: -amount, 
+      type: "withdraw",
+      status: "pending",
+      description: `Вывод на карту ****${cleanCard.slice(-4)}`,
+      metadata: { 
+        cardNumber: cleanCard,
+        userNote: metadata?.userNote || "" 
+      }
+    });
+
+    const updatedUser = await storage.updateUserBalance(user.id, -amount);
+
+    const ADMIN_ID = "514679635";
+    await sendTelegramNotification(ADMIN_ID, 
+      `<b>💰 Новая заявка на вывод!</b>\n\n` +
+      `Пользователь ID: <code>${user.telegramId}</code>\n` +
+      `Сумма: <b>${amount / 100} ₽</b>\n` +
+      `Карта: <code>${cleanCard}</code>`
+    );
+
+    res.json({ 
+      user: updatedUser, 
+      transactionId: transaction.id,
+      message: "Заявка на вывод успешно создана" 
+    });
+
+  } catch (err: any) {
+    console.error("Withdraw error:", err);
+    res.status(500).json({ message: "Ошибка сервера при обработке вывода" });
+  }
+});
 
 
-    app.get("/api/transactions", async (req, res) => {
+    app.get("/api/transactions",authMiddleware, async (req: any, res) => {
       try {
-        const telegramId = req.headers["x-telegram-id"] as string ;
+        const telegramId = req.user.telegramId ;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
         const user = await storage.getUserByTelegramId(telegramId);
         if (!user) return res.status(401).json({ message: "Not authenticated" });
@@ -229,10 +260,9 @@ await sendTelegramNotification(ADMIN_ID,
       }
     });
 
-    // --- Tasks API ---
 
-    app.get(api.tasks.list.path, async (req, res) => {
-      const telegramId = req.headers["x-telegram-id"] as string ;
+    app.get(api.tasks.list.path,authMiddleware, async (req: any, res) => {
+      const telegramId = req.user.telegramId ;
       if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(401).json({ message: "Not authenticated" });
@@ -240,9 +270,9 @@ await sendTelegramNotification(ADMIN_ID,
       res.json(userTasks);
     });
 
-    app.post(api.tasks.create.path, async (req, res) => {
+    app.post(api.tasks.create.path,authMiddleware, async (req: any, res) => {
       try {
-        const telegramId = req.headers["x-telegram-id"] as string ;
+        const telegramId = req.user.telegramId ;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
         const user = await storage.getUserByTelegramId(telegramId);
         if (!user) return res.status(401).json({ message: "Not authenticated" });
@@ -259,7 +289,7 @@ await sendTelegramNotification(ADMIN_ID,
         await storage.createTransaction({
           userId: user.id,
           amount: -input.amount,
-          type: "task_pledge",
+          type: "task_amount",
           status: "completed",
           description: `Резерв за услуги мониторинга: ${input.title}`
         });
@@ -271,7 +301,7 @@ await sendTelegramNotification(ADMIN_ID,
       }
     });
 
-    app.post(api.tasks.complete.path, async (req, res) => {
+    app.post(api.tasks.complete.path,authMiddleware, async (req: any, res) => {
       try {
         const id = Number(req.params.id);
         const task = await storage.getTask(id);
@@ -299,7 +329,7 @@ await sendTelegramNotification(ADMIN_ID,
       }
     });
 
-    app.post(api.tasks.fail.path, async (req, res) => {
+    app.post(api.tasks.fail.path,authMiddleware, async (req: any, res) => {
     try {
       const id = Number(req.params.id);
       const { rejectionReason } = req.body; // Получаем причину из запроса
@@ -319,9 +349,9 @@ await sendTelegramNotification(ADMIN_ID,
     }
   });
 
-    app.get(api.tasks.submitted.path, async (req, res) => {
+    app.get(api.tasks.submitted.path,authMiddleware, async (req: any, res) => {
       try {
-        const telegramId = req.headers["x-telegram-id"] as string ;
+        const telegramId = req.user.telegramId ;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
         const user = await storage.getUserByTelegramId(telegramId);
         if (user && user.role === "admin") {
@@ -335,7 +365,7 @@ await sendTelegramNotification(ADMIN_ID,
       }
     });
 
-    app.post(api.tasks.submitEvidence.path, async (req, res) => {
+    app.post(api.tasks.submitEvidence.path,authMiddleware, async (req: any, res) => {
     try {
       const id = Number(req.params.id);
       const { evidenceUrl } = api.tasks.submitEvidence.input.parse(req.body);
@@ -349,7 +379,7 @@ await sendTelegramNotification(ADMIN_ID,
       res.status(400).json({ message: err.message || "Ошибка загрузки" });
     }
   });
-    app.get(api.tasks.get.path, async (req, res) => {
+    app.get(api.tasks.get.path,authMiddleware, async (req: any, res) => {
       try {
         const id = Number(req.params.id);
         
@@ -370,9 +400,9 @@ await sendTelegramNotification(ADMIN_ID,
       }
     });
     
-  app.get("/api/admin/tasks", async (req, res) => {
+  app.get("/api/admin/tasks",authMiddleware, async (req: any, res) => {
       try {
-        const telegramId = req.headers["x-telegram-id"] as string;
+        const telegramId = req.user.telegramId;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
         const user = await storage.getUserByTelegramId(telegramId);
         if (!user || user.role !== "admin") {
@@ -384,7 +414,7 @@ await sendTelegramNotification(ADMIN_ID,
         res.status(500).json({ message: "Ошибка при загрузке истории задач" });
       }
     });
-  app.post("/api/webhook", async (req, res) => {
+  app.post("/api/webhook", async (req: any, res) => {
     try {
       const { message } = req.body;
       console.log("[Webhook] Received message:", message?.text, "from:", message?.from?.id);

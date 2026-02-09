@@ -109,7 +109,7 @@ export default function Verify() {
                       )}
                       <div className="mt-3 flex gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Pledge Amount</p>
+                          <p className="text-muted-foreground"> Amount</p>
                           <p className="font-bold text-foreground">{(task.amount / 100).toFixed(2)} ₽</p>
                         </div>
                         <div>

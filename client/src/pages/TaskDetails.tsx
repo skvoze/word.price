@@ -85,43 +85,11 @@ export default function TaskDetails() {
     );
   }
 
-  // Status visual helpers
   const isPending = task.status === "pending";
   const isSubmitted = task.status === "submitted";
   const isCompleted = task.status === "completed";
   const isFailed = task.status === "failed";
 const isExpired = new Date(task.deadline) < new Date();
-  const handleShare = async () => {
-    const shareText = isCompleted 
-      ? `I completed my goal: "${task.title}" and saved my $${(task.amount / 100).toFixed(2)} pledge! 🚀 #Accountability #PledgeApp`
-      : `I pledged $${(task.amount / 100).toFixed(2)} to "${task.title}". Check out my progress! 🎯`;
-    
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Task Pledge Accountability",
-          text: shareText,
-          url: shareUrl,
-        });
-        toast({ title: "Shared successfully!" });
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error("Share failed:", err);
-        }
-      }
-    } else {
-      // Fallback: Copy to clipboard
-      try {
-        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
-        toast({ title: "Link copied!", description: "Share it with your friends to stay accountable." });
-      } catch (err) {
-        toast({ title: "Failed to share", variant: "destructive" });
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 sticky top-0 z-40 bg-background/80 backdrop-blur-md">

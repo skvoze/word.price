@@ -441,7 +441,7 @@ const handleWithdrawSubmit = async () => {
          </p>
       </div>
     ) : (filteredTransactions.map((tx) => {
-  const isPledge = tx.type === "task_pledge";
+  const isAmount = tx.type === "task_amount";
   const isPositive = tx.amount > 0;
   const isExpanded = expandedTx === tx.id;
 
@@ -460,9 +460,9 @@ const handleWithdrawSubmit = async () => {
           <div className={cn(
             "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
             isPositive ? "bg-emerald-500/10 text-emerald-500" : 
-            isPledge ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
+            isAmount ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
           )}>
-            {isPositive ? <Check className="w-5 h-5" /> : isPledge ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
+            {isPositive ? <Check className="w-5 h-5" /> : isAmount ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
           </div>
           
           <div className="min-w-0 flex-1"> 
@@ -475,7 +475,7 @@ const handleWithdrawSubmit = async () => {
               tx.status === "completed" ? "text-emerald-500" : "text-red-500"
             )}>
               {tx.status === "pending" && "• В обработке"}
-              {tx.status === "completed" && (isPledge ? "• Резерв" : "• Выполнено")}
+              {tx.status === "completed" && (isAmount ? "• Резерв" : "• Выполнено")}
               {tx.status === "rejected" && "• Отклонено"}
             </p>
           </div>
