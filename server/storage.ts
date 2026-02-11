@@ -160,7 +160,8 @@ export class DatabaseStorage implements IStorage {
   const [task] = await db.update(tasks)
     .set({ 
       status,
-      rejectionReason: rejectionReason || null 
+      rejectionReason: rejectionReason || null ,
+      updatedAt: new Date()
     })
     .where(eq(tasks.id, id))
     .returning();
@@ -168,13 +169,16 @@ export class DatabaseStorage implements IStorage {
   if (!task) throw new Error("Task not found");
   return task;
 }
-
+async getAdmins(): Promise<User[]> {
+  return await db.select().from(users).where(eq(users.role, "admin"));
+}
   async submitEvidence(id: number, evidenceUrl: string): Promise<Task> {
     console.log(`[Storage] submitEvidence called for ID ${id} with URL ${evidenceUrl}`);
     const [task] = await db.update(tasks)
       .set({ 
         evidenceUrl: evidenceUrl,
-        status: "submitted"
+        status: "submitted",
+        updatedAt: new Date()
       })
       .where(eq(tasks.id, id))
       .returning();
@@ -252,7 +256,7 @@ async updateTransactionStatus(id: number, status: string, rejectionReason?: stri
     .update(transactions)
     .set({ 
       status, 
-      rejectionReason: rejectionReason || null // Сохраняем причину
+      rejectionReason: rejectionReason || null
     })
     .where(eq(transactions.id, id))
     .returning();

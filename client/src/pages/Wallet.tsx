@@ -475,7 +475,7 @@ const handleWithdrawSubmit = async () => {
               tx.status === "completed" ? "text-emerald-500" : "text-red-500"
             )}>
               {tx.status === "pending" && "• В обработке"}
-              {tx.status === "completed" && (isAmount ? "• Резерв" : "• Выполнено")}
+              {tx.status === "completed" && (isAmount ? "• Предоплата" : "• Выполнено")}
               {tx.status === "rejected" && "• Отклонено"}
             </p>
           </div>

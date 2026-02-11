@@ -2,14 +2,13 @@ import { pgTable, text, serial, integer, jsonb, timestamp } from "drizzle-orm/pg
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Export chat models from the integration
 export * from "./models/chat";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   telegramId: text("telegram_id").notNull().unique(),
   balance: integer("balance").notNull().default(0), 
-  role: text("role").notNull().default("user"), // "user" or "admin"
+  role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -20,10 +19,11 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   amount: integer("amount").notNull(), 
   deadline: timestamp("deadline").notNull(),
-  status: text("status").notNull().default("pending"), // pending, submitted, completed, failed
+  status: text("status").notNull().default("pending"), 
   rejectionReason: text("rejection_reason"),
   evidenceUrl: text("evidence_url"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
@@ -46,10 +46,9 @@ export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
-// Explicit API types
 export type CreateTaskRequest = InsertTask;
 export type SubmitEvidenceRequest = { evidenceUrl: string };
 export const addFundsSchema = z.object({
-  amount: z.number().min(10000, "Минимальная сумма — 100 ₽"), // или просто z.object({ amount: z.number() })
+  amount: z.number().min(10000, "Минимальная сумма — 100 ₽"), 
 });
 export type AddFundsRequest = z.infer<typeof addFundsSchema>;

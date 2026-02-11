@@ -43,6 +43,18 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   (req as any).user = user;
   next();
 }
+async function notifyAdmins(message: string) {
+  try {
+    const admins = await storage.getAdmins();
+    for (const admin of admins) {
+      if (admin.telegramId) {
+        await sendTelegramNotification(admin.telegramId, message);
+      }
+    }
+  } catch (e) {
+    console.error("[Notify Admins Error]:", e);
+  }
+}
   async function sendTelegramNotification(telegramId: string, message: string) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
     if (!BOT_TOKEN) return;
@@ -62,35 +74,55 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     }
   }
 
-  function startDeadlineChecker() {
+function startDeadlineChecker() {
   setInterval(async () => {
     try {
       const allTasks = await storage.getTasks();
       const now = new Date();
 
       for (const task of allTasks) {
-        if (task.status !== "pending") continue;
+        if (task.status === "pending") {
+          const deadline = new Date(task.deadline);
+          const diffMs = deadline.getTime() - now.getTime();
+          const diffMinutes = Math.floor(diffMs / 60000);
 
-        const deadline = new Date(task.deadline);
-        const diffMs = deadline.getTime() - now.getTime();
-        const diffMinutes = Math.floor(diffMs / 60000);
-        if (diffMs <= 0) {
-          await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
-          if (task.userTelegramId) {
-            await sendTelegramNotification(task.userTelegramId, 
-              `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Услуги мониторинга считаются оказанными, резерв удержан.`);
+          if (diffMs <= 0) {
+            await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
+            if (task.userTelegramId) {
+              await sendTelegramNotification(task.userTelegramId, 
+                `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Услуги мониторинга считаются оказанными, предоплата удержана.`);
+            }
+          } else if (task.userTelegramId) {
+            if (diffMinutes === 1440) {
+              await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Остались сутки!</b>...`);
+            }
+            if (diffMinutes === 60) {
+              await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>...`);
+            }
           }
-          continue; 
         }
-        if (!task.userTelegramId) continue;
-        if (diffMinutes === 1440) {
-          await sendTelegramNotification(task.userTelegramId, 
-            `⚠️ <b>Остались сутки!</b>\nДо дедлайна по задаче "<b>${task.title}</b>" осталось 24 часа.`);
-        }
+        if (task.status === "submitted" && task.updatedAt) {
+          const submissionDate = new Date(task.updatedAt);
+          const msPassed = now.getTime() - submissionDate.getTime();
+          const hoursPassed = msPassed / (1000 * 60 * 60);
 
-        if (diffMinutes === 60) {
-          await sendTelegramNotification(task.userTelegramId, 
-            `🚨 <b>Последний шанс!</b>\nУ тебя остался всего 1 час на задачу "<b>${task.title}</b>".`);
+          if (hoursPassed >= 24) {
+            await storage.updateUserBalance(task.userId, task.amount);
+            await storage.createTransaction({
+              userId: task.userId,
+              amount: task.amount,
+              type: "task_refund",
+              status: "completed",
+              description: `Подтверждение выполнения: ${task.title}`
+            });
+            await storage.updateTaskStatus(task.id, "completed");
+
+            if (task.userTelegramId) {
+              await sendTelegramNotification(task.userTelegramId, 
+                `✅ <b>Задача одобрена!</b>\n\nРезультат по задаче "<b>${task.title}</b>" подтвержден. Предоплата <b>${task.amount / 100} ₽</b> возвращена на ваш баланс.`);
+            }
+            console.log(`[Auto-Approve] Задача #${task.id} одобрена по истечении 24ч`);
+          }
         }
       }
     } catch (err) {
@@ -174,10 +206,6 @@ const telegramId = req.user.telegramId;
           }
         }
       }
-      if (status === 'rejected') {
-        if (!tx) return res.status(404).json({ message: "Транзакция не найдена" });
-        await storage.updateUserBalance(tx.userId, Math.abs(tx.amount));
-      }
       
       res.json(updated);
     } catch (err: any) {
@@ -225,13 +253,12 @@ const telegramId = req.user.telegramId;
 
     const updatedUser = await storage.updateUserBalance(user.id, -amount);
 
-    const ADMIN_ID = "514679635";
-    await sendTelegramNotification(ADMIN_ID, 
-      `<b>💰 Новая заявка на вывод!</b>\n\n` +
-      `Пользователь ID: <code>${user.telegramId}</code>\n` +
-      `Сумма: <b>${amount / 100} ₽</b>\n` +
-      `Карта: <code>${cleanCard}</code>`
-    );
+    await notifyAdmins(
+  `<b>💰 Новая заявка на вывод!</b>\n\n` +
+  `Пользователь ID: <code>${user.telegramId}</code>\n` +
+  `Сумма: <b>${amount / 100} ₽</b>\n` +
+  `Карта: <code>${cleanCard}</code>`
+);
 
     res.json({ 
       user: updatedUser, 
@@ -279,7 +306,7 @@ const telegramId = req.user.telegramId;
   const input = api.tasks.create.input.parse(req.body);
       
       if (input.amount < 10000) { 
-          return res.status(400).json({ message: "Минимальный резерв — 100 ₽" });
+          return res.status(400).json({ message: "Минимальная предоплата — 100 ₽" });
       }
         if (user.balance < input.amount) {
           return res.status(400).json({ message: "Insufficient balance" });
@@ -291,7 +318,7 @@ const telegramId = req.user.telegramId;
           amount: -input.amount,
           type: "task_amount",
           status: "completed",
-          description: `Резерв за услуги мониторинга: ${input.title}`
+          description: `Предоплата за услуги мониторинга: ${input.title}`
         });
 
         const task = await storage.createTask({ ...input, userId: user.id });
@@ -314,14 +341,14 @@ const telegramId = req.user.telegramId;
           amount: task.amount,
           type: "task_refund",
           status: "completed",
-          description: `Возврат резерва за выполнение задачи: ${task.title}`
+          description: `Возврат предоплаты за выполнение задачи: ${task.title}`
         });
 
         const updated = await storage.updateTaskStatus(id, "completed");
         const user = await storage.getUser(task.userId);
       if (user?.telegramId) {
         await sendTelegramNotification(user.telegramId, 
-          `🌟 <b>Задание принято!</b>\n\nТвое решение по задаче "<b>${task.title}</b>" одобрено. Сумма резерва <b>${task.amount / 100} ₽</b> возвращена на баланс.`);
+          `🌟 <b>Задание принято!</b>\n\nТвое решение по задаче "<b>${task.title}</b>" одобрено. Предоплата в размере <b>${task.amount / 100} ₽</b> возвращена.`);
       }
         res.json(updated);
       } catch (err: any) {
@@ -341,7 +368,7 @@ const telegramId = req.user.telegramId;
       const user = await storage.getUser(task.userId);
       if (user?.telegramId) {
         await sendTelegramNotification(user.telegramId, 
-          `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Услуги мониторинга оплачены из резерва. Постарайся лучше в следующий раз!</i>`);
+          `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Услуги мониторинга оплачены предоплатой. Постарайся лучше в следующий раз!</i>`);
       }
       res.json(updated);
     } catch (err) {
@@ -372,8 +399,7 @@ const telegramId = req.user.telegramId;
       const task = await storage.submitEvidence(id, evidenceUrl);
       if (!task) return res.status(404).json({ message: "Задача не найдена" });
       await storage.updateTaskStatus(id, "submitted", undefined); 
-  const ADMIN_ID = "514679635"; 
-    await sendTelegramNotification(ADMIN_ID, `<b>📦 Новое решение!</b>\nПользователь прислал отчет по задаче #${id}. Пора проверять!`);
+    await notifyAdmins(`<b>📦 Новое решение!</b>\nПользователь прислал отчет по задаче #${id}. Пора проверять!`);
       res.json(task);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Ошибка загрузки" });
@@ -439,7 +465,7 @@ const telegramId = req.user.telegramId;
   3. Если захочешь обмануть при подтверждении выполнения задачи, помни, ты в первую очередь обманываешь себя.
   4. Если возникнут вопросы пишите команду /help.
 
-  Если дедлайн выйдет, а подтверждения не будет — Резерв удерживается в счет оплаты услуг. 
+  Если дедлайн выйдет, а подтверждения не будет — Предоплата удерживается в счет оплаты услуг. 
 
   <b>С чего начать?</b>
   Просто нажми кнопку ниже и создавай первую задачу!
@@ -478,14 +504,13 @@ const telegramId = req.user.telegramId;
   <b>🆘 Справка и поддержка</b>
 
   <b>💰 Финансы:</b>
-  • Минимальная сумма активации мониторинга: 100 ₽.
-  • Минимальный резерв: 100 ₽.
+  • Минимальная предоплата за мониторинг: 100 ₽.
   • Вывод средств: Проверка занимает до 24 часов.
-  • Возврат резерва: Происходит мгновенно после одобрения отчета админом.
+  • Возврат предоплаты: Происходит мгновенно после одобрения отчета админом.
 
   <b>📝 Задачи:</b>
   • Как сдать? Зайдите в задачу и нажмите "Загрузить доказательства".
-  • Что если я не успел? Резерв удерживается в счет оплаты услуг.
+  • Что если я не успел? Предоплата удерживается в счет оплаты услуг.
 
   <b>🤖 Техподдержка:</b>
   Если у вас остались вопросы или возникли проблемы, напишите @Vacorik`;
