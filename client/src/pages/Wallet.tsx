@@ -353,7 +353,7 @@ const handleWithdrawSubmit = async () => {
   >
 
    <CreditCard className="w-6 h-6" />
-    Активировать мониторинг задач
+    Активировать мониторинг
   </Button>
 </div>
               
