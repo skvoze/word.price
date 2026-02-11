@@ -8,22 +8,23 @@ import { Loader2, Target, History } from "lucide-react";
 
 export default function AdminHistory() {
   const { data: user } = useUser();
-  const { data: tasks, isLoading,error } = useQuery({
-    queryKey: ["/api/admin/tasks"],
-    queryFn: async () => {
-      const telegramId = user?.telegramId;
-      if (!telegramId) {
-        throw new Error("Telegram ID not found");
-      }
-      const headers: Record<string, string> = {};
-      const res = await fetch("/api/admin/tasks", { headers:{"x-telegram-id": telegramId} });
-if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to fetch admin tasks");
-      }      return await res.json();
-    },
-    enabled: !!user,
-  });
+  const { data: tasks, isLoading, error } = useQuery({
+  queryKey: ["/api/admin/tasks"],
+  queryFn: async () => {
+    const tg = (window as any).Telegram?.WebApp;
+    const res = await fetch("/api/admin/tasks", { 
+      headers: {
+        "x-telegram-init-data": tg?.initData || "" 
+      } 
+    });
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || "Failed to fetch admin tasks");
+    }
+    return await res.json();
+  },
+  enabled: !!user,
+});
 
   if (isLoading) {
     return (

@@ -5,8 +5,11 @@ import { Transaction } from "@shared/schema";
 const getHeaders = () => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const tg = (window as any).Telegram?.WebApp;
+  const initData = tg?.initData; 
+  if (initData) {
+    headers["x-telegram-init-data"] = initData;
+  }
   const tid = tg?.initDataUnsafe?.user?.id?.toString();
-
   if (tid) {
     headers["x-telegram-id"] = tid;
   }

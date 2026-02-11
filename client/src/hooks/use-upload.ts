@@ -23,11 +23,20 @@ export function useUpload(options: UseUploadOptions = {}) {
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
 
+  const getAuthHeaders = () => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.initData) {
+      headers["x-telegram-init-data"] = tg.initData;
+    }
+    return headers;
+  };
+
   const requestUploadUrl = useCallback(
     async (file: File): Promise<UploadResponse> => {
       const response = await fetch("/api/uploads/request-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: file.name,
           size: file.size,

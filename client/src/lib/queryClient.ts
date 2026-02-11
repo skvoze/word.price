@@ -28,7 +28,6 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Важно: создаем объект заголовков правильно
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -57,10 +56,16 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
   
-    const telegramId = getTelegramId(); 
-    if (telegramId) {
-      headers["x-telegram-id"] = telegramId;
-    }
+    const tg = (window as any).Telegram?.WebApp;
+const initData = tg?.initData;
+
+if (initData) {
+  headers["x-telegram-init-data"] = initData;
+}
+const tid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
+if (tid) {
+  headers["x-telegram-id"] = tid;
+}
     
    
     const path = queryKey.join("/");

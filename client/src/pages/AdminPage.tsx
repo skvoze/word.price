@@ -13,21 +13,20 @@ import { useUser } from "@/hooks/use-user";
 export default function AdminPage() {
   const { toast } = useToast();
   const { data: user } = useUser();
-  const { data: withdrawals, isLoading,error } = useQuery<Transaction[]>({
-    queryKey: ["/api/admin/withdrawals"],
-    queryFn: async () => {
-      console.log("Fetching withdrawals for:", user?.telegramId);
-      const res = await fetch("/api/admin/withdrawals", {
-        headers: {
-          "x-telegram-id": user?.telegramId || ""
-        }
-      });
-      if (!res.ok) throw new Error("Ошибка доступа");
-      return res.json();
-    },
-    enabled: !!user?.telegramId
-  });
-
+  const { data: withdrawals, isLoading, error } = useQuery<Transaction[]>({
+  queryKey: ["/api/admin/withdrawals"],
+  queryFn: async () => {
+    const tg = (window as any).Telegram?.WebApp;
+    const res = await fetch("/api/admin/withdrawals", {
+      headers: {
+        "x-telegram-init-data": tg?.initData || "" 
+      }
+    });
+    if (!res.ok) throw new Error("Ошибка доступа");
+    return res.json();
+  },
+  enabled: !!user?.role
+});
 
   const statusMutation = useMutation({
   mutationFn: async ({ id, status, rejectionReason }: { id: number; status: string; rejectionReason?: string }) => {

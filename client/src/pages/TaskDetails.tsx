@@ -247,29 +247,33 @@ const isExpired = new Date(task.deadline) < new Date();
         {isFailed ? "Исправить доказательство" : "Доказательство выполнения"}
       </h3>
               <ObjectUploader
-  maxFileSize={52428800} // 50MB
+  maxFileSize={52428800} 
   onGetUploadParameters={async (file) => {
     if (!task?.id) {
       throw new Error("Task data is not loaded yet");
     }
 
-    // Проверка типов файлов перед отправкой
+    
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime", "video/webm"];
     if (!allowedTypes.includes(file.type)) {
       throw new Error("Only images and videos are allowed as evidence.");
     }
 
-    // 1. Запрос параметров загрузки у вашего бэкенда
-    const res = await fetch("/api/uploads/request-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-        taskId: task.id, 
-      }),
-    });
+    
+    const tg = (window as any).Telegram?.WebApp;
+  const res = await fetch("/api/uploads/request-url", {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "x-telegram-init-data": tg?.initData || "" 
+    },
+    body: JSON.stringify({
+      name: file.name,
+      size: file.size,
+      contentType: file.type,
+      taskId: task.id, 
+    }),
+  });
 
     if (!res.ok) {
       const errorData = await res.json();
@@ -277,8 +281,6 @@ const isExpired = new Date(task.deadline) < new Date();
     }
     
     const data = await res.json();
-    
-    // Сохраняем objectPath в метаданные файла Uppy, чтобы потом прочитать в onComplete
     file.meta = { 
       ...file.meta, 
       objectPath: data.objectPath,
