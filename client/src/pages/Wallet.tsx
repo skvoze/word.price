@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label";
-import { Link } from "wouter";
+import { Checkbox } from "@/components/ui/checkbox";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 
@@ -63,6 +63,7 @@ export default function Wallet() {
   const { toast } = useToast();
   const [topUpAmount, setTopUpAmount] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [agreed, setAgreed] = useState(false);
  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 const [withdrawAmount, setWithdrawAmount] = useState(0);
 const [cardNumber, setCardNumber] = useState("");
@@ -359,36 +360,53 @@ const handleWithdrawSubmit = async () => {
   </Button>
 </div>
               
-              <div className="mt-6 px-4 text-center">
-  <p className="text-[11px] text-muted-foreground leading-relaxed">
-    Нажимая «Пополнить», вы соглашаетесь с{" "}
-    
-    <Dialog>
-      <DialogTrigger className="text-primary underline underline-offset-2">правилами сервиса</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-lg">
-        <DialogHeader>
-          <DialogTitle>Условия использования</DialogTitle>
-        </DialogHeader>
-        <Terms />
-      </DialogContent>
-    </Dialog>
-    
-    {" "}и{" "}
-    
-    <Dialog>
-      <DialogTrigger className="text-primary underline underline-offset-2">политикой конфиденциальности</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-lg">
-        <DialogHeader>
-          <DialogTitle>Приватность</DialogTitle>
-        </DialogHeader>
-        <Privacy />
-      </DialogContent>
-    </Dialog>
-  </p>
-</div>
+             <div className="flex items-start space-x-3 px-1 py-2">
+              <Checkbox 
+                id="terms-wallet" 
+                checked={agreed}
+                onCheckedChange={(checked) => setAgreed(checked as boolean)}
+                className="mt-1 border-white/20 data-[state=checked]:bg-primary"
+              />
+              <label 
+                htmlFor="terms-wallet" 
+                className="text-[11px] leading-tight text-zinc-400 font-medium cursor-pointer select-none"
+              >
+                Я ознакомлен и согласен с{" "}
+                <Dialog>
+                  <DialogTrigger className="text-primary underline">условиями использования</DialogTrigger>
+                  <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+                    <DialogHeader><DialogTitle>Условия использования</DialogTitle></DialogHeader>
+                    <Terms />
+                  </DialogContent>
+                </Dialog>
+                {" "}и{" "}
+                <Dialog>
+                  <DialogTrigger className="text-primary underline">политикой конфиденциальности</DialogTrigger>
+                  <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+                    <DialogHeader><DialogTitle>Приватность</DialogTitle></DialogHeader>
+                    <Privacy />
+                  </DialogContent>
+                </Dialog>
+                . Вносимая сумма является предоплатой за услуги мониторинга.
+              </label>
             </div>
-          </Card>
-        </div>
+
+            <div className="space-y-4">
+              <Button 
+                className="w-full h-auto py-4 px-4 flex flex-col gap-1 items-center justify-center whitespace-normal leading-tight shadow-lg transition-all active:scale-[0.98]"
+                onClick={onTopUpClick}
+                disabled={topUpAmount <= 0 || !agreed} // Кнопка заблокирована без галочки
+              >
+                <CreditCard className="w-6 h-6 mb-1" />
+                <span className="text-sm sm:text-base font-bold text-center">
+                  Активировать мониторинг
+                </span>
+                <span className="text-[10px] opacity-70 font-medium">Нажмите для пополнения</span>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
 
         {/* History Section */}
         <div className="space-y-4 pt-2">
