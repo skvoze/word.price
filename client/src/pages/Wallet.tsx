@@ -346,19 +346,6 @@ const handleWithdrawSubmit = async () => {
     />
   </div>
 </div>
-              <div className="space-y-4">
-  <Button 
-    className="w-full h-auto py-4 px-4 flex flex-col gap-1 items-center justify-center whitespace-normal leading-tight shadow-lg transition-all active:scale-[0.98]"
-    onClick={onTopUpClick}
-    disabled={topUpAmount <= 0}
-  >
-
-   <CreditCard className="w-6 h-6" />
-    <span className="text-sm sm:text-base font-bold text-center">
-    Активировать мониторинг
-  </span>
-  </Button>
-</div>
               
              <div className="flex items-start space-x-3 px-1 py-2">
               <Checkbox 
@@ -393,15 +380,12 @@ const handleWithdrawSubmit = async () => {
 
             <div className="space-y-4">
               <Button 
-                className="w-full h-auto py-4 px-4 flex flex-col gap-1 items-center justify-center whitespace-normal leading-tight shadow-lg transition-all active:scale-[0.98]"
+                className="w-full h-14 text-lg font-black uppercase bg-gradient-to-r from-blue-600 to-primary hover:opacity-90 text-white rounded-2xl gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
                 onClick={onTopUpClick}
-                disabled={topUpAmount <= 0 || !agreed} // Кнопка заблокирована без галочки
+                disabled={topUpAmount <= 0 || !agreed}
               >
                 <CreditCard className="w-6 h-6 mb-1" />
-                <span className="text-sm sm:text-base font-bold text-center">
-                  Активировать мониторинг
-                </span>
-                <span className="text-[10px] opacity-70 font-medium">Нажмите для пополнения</span>
+                  Активировать мониторинг          
               </Button>
             </div>
           </div>
