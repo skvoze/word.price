@@ -156,11 +156,19 @@ export class DatabaseStorage implements IStorage {
     return task;
   }
 
-  async updateTaskStatus(id: number, status: string, rejectionReason?: string): Promise<Task> {
+  async updateTaskStatus(
+  id: number, 
+  status: string, 
+  rejectionReason?: string, 
+  newDeadline?: Date,
+  clearEvidence: boolean = false
+): Promise<Task> {
   const [task] = await db.update(tasks)
     .set({ 
       status,
-      rejectionReason: rejectionReason || null ,
+      rejectionReason: rejectionReason || null,
+      ...(newDeadline && { deadline: newDeadline }),
+      ...(clearEvidence && { evidenceUrl: null }),
       updatedAt: new Date()
     })
     .where(eq(tasks.id, id))

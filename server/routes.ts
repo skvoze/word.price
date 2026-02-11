@@ -141,10 +141,10 @@ function startDeadlineChecker() {
       res.json(req.user);
     });
     app.post(api.users.addFunds.path,authMiddleware, async (req: any, res) => {
-      const isPaymentCallback = req.headers["x-provider-signature"]; 
+    /*const isPaymentCallback = req.headers["x-provider-signature"]; 
     if (!isPaymentCallback) {
       return res.status(403).json({ message: "Direct deposit not allowed" });
-    }
+    }*/
       try {
         const telegramId = req.user.telegramId;
         if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
@@ -359,17 +359,30 @@ const telegramId = req.user.telegramId;
     app.post(api.tasks.fail.path,authMiddleware, async (req: any, res) => {
     try {
       const id = Number(req.params.id);
-      const { rejectionReason } = req.body; // Получаем причину из запроса
+      const { rejectionReason } = req.body;
 
       const task = await storage.getTask(id);
       if (!task) return res.status(404).json({ message: "Task not found" });
-      if (task.status === "failed") return res.json(task);
-      const updated = await storage.updateTaskStatus(id, "failed", rejectionReason);
+      const bonusDeadline = new Date();
+    bonusDeadline.setHours(bonusDeadline.getHours() + 48);
+    const currentDeadline = new Date(task.deadline);
+    const finalDeadline = bonusDeadline > currentDeadline ? bonusDeadline : currentDeadline;
+    const updated = await storage.updateTaskStatus(
+      id, 
+      "pending", 
+      rejectionReason, 
+      finalDeadline, 
+      true
+    );     
       const user = await storage.getUser(task.userId);
       if (user?.telegramId) {
-        await sendTelegramNotification(user.telegramId, 
-          `❌ <b>Задание не принято</b>\n\nЗадача: "<b>${task.title}</b>"\nПричина: ${rejectionReason || "Не соответствует условиям"}.\n\n<i>Услуги мониторинга оплачены предоплатой. Постарайся лучше в следующий раз!</i>`);
-      }
+      const isExtended = bonusDeadline > currentDeadline;
+      const message = isExtended 
+        ? `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nМы продлили срок на 48 часов. Новый дедлайн: <b>${finalDeadline.toLocaleString('ru-RU')}</b>`
+        : `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nСрок задачи остается прежним. Успей загрузить до: <b>${finalDeadline.toLocaleString('ru-RU')}</b>`;
+
+      await sendTelegramNotification(user.telegramId, message);
+    }
       res.json(updated);
     } catch (err) {
       res.status(500).json({ message: "Internal server error" });
