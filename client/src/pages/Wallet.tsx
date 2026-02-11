@@ -352,7 +352,7 @@ const handleWithdrawSubmit = async () => {
     disabled={topUpAmount <= 0}
   >
 
-   <CreditCard className="w-6 h-6" />
+   <CreditCard className="w-5 h-5" />
     Активировать мониторинг
   </Button>
 </div>
