@@ -347,13 +347,15 @@ const handleWithdrawSubmit = async () => {
 </div>
               <div className="space-y-4">
   <Button 
-    className="w-full h-14 text-lg font-black uppercase bg-gradient-to-r from-blue-600 to-primary hover:opacity-90 text-white rounded-2xl gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
+    className="w-full h-auto py-4 px-4 flex flex-col gap-1 items-center justify-center whitespace-normal leading-tight shadow-lg transition-all active:scale-[0.98]"
     onClick={onTopUpClick}
     disabled={topUpAmount <= 0}
   >
 
-   <CreditCard className="w-5 h-5" />
+   <CreditCard className="w-6 h-6" />
+    <span className="text-sm sm:text-base font-bold text-center">
     Активировать мониторинг
+  </span>
   </Button>
 </div>
               
