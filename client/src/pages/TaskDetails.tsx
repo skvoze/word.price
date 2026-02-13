@@ -79,8 +79,8 @@ export default function TaskDetails() {
   if (!task) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-        <h2 className="text-2xl font-bold mb-2">Task Not Found</h2>
-        <Button variant="ghost" onClick={() => setLocation("/")}>Go Home</Button>
+        <h2 className="text-2xl font-bold mb-2">Задача не найдена</h2>
+        <Button variant="ghost" onClick={() => setLocation("/")}>Вернутсья домой</Button>
       </div>
     );
   }
@@ -163,7 +163,10 @@ const isExpired = new Date(task.deadline) < new Date();
               <Coins className="w-3 h-3" /> Статус
             </div>
             <div className="font-semibold text-sm capitalize">
-              {task.status}
+              {task.status === "pending" && "В процессе"}
+      {task.status === "submitted" && "На проверке"}
+      {task.status === "completed" && "Завершено"}
+      {task.status === "failed" && "Провалено"}
             </div>
           </div>
         </div>
@@ -301,7 +304,6 @@ const isExpired = new Date(task.deadline) < new Date();
   onComplete={(result) => {
     if (result.successful && result.successful.length > 0) {
       const file = result.successful[0];
-      // Пытаемся достать URL из ответа сервера или из метаданных, которые мы сохранили выше
       const uploadedUrl = file.response?.body?.url || file.meta?.objectPath;
       
       if (uploadedUrl && typeof uploadedUrl === "string") {

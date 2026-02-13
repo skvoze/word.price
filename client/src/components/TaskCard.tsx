@@ -12,28 +12,28 @@ const statusConfig = {
     color: "text-amber-500",
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
-    label: "In Progress"
+    label: "В процессе"
   },
   submitted: {
     icon: AlertCircle,
     color: "text-blue-500",
     bg: "bg-blue-500/10",
     border: "border-blue-500/20",
-    label: "Verifying"
+    label: "На проверка"
   },
   completed: {
     icon: CheckCircle2,
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/20",
-    label: "Success"
+    label: "Завершено"
   },
   failed: {
     icon: XCircle,
     color: "text-red-500",
     bg: "bg-red-500/10",
     border: "border-red-500/20",
-    label: "Failed"
+    label: "Провалено"
   }
 };
 

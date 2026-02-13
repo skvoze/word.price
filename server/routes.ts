@@ -376,7 +376,7 @@ const telegramId = req.user.telegramId;
 
     const updated = await storage.updateTaskStatus(
       id, 
-      "rejected", 
+      "failed", 
       rejectionReason, 
       finalDeadline, 
       true
