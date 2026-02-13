@@ -385,6 +385,7 @@ const telegramId = req.user.telegramId;
     }
       res.json(updated);
     } catch (err) {
+      console.error("[Task Fail Error]:", err);
       res.status(500).json({ message: "Internal server error" });
     }
   });

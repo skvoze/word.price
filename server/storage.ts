@@ -21,7 +21,7 @@ export interface IStorage {
   getAllSubmittedTasks(): Promise<Task[]>;
   getTask(id: number): Promise<Task | undefined>;
   createTask(task: InsertTask): Promise<Task>;
-  updateTaskStatus(id: number, status: string, rejectionReason?: string): Promise<Task>;
+  updateTaskStatus(id: number, status: string, rejectionReason?: string, newDeadline?: Date, clearEvidence?: boolean ): Promise<Task>;
   submitEvidence(id: number, evidenceUrl: string): Promise<Task>;
 
   getTransactionsByType(type: string): Promise<Transaction[]>;
