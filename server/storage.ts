@@ -47,7 +47,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserBalance(id: number, amount: number): Promise<User> {
-    // amount can be negative
     if (!Number.isFinite(amount) || isNaN(amount)) {
     throw new Error("Некорректная сумма: число должно быть конечным");
   }

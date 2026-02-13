@@ -368,13 +368,15 @@ const telegramId = req.user.telegramId;
 
       const task = await storage.getTask(id);
       if (!task) return res.status(404).json({ message: "Task not found" });
+
       const bonusDeadline = new Date();
     bonusDeadline.setHours(bonusDeadline.getHours() + 48);
     const currentDeadline = new Date(task.deadline);
     const finalDeadline = bonusDeadline > currentDeadline ? bonusDeadline : currentDeadline;
+
     const updated = await storage.updateTaskStatus(
       id, 
-      "pending", 
+      "rejected", 
       rejectionReason, 
       finalDeadline, 
       true
