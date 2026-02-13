@@ -94,10 +94,15 @@ function startDeadlineChecker() {
             }
           } else if (task.userTelegramId) {
             if (diffMinutes === 1440) {
-              await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Остались сутки!</b>...`);
+              await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Остались сутки!</b>\n\n` +
+          `Задача: "<b>${task.title}</b>"\n` +
+          `Срок истекает: ${deadline.toLocaleString('ru-RU')}\n\n` +
+          `Не забудь загрузить отчет, иначе предоплата будет удержана.`);
             }
             if (diffMinutes === 60) {
-              await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>...`);
+              await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>\n\n` +
+          `До конца задачи "<b>${task.title}</b>" остался всего 1 час!\n` +
+          `Срочно загрузи доказательства выполнения.`);
             }
           }
         }
