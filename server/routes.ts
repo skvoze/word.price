@@ -156,7 +156,7 @@ function startDeadlineChecker() {
         const user = await storage.getUserByTelegramId(telegramId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const { amount } = addFundsSchema.parse(req.body);
+        const { amount,acceptedTerms } = addFundsSchema.parse(req.body);
         const updatedUser = await storage.updateUserBalance(user.id, amount);
         
         await storage.createTransaction({
@@ -164,7 +164,11 @@ function startDeadlineChecker() {
           amount: amount,
           type: "topup",
           status: "completed",
-          description: "Пополнение баланса"
+          description: "Пополнение баланса",
+          metadata: { 
+          acceptedTerms: true,
+          ip: req.ip 
+      }
         });
 
         res.json(updatedUser);

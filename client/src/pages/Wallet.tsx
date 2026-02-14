@@ -194,7 +194,10 @@ const handleFinalTopUp = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    await addFunds.mutateAsync(topUpAmount);
+    await addFunds.mutateAsync({ 
+      amount: topUpAmount, 
+      acceptedTerms: agreed 
+    });
     
     toast({ 
       title: "Перенаправление...", 

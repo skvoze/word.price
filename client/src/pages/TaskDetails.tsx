@@ -119,7 +119,7 @@ const isExpired = new Date(task.deadline) < new Date();
               {(task.amount / 100)} ₽
             </h2>
             <p className="text-sm font-medium uppercase tracking-wide opacity-80">
-              {isCompleted ? "Средства возвращены" : isFailed ? "Средтсва потеряны" : isSubmitted ? "На рассмотрении" : "Замороженные средства"}
+              {isCompleted ? "Предоплата возвращена" : isFailed ? "Предоплата удержана" : isSubmitted ? "На рассмотрении" : "Сумма предоплаты"}
             </p>
             {isFailed && task.rejectionReason && (
               <div className="mt-4 p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-full">

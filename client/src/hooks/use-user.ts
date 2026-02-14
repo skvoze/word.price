@@ -61,11 +61,11 @@ export function useTransactions() {
 export function useAddFunds() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (amount: number) => {
+    mutationFn: async ({ amount, acceptedTerms }: { amount: number; acceptedTerms: boolean }) => {
       const res = await fetch(api.users.addFunds.path, {
         method: api.users.addFunds.method,
         headers: getHeaders(),
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, acceptedTerms }),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to add funds");
