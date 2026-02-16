@@ -35,16 +35,12 @@ export default function TaskDetails() {
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
-    if (!task) return;
+    if (!task || submitEvidence.isPending) return;
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
      await queryClient.invalidateQueries({ 
       queryKey: [api.tasks.get.path, task.id] 
 
-    });
-  
-    await queryClient.invalidateQueries({ 
-      queryKey: [api.tasks.list.path] 
     });
     await queryClient.refetchQueries({ 
       queryKey: [api.tasks.get.path, task.id] 
@@ -57,7 +53,6 @@ export default function TaskDetails() {
         evidenceUrl: objectPath
       };
     });
-    queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
     } catch (error) {
       console.error("Evidence submission error:", error);
       toast({ 

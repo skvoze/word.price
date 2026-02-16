@@ -116,13 +116,13 @@ function startDeadlineChecker() {
             }
           }
           } else if (task.userTelegramId) {
-            if (diffMinutes <= 1440 && diffMinutes > 1410) {
+            if (diffMinutes === 1440 ) {
               await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Осталось меньше суток!</b>\n\n` +
           `Задача: "<b>${task.title}</b>"\n` +
           `Срок истекает: ${deadline.toLocaleString('ru-RU')}\n\n` +
           `Не забудь загрузить отчет, иначе предоплата будет удержана.`);
             }
-            if (diffMinutes <= 60 && diffMinutes > 30) {
+            if (diffMinutes === 60) {
               await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>\n\n` +
           `До конца задачи "<b>${task.title}</b>" осталось меньше часа!\n` +
           `Срочно загрузи доказательства выполнения.`);
@@ -156,7 +156,7 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Error]:", err);
     }
-  }, 30 * 60 * 1000); 
+  }, 60 * 1000); 
 }
   export async function registerRoutes(
     httpServer: Server,
@@ -446,7 +446,6 @@ const telegramId = req.user.telegramId;
       const { evidenceUrl } = api.tasks.submitEvidence.input.parse(req.body);
       const task = await storage.submitEvidence(id, evidenceUrl);
       if (!task) return res.status(404).json({ message: "Задача не найдена" });
-      await storage.updateTaskStatus(id, "submitted", undefined); 
     await notifyAdmins(`<b>📦 Новое решение!</b>\nПользователь прислал отчет по задаче #${id}. Пора проверять!`);
       res.json(task);
     } catch (err: any) {
