@@ -8,6 +8,21 @@ export default function Landing() {
       <p className="text-zinc-400 max-w-md mb-8 leading-relaxed">
         Сервис обеспечения личных обязательств. Ставьте цели, подтверждайте результат и держите своё слово.
       </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-16 text-left max-w-4xl">
+  <div className="space-y-2">
+    <div className="text-white font-bold uppercase tracking-tighter">01. Заказ услуг</div>
+    <p className="text-zinc-500 text-sm">Вы выбираете цель и вносите предоплату за услуги мониторинга и верификации.</p>
+  </div>
+  <div className="space-y-2">
+    <div className="text-white font-bold uppercase tracking-tighter">02. Верификация</div>
+    <p className="text-zinc-500 text-sm">Вы выполняете задачу и загружаете отчет. Мы проверяем достоверность результата.</p>
+  </div>
+  <div className="space-y-2">
+    <div className="text-white font-bold uppercase tracking-tighter">03. Результат</div>
+    <p className="text-zinc-500 text-sm">При успехе сумма возвращается вам как компенсация за достигнутый результат.</p>
+  </div>
+</div>
       
       <div className="flex flex-col gap-4 w-full max-w-xs">
         <Button 
@@ -18,8 +33,8 @@ export default function Landing() {
         </Button>
         
         <div className="flex justify-center gap-6 mt-10">
-          <Link href="/terms" className="text-xs text-zinc-500 hover:text-white transition-colors underline">Оферта</Link>
-          <Link href="/privacy" className="text-xs text-zinc-500 hover:text-white transition-colors underline">Конфиденциальность</Link>
+          <Link href="/terms" className="text-xs text-zinc-500 hover:text-white transition-colors underline">Условия использования</Link>
+          <Link href="/privacy" className="text-xs text-zinc-500 hover:text-white transition-colors underline">Политика конфиденциальности</Link>
         </div>
       </div>
 
