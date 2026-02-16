@@ -104,14 +104,14 @@ const isFinalFailed = isFailed && isExpired;
 ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : ''}
   ${isFinalFailed ? 'bg-red-500/10 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : ''}
   ${isRejected ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : ''}
-  ${isPending ? 'bg-zinc-500/10 border-zinc-500/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]' : ''}
+  ${isPending ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]' : ''}
   ${isSubmitted ? 'bg-blue-500/10 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : ''}        
   `}>
           <div className="relative z-10 flex flex-col items-center gap-3">
     {isCompleted && <CheckCircle2 className="w-12 h-12 text-emerald-500" />}
     {isFinalFailed && <XCircle className="w-12 h-12 text-red-500" />}
     {isRejected && <AlertTriangle className="w-12 h-12 text-amber-500" />} 
-    {isPending && <Clock className="w-12 h-12 text-zinc-500" />}
+    {isPending && <Clock className="w-12 h-12 text-amber-500" />}
     {isSubmitted && <Clock className="w-12 h-12 text-blue-500" />}
             
             <h2 className="text-3xl font-bold">
@@ -124,8 +124,8 @@ ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(1
       {isSubmitted && "На рассмотрении"}
       {isPending && "Сумма предоплаты"}            </p>
             {isFailed && task.rejectionReason && (
-              <div className="mt-4 p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-full">
-                <p className="text-[10px] text-red-600 font-black uppercase mb-1">Причина отказа:</p>
+              <div className="mt-4 p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20 w-full">
+                <p className="text-[10px] text-amber-600 font-black uppercase mb-1">Причина отказа:</p>
                 <p className="text-sm font-medium">{task.rejectionReason}</p>
               </div>
             )}
