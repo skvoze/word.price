@@ -37,11 +37,30 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const { success, user: tgUser } = validateTelegramInitData(initData);
   if (!success) return res.status(403).json({ message: "Invalid auth data" });
 
-  let user = await storage.getUserByTelegramId(tgUser.id.toString());
-  if (!user) user = await storage.createUser({ telegramId: tgUser.id.toString() });
+  const telegramId = tgUser.id.toString();
 
-  (req as any).user = user;
-  next();
+  try {
+    let user = await storage.getUserByTelegramId(telegramId);
+    if (!user) {
+      try {
+        user = await storage.createUser({ 
+          telegramId, 
+        });
+      } catch (createError) {
+        user = await storage.getUserByTelegramId(telegramId);
+      }
+    }
+
+    if (!user) {
+      return res.status(500).json({ message: "Не удалось инициализировать пользователя" });
+    }
+
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error("[Auth Error]:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 async function notifyAdmins(message: string) {
   try {
