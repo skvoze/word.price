@@ -33,9 +33,11 @@ export default function TaskDetails() {
   const isAdmin = user?.role === "admin";
   const queryClient = useQueryClient();
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  
 
   const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
     if (!task || submitEvidence.isPending) return;
+
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
      await queryClient.invalidateQueries({ 
@@ -79,12 +81,13 @@ export default function TaskDetails() {
       </div>
     );
   }
-
+   
   const isPending = task.status === "pending";
   const isSubmitted = task.status === "submitted";
   const isCompleted = task.status === "completed";
   const isFailed = task.status === "failed";
 const isExpired = new Date(task.deadline) < new Date();
+  const isRejected = task.status === "failed" && !isExpired; 
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 sticky top-0 z-40 bg-background/80 backdrop-blur-md">
@@ -109,6 +112,7 @@ const isExpired = new Date(task.deadline) < new Date();
             {isFailed && <XCircle className="w-12 h-12 text-red-500" />}
             {isPending && <Clock className="w-12 h-12 text-amber-500" />}
             {isSubmitted && <AlertTriangle className="w-12 h-12 text-blue-500" />}
+            {isRejected && <AlertTriangle className="w-12 h-12 text-blue-500" />}
             
             <h2 className="text-3xl font-bold">
               {(task.amount / 100)} ₽
@@ -117,7 +121,7 @@ const isExpired = new Date(task.deadline) < new Date();
               {isCompleted ? "Предоплата возвращена" : isFailed ? "Предоплата удержана" : isSubmitted ? "На рассмотрении" : "Сумма предоплаты"}
             </p>
             {isFailed && task.rejectionReason && (
-              <div className="mt-4 p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-full">
+              <div className="mt-4 p-3 ${isRejected ? 'bg-red-600/10 border-red-500/30' : 'bg-red-500/5 border-red-500/20' rounded-2xl border border-red-500/20 w-full">
                 <p className="text-[10px] text-red-600 font-black uppercase mb-1">Причина отказа:</p>
                 <p className="text-sm font-medium">{task.rejectionReason}</p>
               </div>

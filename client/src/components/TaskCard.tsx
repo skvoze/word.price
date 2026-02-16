@@ -38,6 +38,17 @@ const statusConfig = {
 };
 
 export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmin?: boolean }) {
+  const isExpired = new Date(task.deadline) < new Date();
+  const isRejected = task.status === "failed" && !isExpired;
+  const currentStatus = isRejected 
+    ? {
+        icon: AlertCircle,
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+        border: "border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]",
+        label: "ОТКЛОНЕНО (Исправьте)"
+      }
+    : (statusConfig[task.status as keyof typeof statusConfig] || statusConfig.pending);
   const status = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.pending;
   const StatusIcon = status.icon;
 
@@ -51,7 +62,7 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
         <div className="flex justify-between items-start mb-3">
           <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${status.bg} ${status.color} border ${status.border}`}>
             <StatusIcon className="w-3.5 h-3.5" />
-            {status.label}
+            {currentStatus.label}
           </div>
           <div className="flex items-center text-primary font-bold">
             <Coins className="w-4 h-4 mr-1.5 opacity-70" />
