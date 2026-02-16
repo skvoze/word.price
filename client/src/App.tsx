@@ -1,6 +1,7 @@
 import { Switch, Route, Redirect } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Loader2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "@/pages/not-found";
@@ -10,16 +11,38 @@ import TaskDetails from "@/pages/TaskDetails";
 import Wallet from "@/pages/Wallet";
 import Verify from "@/pages/Verify";
 import AdminHistory from "@/pages/AdminHistory";
+import Landing from "@/pages/Landing";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 
 import { useUser } from "@/hooks/use-user";
 
 function Router() {
-  const { data: user } = useUser();
+  const { data: user, isLoading } = useUser();
   const isAdmin = user?.role === "admin";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
+  if (!user) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy" component={Privacy} />
+        <Route>
+            <Redirect to="/" />
+        </Route>
+      </Switch>
+    );
+  }
     return (
     <AnimatePresence mode="wait">
       <Switch>
-        {/* User Routes */}
         <Route path="/">
           {isAdmin ? <Verify /> : <Home />}
         </Route>
