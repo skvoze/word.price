@@ -46,7 +46,7 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
         color: "text-red-500",
         bg: "bg-red-500/10",
         border: "border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]",
-        label: "ОТКЛОНЕНО (Исправьте)"
+        label: "Отклонено"
       }
     : (statusConfig[task.status as keyof typeof statusConfig] || statusConfig.pending);
   const status = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.pending;

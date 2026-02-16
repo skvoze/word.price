@@ -33,11 +33,9 @@ export default function TaskDetails() {
   const isAdmin = user?.role === "admin";
   const queryClient = useQueryClient();
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  
 
   const handleEvidenceSubmit = useCallback(async (objectPath: string) => {
     if (!task || submitEvidence.isPending) return;
-
     try {
       await submitEvidence.mutateAsync({ id: task.id, evidenceUrl: objectPath });
      await queryClient.invalidateQueries({ 
@@ -81,13 +79,14 @@ export default function TaskDetails() {
       </div>
     );
   }
-   
+const isExpired = new Date(task.deadline) < new Date();
   const isPending = task.status === "pending";
   const isSubmitted = task.status === "submitted";
   const isCompleted = task.status === "completed";
   const isFailed = task.status === "failed";
-const isExpired = new Date(task.deadline) < new Date();
-  const isRejected = task.status === "failed" && !isExpired; 
+  const isRejected = isFailed && !isExpired; 
+const isFinalFailed = isFailed && isExpired; 
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 py-6 flex items-center gap-4 border-b border-border/50 sticky top-0 z-40 bg-background/80 backdrop-blur-md">
@@ -102,26 +101,30 @@ const isExpired = new Date(task.deadline) < new Date();
         {/* Status Card */}
         <div className={`
           p-6 rounded-3xl border text-center relative overflow-hidden
-          ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : ''}
-          ${isFailed ? 'bg-red-500/10 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : ''}
-          ${isPending ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : ''}
-          ${isSubmitted ? 'bg-blue-500/10 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : ''}
-        `}>
+${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : ''}
+  ${isFinalFailed ? 'bg-red-500/10 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : ''}
+  ${isRejected ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : ''}
+  ${isPending ? 'bg-zinc-500/10 border-zinc-500/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]' : ''}
+  ${isSubmitted ? 'bg-blue-500/10 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : ''}        
+  `}>
           <div className="relative z-10 flex flex-col items-center gap-3">
-            {isCompleted && <CheckCircle2 className="w-12 h-12 text-emerald-500" />}
-            {isFailed && <XCircle className="w-12 h-12 text-red-500" />}
-            {isPending && <Clock className="w-12 h-12 text-amber-500" />}
-            {isSubmitted && <AlertTriangle className="w-12 h-12 text-blue-500" />}
-            {isRejected && <AlertTriangle className="w-12 h-12 text-blue-500" />}
+    {isCompleted && <CheckCircle2 className="w-12 h-12 text-emerald-500" />}
+    {isFinalFailed && <XCircle className="w-12 h-12 text-red-500" />}
+    {isRejected && <AlertTriangle className="w-12 h-12 text-amber-500" />} 
+    {isPending && <Clock className="w-12 h-12 text-zinc-500" />}
+    {isSubmitted && <Clock className="w-12 h-12 text-blue-500" />}
             
             <h2 className="text-3xl font-bold">
               {(task.amount / 100)} ₽
             </h2>
             <p className="text-sm font-medium uppercase tracking-wide opacity-80">
-              {isCompleted ? "Предоплата возвращена" : isFailed ? "Предоплата удержана" : isSubmitted ? "На рассмотрении" : "Сумма предоплаты"}
-            </p>
+      {isCompleted && "Предоплата возвращена"}
+      {isFinalFailed && "Предоплата удержана"}
+      {isRejected && "Нужно исправить"} 
+      {isSubmitted && "На рассмотрении"}
+      {isPending && "Сумма предоплаты"}            </p>
             {isFailed && task.rejectionReason && (
-              <div className="mt-4 p-3 ${isRejected ? 'bg-red-600/10 border-red-500/30' : 'bg-red-500/5 border-red-500/20' rounded-2xl border border-red-500/20 w-full">
+              <div className="mt-4 p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-full">
                 <p className="text-[10px] text-red-600 font-black uppercase mb-1">Причина отказа:</p>
                 <p className="text-sm font-medium">{task.rejectionReason}</p>
               </div>
