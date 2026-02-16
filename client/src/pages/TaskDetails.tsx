@@ -166,10 +166,10 @@ ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(1
             </div>
             <div className="font-semibold text-sm capitalize">
               {isPending && "В процессе"}
-    {isSubmitted && "На проверке"}
-    {isCompleted && "Завершено"}
-    {isRejected && <span className="text-amber-500">Отклонено</span>}
-    {isFinalFailed && <span className="text-red-500">Провалено</span>}
+              {isSubmitted && "На проверке"}
+              {isCompleted && "Завершено"}
+              {isRejected && "Отклонено"}
+              {isFinalFailed && "Провалено"}
             </div>
           </div>
         </div>
