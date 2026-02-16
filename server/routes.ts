@@ -78,30 +78,34 @@ function startDeadlineChecker() {
   setInterval(async () => {
     try {
       const allTasks = await storage.getTasks();
+      const activeTasks = allTasks.filter(t => t.status !== "completed");
+      if (activeTasks.length === 0) return;
       const now = new Date();
 
-      for (const task of allTasks) {
-        if (task.status === "pending") {
+      for (const task of activeTasks) {
+        if (task.status === "pending"|| task.status === "failed") {
           const deadline = new Date(task.deadline);
           const diffMs = deadline.getTime() - now.getTime();
           const diffMinutes = Math.floor(diffMs / 60000);
 
           if (diffMs <= 0) {
+            if (task.status === "pending") {
             await storage.updateTaskStatus(task.id, "failed", "Время на выполнение истекло");
             if (task.userTelegramId) {
               await sendTelegramNotification(task.userTelegramId, 
                 `⌛ <b>Время вышло!</b>\n\nСрок выполнения задачи "<b>${task.title}</b>" истек. Услуги мониторинга считаются оказанными, предоплата удержана.`);
             }
+          }
           } else if (task.userTelegramId) {
-            if (diffMinutes === 1440) {
-              await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Остались сутки!</b>\n\n` +
+            if (diffMinutes <= 1440 && diffMinutes > 1410) {
+              await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Осталось меньше суток!</b>\n\n` +
           `Задача: "<b>${task.title}</b>"\n` +
           `Срок истекает: ${deadline.toLocaleString('ru-RU')}\n\n` +
           `Не забудь загрузить отчет, иначе предоплата будет удержана.`);
             }
-            if (diffMinutes === 60) {
+            if (diffMinutes <= 60 && diffMinutes > 30) {
               await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>\n\n` +
-          `До конца задачи "<b>${task.title}</b>" остался всего 1 час!\n` +
+          `До конца задачи "<b>${task.title}</b>" осталось меньше часа!\n` +
           `Срочно загрузи доказательства выполнения.`);
             }
           }
@@ -133,7 +137,7 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Error]:", err);
     }
-  }, 60000); 
+  }, 30 * 60 * 1000); 
 }
   export async function registerRoutes(
     httpServer: Server,
