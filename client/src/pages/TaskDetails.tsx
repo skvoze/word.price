@@ -165,10 +165,11 @@ ${isCompleted ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(1
               <Coins className="w-3 h-3" /> Статус
             </div>
             <div className="font-semibold text-sm capitalize">
-              {task.status === "pending" && "В процессе"}
-      {task.status === "submitted" && "На проверке"}
-      {task.status === "completed" && "Завершено"}
-      {task.status === "failed" && "Провалено"}
+              {isPending && "В процессе"}
+    {isSubmitted && "На проверке"}
+    {isCompleted && "Завершено"}
+    {isRejected && <span className="text-amber-500">Отклонено</span>}
+    {isFinalFailed && <span className="text-red-500">Провалено</span>}
             </div>
           </div>
         </div>
