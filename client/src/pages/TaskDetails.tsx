@@ -321,7 +321,7 @@ buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h
   {isFailed ? "Загрузить новое" : "Загрузить доказательство"}
 </ObjectUploader>
 {isFailed ? (
-  <p className="text-xs text-red-500 mt-3 font-medium italic">
+  <p className="text-xs text-amber-500 mt-3 font-medium italic">
     Администратор отклонил предыдущее доказательство. Пожалуйста, исправьте ошибки и загрузите файл снова.
   </p>
 ) : (
