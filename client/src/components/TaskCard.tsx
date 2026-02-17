@@ -19,7 +19,7 @@ const statusConfig = {
     color: "text-blue-500",
     bg: "bg-blue-500/10",
     border: "border-blue-500/20",
-    label: "На проверка"
+    label: "На проверке"
   },
   completed: {
     icon: CheckCircle2,
