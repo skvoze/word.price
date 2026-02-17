@@ -130,11 +130,21 @@ function startDeadlineChecker() {
           }
         }
         if (task.status === "submitted" && task.updatedAt) {
+          const dateToCompare = task.updatedAt || task.createdAt;
+  
+  if (!dateToCompare) {
+    console.log(`[Auto-Approve] У задачи #${task.id} нет даты обновления/создания`);
+    continue;
+  }
           const submissionDate = new Date(task.updatedAt);
+          if (isNaN(submissionDate.getTime())) {
+    console.log(`[Auto-Approve] Ошибка: Невалидная дата у задачи #${task.id}: ${dateToCompare}`);
+    continue;
+  }
           const msPassed = now.getTime() - submissionDate.getTime();
           const hoursPassed = msPassed / (1000 * 60 * 60);
 
-          if (hoursPassed >= 24) {
+          if (hoursPassed >= 0.01) {
             await storage.updateUserBalance(task.userId, task.amount);
             await storage.createTransaction({
               userId: task.userId,
