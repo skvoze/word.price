@@ -129,14 +129,14 @@ function startDeadlineChecker() {
             }
           }
         }
-        if (task.status === "submitted" && task.updatedAt) {
+        if (task.status === "submitted") {
           const dateToCompare = task.updatedAt || task.createdAt;
   
   if (!dateToCompare) {
     console.log(`[Auto-Approve] У задачи #${task.id} нет даты обновления/создания`);
     continue;
   }
-          const submissionDate = new Date(task.updatedAt);
+          const submissionDate = new Date(task.updatedAt || task.createdAt);
           if (isNaN(submissionDate.getTime())) {
     console.log(`[Auto-Approve] Ошибка: Невалидная дата у задачи #${task.id}: ${dateToCompare}`);
     continue;
