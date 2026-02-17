@@ -138,9 +138,9 @@ function startDeadlineChecker() {
   }
           const submissionDate = new Date(task.updatedAt || task.createdAt);
           if (isNaN(submissionDate.getTime())) {
-    console.log(`[Auto-Approve] Ошибка: Невалидная дата у задачи #${task.id}: ${dateToCompare}`);
-    continue;
-  }
+      console.log(`[Auto-Approve] Ошибка: Невалидная дата у задачи #${task.id}: ${dateToCompare}`);
+      continue;
+    }
           const msPassed = now.getTime() - submissionDate.getTime();
           const hoursPassed = msPassed / (1000 * 60 * 60);
 
