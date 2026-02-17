@@ -144,7 +144,7 @@ function startDeadlineChecker() {
           const msPassed = now.getTime() - submissionDate.getTime();
           const hoursPassed = msPassed / (1000 * 60 * 60);
 
-          if (hoursPassed >= 0.01) {
+          if (hoursPassed >= 24) {
             await storage.updateUserBalance(task.userId, task.amount);
             await storage.createTransaction({
               userId: task.userId,
