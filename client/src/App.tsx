@@ -14,6 +14,7 @@ import AdminHistory from "@/pages/AdminHistory";
 import Landing from "@/pages/Landing";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import Refund from "@/pages/Refund";
 
 import { useUser } from "@/hooks/use-user";
 
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/terms" component={Terms} />
         <Route path="/privacy" component={Privacy} />
+        <Route path="/refund" component={Refund} />
         <Route>
             <Redirect to="/" />
         </Route>
