@@ -1,151 +1,138 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { CheckCircle2, ShieldCheck, Zap, MessageCircle, ArrowRight, HelpCircle } from "lucide-react";
+import { ChevronDown, ArrowRight, ShieldCheck, Mail, User } from "lucide-react";
 
 export default function Landing() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const faq = [
+    { q: "Что считается доказательством выполнения?", a: "Фото или видео подтверждение, на котором четко виден результат вашей работы (например, скриншот завершенного проекта, фото из спортзала или выполненный отчет)." },
+    { q: "Как происходит возврат средств?", a: "После того как модератор подтвердит ваше доказательство, сумма предоплаты возвращается на ваш внутренний баланс. Вы можете вывести её на карту или использовать для новой цели." },
+    { q: "Почему удерживается 5% при выводе?", a: "Эта комиссия покрывает банковские издержки платежных систем и услуги по проведению транзакций." },
+    { q: "Что если я не успею загрузить отчет?", a: "Если дедлайн истек, а отчет не предоставлен, услуги мониторинга считаются оказанными в полном объеме, и предоплата удерживается сервисом." }
+  ];
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-white selection:text-black">
-      
-      {/* 1. HEADER & HERO (Заголовок) */}
-      <header className="max-w-6xl mx-auto px-6 py-20 flex flex-col items-center text-center">
-        <div className="inline-block px-4 py-1.5 mb-6 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-400">
-          Productivity Tool 2026
-        </div>
-        <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase mb-6 leading-[0.85]">
-          Цена <br /> Слова
-        </h1>
-        <p className="text-xl md:text-2xl font-bold text-zinc-500 uppercase tracking-tight max-w-xl">
-          Сервис мониторинга личных целей через финансовую ответственность
-        </p>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
+      <main className="max-w-4xl mx-auto px-4 py-20">
         
-        <div className="mt-10 w-full max-w-xs">
+        {/* ——— 1. ЗАГОЛОВОК ——— */}
+        <section className="text-center mb-24">
+          <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase mb-6 leading-none">
+            Цена <br /> Слова
+          </h1>
+          <p className="text-xl font-bold text-zinc-500 uppercase tracking-tight">
+            Сервис контроля личных целей через финансовую ответственность
+          </p>
+        </section>
+
+        {/* ——— 2. БОЛИ ——— */}
+        <section className="mb-32 space-y-12">
+          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter">Почему это нужно?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800">
+              <p className="text-zinc-400 text-lg leading-tight">
+                Обещания самому себе часто ничего не стоят, потому что за их нарушение нет последствий. Мозг всегда выбирает путь наименьшего сопротивления.
+              </p>
+            </div>
+            <div className="bg-white p-8 rounded-3xl flex flex-col justify-center">
+              <p className="text-zinc-900 font-bold text-lg leading-tight">
+                Мы создаем цену вашего бездействия. <br />
+                Финансовая ответственность — это самый эффективный способ заставить дисциплину работать на вас.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ——— 3. ПРО ПРОДУКТ ——— */}
+        <section className="mb-32 space-y-16">
+          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter">Как это работает</h2>
+          <div className="grid grid-cols-1 gap-12">
+            {[
+              { n: "01", t: "Постановка цели", d: "Выбираете задачу, ставите дедлайн и вносите предоплату за услуги мониторинга (от 100 ₽)." },
+              { n: "02", t: "Выполнение", d: "Выполняете задачу в срок и загружаете фото или видео отчет прямо в Telegram-бот." },
+              { n: "03", t: "Верификация", d: "Наша команда проверяет достоверность отчета. Если всё честно — задача подтверждается." },
+              { n: "04", t: "Результат", d: "Сумма предоплаты возвращается на ваш баланс. Вы дисциплинированы и сохранили деньги." }
+            ].map((step, i) => (
+              <div key={i} className="flex gap-6 items-start border-l border-zinc-800 pl-8 relative">
+                <div className="absolute -left-3 top-0 w-6 h-6 bg-zinc-950 border-2 border-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold">{step.n}</div>
+                <div>
+                  <h4 className="font-bold uppercase text-white mb-2">{step.t}</h4>
+                  <p className="text-zinc-500 text-sm leading-relaxed">{step.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ——— 4. CALL TO ACTION ——— */}
+        <section className="text-center mb-40">
           <Button 
-            className="w-full bg-white text-black hover:bg-zinc-200 h-16 rounded-2xl font-black text-xl uppercase italic shadow-[0_0_30px_rgba(255,255,255,0.15)] group"
-            onClick={() => window.open('https://t.me/your_bot_link', '_blank')}
+            className="w-full max-w-sm bg-white text-black hover:bg-zinc-200 h-16 rounded-2xl font-black text-xl uppercase italic shadow-[0_0_30px_rgba(255,255,255,0.15)] group"
+            onClick={() => window.open('https://t.me/cena_slova_task_bot', '_blank')}
           >
             Начать в Telegram
             <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </Button>
-        </div>
-      </header>
+          <p className="mt-4 text-[10px] text-zinc-600 uppercase font-bold tracking-[0.2em]">
+            Без регистрации. Вход через Telegram.
+          </p>
+        </section>
 
-      {/* 2. БОЛИ (Зачем мне это?) */}
-      <section className="max-w-4xl mx-auto px-6 py-20 border-t border-zinc-900">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h2 className="text-3xl font-black uppercase italic leading-none">Почему мы <br /> прокрастинируем?</h2>
-            <p className="text-zinc-400 leading-relaxed">
-              Мозг всегда выбирает легкий путь. Обещание самому себе «начать с понедельника» не имеет веса, потому что за его нарушение нет последствий.
-            </p>
-          </div>
-          <div className="bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800">
-            <h3 className="text-white font-bold mb-4 uppercase text-sm tracking-widest">Мы решаем это:</h3>
-            <ul className="space-y-3 text-zinc-400 text-sm italic">
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-white shrink-0" /> Цена слова создает реальный риск.</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-white shrink-0" /> Финансовый рычаг запускает дисциплину.</li>
-              <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-white shrink-0" /> Результат становится неизбежным.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. КАК ЭТО РАБОТАЕТ (Про продукт + Юзер Флоу) */}
-      <section className="bg-zinc-900/30 py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-center text-4xl font-black uppercase italic mb-16 tracking-tighter text-white">4 шага к результату</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { t: "Постановка", d: "Опишите цель в боте, выберите дедлайн и сумму предоплаты." },
-              { t: "Аванс", d: "Внесите предоплату за услуги верификации через Robokassa." },
-              { t: "Действие", d: "Выполните задачу и загрузите фото/видео отчет до дедлайна." },
-              { t: "Возврат", d: "Мы проверяем отчет и возвращаем сумму на ваш баланс." }
-            ].map((step, i) => (
-              <div key={i} className="relative group">
-                <div className="text-5xl font-black text-zinc-800 mb-4 group-hover:text-zinc-700 transition-colors">0{i+1}</div>
-                <h4 className="font-bold uppercase text-white mb-2">{step.t}</h4>
-                <p className="text-zinc-500 text-xs leading-relaxed">{step.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 4. ТАРИФЫ И ВЫВОД (Требование Алисы №3) */}
-      <section className="max-w-4xl mx-auto px-6 py-24 border-b border-zinc-900">
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-[2rem] overflow-hidden">
-          <div className="p-8 border-b border-zinc-800 bg-zinc-900/50">
-            <h3 className="text-xl font-bold uppercase italic text-white">Условия и комиссии</h3>
-          </div>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <div className="text-white font-bold">Внесение предоплаты</div>
-              <p className="text-zinc-500 text-xs">Вы сами выбираете сумму (от 100 ₽). При выполнении задачи она возвращается в полном объеме.</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-white font-bold font-mono">Сервисный сбор — 5%</div>
-              <p className="text-zinc-500 text-xs">Взимается только при выводе средств с баланса на карту. Покрывает расходы на транзакции.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. БЕЗОПАСНОСТЬ (Требование Алисы №6) */}
-      <section className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <div className="flex justify-center gap-12 mb-8 opacity-40 grayscale group-hover:grayscale-0 transition-all">
-           {/* Сюда можно вставить логотипы платежных систем */}
-           <ShieldCheck className="w-12 h-12" />
-           <Zap className="w-12 h-12" />
-           <ShieldCheck className="w-12 h-12" />
-        </div>
-        <h3 className="text-lg font-bold uppercase mb-4 text-white">Безопасность платежей</h3>
-        <p className="text-zinc-500 text-sm max-w-2xl mx-auto leading-relaxed">
-          Все платежи проходят через защищенный шлюз <strong>Robokassa</strong>. Мы не храним и не обрабатываем данные ваших банковских карт. 
-          Соединение защищено сертификатом SSL (AES-256).
-        </p>
-      </section>
-
-      {/* 6. FAQ (Коротко) */}
-      <section className="max-w-2xl mx-auto px-6 py-20">
-         <h2 className="text-2xl font-black uppercase italic mb-8 text-center">FAQ</h2>
-         <div className="space-y-6">
-            {[
-              { q: "Что считается доказательством?", a: "Фото или видео, на котором зафиксирован результат выполнения вашей задачи." },
-              { q: "Как вернуть средства?", a: "После проверки отчета сумма размораживается и доступна для вывода или новой задачи." },
-              { q: "А если я не успел?", a: "Предоплата удерживается в качестве оплаты услуг сервиса по мониторингу." }
-            ].map((item, i) => (
-              <div key={i} className="border-b border-zinc-900 pb-6">
-                <div className="font-bold text-white mb-2 flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-zinc-600" /> {item.q}
-                </div>
-                <p className="text-zinc-500 text-sm leading-relaxed">{item.a}</p>
-              </div>
-            ))}
-         </div>
-      </section>
-
-      {/* 7. FOOTER (Юридический блок) */}
-      <footer className="bg-black py-20 border-t border-zinc-900">
-        <div className="max-w-6xl mx-auto px-6 text-center md:text-left grid grid-cols-1 md:grid-cols-3 gap-12">
+        {/* ——— 5. FAQ (Аккордеон) ——— */}
+        <section className="mb-40">
+          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter mb-12">Вопросы и ответы</h2>
           <div className="space-y-4">
-            <h4 className="text-white font-black italic uppercase">Цена Слова</h4>
-            <p className="text-zinc-600 text-[10px] leading-relaxed uppercase tracking-widest">
-              Сервис обеспечения личных обязательств. <br /> Не является азартной игрой или пари.
-            </p>
+            {faq.map((item, i) => (
+              <div key={i} className="bg-zinc-900/30 border border-zinc-900 rounded-2xl overflow-hidden">
+                <button 
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-zinc-900/50 transition-colors"
+                >
+                  <span className="font-bold text-sm uppercase tracking-tight">{item.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-zinc-500 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-5 text-zinc-400 text-sm leading-relaxed border-t border-zinc-900 pt-4">
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2">Документы</h4>
-            <Link href="/terms" className="text-xs text-zinc-400 hover:text-white underline decoration-zinc-800">Условия использования</Link>
-            <Link href="/privacy" className="text-xs text-zinc-400 hover:text-white underline decoration-zinc-800">Политика конфиденциальности</Link>
-            <Link href="/contacts" className="text-xs text-zinc-400 hover:text-white underline decoration-zinc-800">Контакты и поддержка</Link>
+        </section>
+
+        {/* ——— ФУТЕР (Контакты и Юр. данные) ——— */}
+        <footer className="border-t border-zinc-900 pt-20 pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+            <div className="space-y-6">
+              <h4 className="text-white font-black uppercase italic">Контакты и поддержка</h4>
+              <div className="space-y-4 text-sm text-zinc-500 font-medium">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-4 h-4" /> cena.slova.help@gmail.com
+                </div>
+                <div className="flex items-center gap-3">
+                  <User className="w-4 h-4" /> Самозанятый Коновалов В.А.
+                </div>
+                <div className="flex items-center gap-3">
+                   <ShieldCheck className="w-4 h-4" /> ИНН 594204795787
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4 text-sm uppercase font-bold tracking-widest text-zinc-600">
+               <Link href="/terms" className="hover:text-white transition-colors underline">Условия использования</Link>
+               <Link href="/privacy" className="hover:text-white transition-colors underline">Конфиденциальность</Link>
+            </div>
           </div>
-          <div className="space-y-4 text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
-            <p>© 2026 PRICE OF WORD</p>
-            <p>Самозанятый Коновалов В.А.</p>
-            <p>ИНН 594204795787</p>
-            <p>Support: <span className="text-zinc-400 font-mono">cena.slova.help@gmail.com</span></p>
+          
+          <div className="text-[9px] text-zinc-700 uppercase tracking-[0.3em] text-center border-t border-zinc-900 pt-10">
+            <p>© 2026 ЦЕНА СЛОВА. Сервис мониторинга личных обязательств.</p>
+            <p className="mt-2 opacity-50 italic">Не является азартной игрой, пари или финансовой пирамидой.</p>
+            <p className="mt-4">Прием платежей через Robokassa</p>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </main>
     </div>
   );
 }
