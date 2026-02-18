@@ -57,7 +57,40 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ——— 3. ТАРИФЫ И ЦЕНЫ (Новый блок для Робокассы) ——— */}
+        
+
+        {/* ——— 3. ПРО ПРОДУКТ ——— */}
+        <section className="mb-32 space-y-16">
+          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter">Механика сервиса</h2>
+          <div className="grid grid-cols-1 gap-12">
+            {[
+              { n: "01", t: "Постановка цели", d: "Создайте задачу в мини-приложении, укажите дедлайн и внесите сумму обязательства." },
+              { n: "02", t: "Выполнение", d: "Сделайте то, что обещали, и загрузите доказательства (фото/видео) в интерфейс приложения." },
+              { n: "03", t: "Проверка", d: "Модератор проверяет отчет в течение 24 часов. Если отчет не предоставлен — сумма удерживается за услуги мониторинга." },
+              { n: "04", t: "Результат", d: "При подтверждении сумма возвращается на баланс. Цель достигнута." }
+            ].map((step, i) => (
+              <div key={i} className="flex gap-6 items-start border-l border-zinc-800 pl-8 relative group">
+                <div className="absolute -left-3 top-0 w-6 h-6 bg-zinc-950 border-2 border-zinc-800 group-hover:border-white transition-colors rounded-full flex items-center justify-center text-[10px] font-bold">{step.n}</div>
+                <div>
+                  <h4 className="font-bold uppercase text-white mb-2">{step.t}</h4>
+                  <p className="text-zinc-500 text-sm leading-relaxed">{step.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ——— 4. CTA ——— */}
+        <section className="text-center mb-40">
+          <Button 
+            className="w-full max-w-sm bg-white text-black hover:bg-zinc-200 h-16 rounded-2xl font-black text-xl uppercase italic shadow-[0_0_30px_rgba(255,255,255,0.15)] group"
+            onClick={() => window.open('https://t.me/cena_slova_task_bot', '_blank')}
+          >
+            Попробовать сервис
+            <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </section>
+{/* ——— 5. ТАРИФЫ И ЦЕНЫ (Новый блок для Робокассы) ——— */}
         <section className="mb-32">
           <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter mb-12">Стоимость услуг</h2>
           <div className="bg-zinc-900/30 border border-zinc-800 rounded-[2.5rem] p-8 md:p-12">
@@ -97,39 +130,6 @@ export default function Landing() {
             </div>
           </div>
         </section>
-
-        {/* ——— 4. ПРО ПРОДУКТ ——— */}
-        <section className="mb-32 space-y-16">
-          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter">Механика сервиса</h2>
-          <div className="grid grid-cols-1 gap-12">
-            {[
-              { n: "01", t: "Постановка цели", d: "Создайте задачу в мини-приложении, укажите дедлайн и внесите сумму обязательства." },
-              { n: "02", t: "Выполнение", d: "Сделайте то, что обещали, и загрузите доказательства (фото/видео) в интерфейс приложения." },
-              { n: "03", t: "Проверка", d: "Модератор проверяет отчет в течение 24 часов. Если отчет не предоставлен — сумма удерживается за услуги мониторинга." },
-              { n: "04", t: "Результат", d: "При подтверждении сумма возвращается на баланс. Цель достигнута." }
-            ].map((step, i) => (
-              <div key={i} className="flex gap-6 items-start border-l border-zinc-800 pl-8 relative group">
-                <div className="absolute -left-3 top-0 w-6 h-6 bg-zinc-950 border-2 border-zinc-800 group-hover:border-white transition-colors rounded-full flex items-center justify-center text-[10px] font-bold">{step.n}</div>
-                <div>
-                  <h4 className="font-bold uppercase text-white mb-2">{step.t}</h4>
-                  <p className="text-zinc-500 text-sm leading-relaxed">{step.d}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ——— 5. CTA ——— */}
-        <section className="text-center mb-40">
-          <Button 
-            className="w-full max-w-sm bg-white text-black hover:bg-zinc-200 h-16 rounded-2xl font-black text-xl uppercase italic shadow-[0_0_30px_rgba(255,255,255,0.15)] group"
-            onClick={() => window.open('https://t.me/cena_slova_task_bot', '_blank')}
-          >
-            Попробовать сервис
-            <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </section>
-
         {/* ——— 6. FAQ ——— */}
         <section className="mb-40 max-w-2xl mx-auto">
           <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter mb-12">Вопросы и ответы</h2>
