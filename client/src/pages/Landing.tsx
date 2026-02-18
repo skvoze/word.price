@@ -132,7 +132,7 @@ export default function Landing() {
         </section>
         {/* ——— 6. FAQ ——— */}
         <section className="mb-40 max-w-2xl mx-auto">
-          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter mb-12">Вопросы и ответы</h2>
+          <h2 className="text-center text-3xl font-black uppercase italic tracking-tighter mb-12">Вопросы  и  ответы</h2>
           <div className="space-y-4">
             {faq.map((item, i) => (
               <div key={i} className="bg-zinc-900/30 border border-zinc-900 rounded-2xl overflow-hidden">
@@ -155,7 +155,7 @@ export default function Landing() {
 
         {/* ——— ФУТЕР ——— */}
         <footer className="border-t border-zinc-900 pt-20 pb-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 items-end">
             <div className="space-y-6">
               <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Контакты и поддержка</h4>
               <div className="space-y-4 text-sm text-zinc-400 font-medium">
@@ -177,7 +177,7 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col md:items-end gap-3 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500">
+            <div className="flex flex-col md:items-end gap-3 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500 justify-end">
                <Link href="/terms" className="hover:text-white transition-colors underline decoration-zinc-800 underline-offset-4">Пользовательское соглашение (Оферта)</Link>
                <Link href="/privacy" className="hover:text-white transition-colors underline decoration-zinc-800 underline-offset-4">Политика конфиденциальности</Link>
                <Link href="/refund" className="hover:text-white transition-colors underline decoration-zinc-800 underline-offset-4">Политика возврата средств</Link>
