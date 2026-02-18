@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import {Link,ArrowLeft} from "lucide-react"
+import { Link } from "wouter";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Privacy() {
