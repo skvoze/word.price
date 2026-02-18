@@ -188,6 +188,13 @@ export default function Landing() {
           <div className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] text-center border-t border-zinc-900 pt-10 space-y-4">
             <p className="text-zinc-400">© 2026 ЦЕНА СЛОВА. Все права защищены.</p>
             <p className="italic text-zinc-600 lowercase">сервис не является азартной игрой, пари или финансовой пирамидой.</p>
+            <div className="flex justify-center items-center gap-4 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500 scale-90">
+                <img src="https://img.icons8.com/color/48/visa.png" className="h-5" alt="visa" />
+                <img src="https://img.icons8.com/color/48/mastercard.png" className="h-5" alt="mc" />
+                <img src="https://img.icons8.com/color/48/mir.png" className="h-5" alt="mir" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/SBP-logo.svg" className="h-4 invert opacity-70" alt="sbp" />
+            </div>
+            
             <p className="font-bold text-zinc-400 tracking-[0.5em]">Прием платежей через Robokassa</p>
           </div>
         </footer>
