@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 
 export default function Terms() {
   const [isTelegram, setIsTelegram] = useState(false);
-
+const handleBack = (e: React.MouseEvent) => {
+  e.preventDefault();
+  if (window.history.length > 1) {
+    window.history.back(); 
+  } else {
+    window.location.href = "/";
+  }
+};
   useEffect(() => {
     window.scrollTo(0, 0);
     if (window.Telegram?.WebApp?.initData) {
@@ -15,12 +22,12 @@ export default function Terms() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl pb-24">
       {!isTelegram && (
-              <Link href="/#footer">
-                <button className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-sm font-bold uppercase tracking-widest">
+           
+                <button onClick={handleBack} className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-sm font-bold uppercase tracking-widest">
                   <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                   Назад на главную
                 </button>
-              </Link>
+          
             )}
       <h1 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter text-white">Пользовательское соглашение</h1>
       

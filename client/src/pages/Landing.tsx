@@ -41,21 +41,33 @@ export default function Landing() {
 
         {/* ——— 2. БОЛИ ——— */}
         <section className="mb-32 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800">
-              <h3 className="text-zinc-500 uppercase font-black text-xs mb-4 tracking-widest">Проблема</h3>
-              <p className="text-zinc-400 text-lg leading-tight">
-                Обещания самому себе часто ничего не стоят, потому что за их нарушение нет последствий.
-              </p>
-            </div>
-            <div className="bg-white p-8 rounded-3xl flex flex-col justify-center">
-              <h3 className="text-zinc-400 uppercase font-black text-xs mb-4 tracking-widest text-center md:text-left">Решение</h3>
-              <p className="text-zinc-900 font-bold text-lg leading-tight text-center md:text-left">
-                Мы создаем цену вашего бездействия. Либо результат, либо оплата услуг мониторинга.
-              </p>
-            </div>
-          </div>
-        </section>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Карточка Проблемы */}
+    <div className="bg-zinc-900/50 p-8 rounded-3xl border border-zinc-800">
+      <h3 className="text-zinc-500 uppercase font-black text-xs mb-4 tracking-widest">Проблема</h3>
+      <p className="text-zinc-400 text-lg leading-tight">
+        Обещания самому себе часто ничего не стоят, потому что за их нарушение нет последствий.
+      </p>
+    </div>
+
+    {/* Карточка Решения с новым текстом */}
+   <div className="bg-white p-8 rounded-3xl flex flex-col justify-center relative overflow-hidden">
+  <h3 className="text-zinc-400 uppercase font-black text-xs mb-4 tracking-widest text-center md:text-left">Решение</h3>
+  <div className="space-y-4">
+    <p className="text-zinc-900 font-extrabold text-xl leading-none text-center md:text-left uppercase italic tracking-tighter">
+      Достиг результата — бесплатно <br/>
+      <span className="text-zinc-400">Не достиг — цена слова*</span>
+    </p>
+    
+    {/* Сноска теперь относится к Цене слова */}
+    <p className="text-[9px] text-zinc-400 leading-tight uppercase tracking-tighter text-center md:text-left">
+      * Под «Ценой слова» понимается удержание средств в качестве оплаты 
+      услуг по мониторингу и верификации задачи согласно оферте.
+    </p>
+  </div>
+  </div>
+  </div>
+</section>
 
         
 
@@ -154,7 +166,7 @@ export default function Landing() {
         </section>
 
         {/* ——— ФУТЕР ——— */}
-        <footer id="footer" className="border-t border-zinc-900 pt-20 pb-10">
+        <footer  className="border-t border-zinc-900 pt-20 pb-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 items-end">
             <div className="space-y-6">
               <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Контакты и поддержка</h4>
@@ -192,7 +204,7 @@ export default function Landing() {
                 <img src="https://img.icons8.com/color/48/visa.png" className="h-5" alt="visa" />
                 <img src="https://img.icons8.com/color/48/mastercard.png" className="h-5" alt="mc" />
                 <img src="https://img.icons8.com/color/48/mir.png" className="h-5" alt="mir" />
-                <img src="https://raw.githubusercontent.com/Anatoly-Semenov/legal-icons/main/sbp.png" className="h-4 brightness-200" alt="sbp" />
+                <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
             </div>
             
             <p className="font-bold text-zinc-400 tracking-[0.5em]">Прием платежей через Robokassa</p>
