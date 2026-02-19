@@ -24,7 +24,7 @@ export default function Refund() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl pb-24">
       {!isTelegram && (
-        <Link href="/">
+        <Link href="/#footer">
           <button className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-sm font-bold uppercase tracking-widest">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Назад на главную

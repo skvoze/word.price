@@ -154,7 +154,7 @@ export default function Landing() {
         </section>
 
         {/* ——— ФУТЕР ——— */}
-        <footer className="border-t border-zinc-900 pt-20 pb-10">
+        <footer id="footer" className="border-t border-zinc-900 pt-20 pb-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 items-end">
             <div className="space-y-6">
               <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Контакты и поддержка</h4>
@@ -192,7 +192,7 @@ export default function Landing() {
                 <img src="https://img.icons8.com/color/48/visa.png" className="h-5" alt="visa" />
                 <img src="https://img.icons8.com/color/48/mastercard.png" className="h-5" alt="mc" />
                 <img src="https://img.icons8.com/color/48/mir.png" className="h-5" alt="mir" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/SBP-logo.svg/512px-SBP-logo.svg.png" className="h-4 brightness-200" alt="sbp" />
+                <img src="https://raw.githubusercontent.com/Anatoly-Semenov/legal-icons/main/sbp.png" className="h-4 brightness-200" alt="sbp" />
             </div>
             
             <p className="font-bold text-zinc-400 tracking-[0.5em]">Прием платежей через Robokassa</p>
