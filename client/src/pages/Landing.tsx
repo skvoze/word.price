@@ -192,7 +192,7 @@ export default function Landing() {
                 <img src="https://img.icons8.com/color/48/visa.png" className="h-5" alt="visa" />
                 <img src="https://img.icons8.com/color/48/mastercard.png" className="h-5" alt="mc" />
                 <img src="https://img.icons8.com/color/48/mir.png" className="h-5" alt="mir" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/SBP-logo.svg" className="h-4 invert opacity-70" alt="sbp" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/SBP-logo.svg/512px-SBP-logo.svg.png" className="h-4 brightness-200" alt="sbp" />
             </div>
             
             <p className="font-bold text-zinc-400 tracking-[0.5em]">Прием платежей через Robokassa</p>
