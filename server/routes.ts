@@ -195,6 +195,7 @@ function startDeadlineChecker() {
     });
     app.post(api.users.addFunds.path,authMiddleware, async (req: any, res) => {
   try {
+    const isTest = process.env.NODE_ENV !== "production" ? 1 : 1;
     const user = req.user;
     const { amount } = addFundsSchema.parse(req.body);
     const transaction = await storage.createTransaction({
@@ -221,6 +222,7 @@ app.post("/api/payment/result", async (req, res) => {
     .toUpperCase();
 
   if (mySignature !== (SignatureValue as string).toUpperCase()) {
+    console.error(`[Payment Error] Invalid signature. Expected ${mySignature}, got ${SignatureValue}`);
     return res.status(400).send("bad signature");
   }
 
