@@ -8,6 +8,21 @@
   import { addFundsSchema } from "@shared/schema";
   import crypto from "crypto";
 
+  const MERCHANT_LOGIN = process.env.ROBOKASSA_LOGIN;
+const PASS1 = process.env.ROBOKASSA_PASS1; 
+const PASS2 = process.env.ROBOKASSA_PASS2; 
+const IS_TEST = process.env.NODE_ENV !== "production" ? 1 : 0;
+
+function generateRobokassaUrl(invoiceId: number, amount: number, description: string) {
+  const sum = (amount / 100).toFixed(2); 
+  const signature = crypto
+    .createHash("md5")
+    .update(`${MERCHANT_LOGIN}:${sum}:${invoiceId}:${PASS1}`)
+    .digest("hex");
+
+  return `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${MERCHANT_LOGIN}&OutSum=${sum}&InvId=${invoiceId}&Description=${encodeURIComponent(description)}&SignatureValue=${signature}&IsTest=${IS_TEST}`;
+}
+
   function validateTelegramInitData(initData: string): { success: boolean; user?: any } {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   if (!BOT_TOKEN || !initData) return { success: false };
@@ -179,36 +194,51 @@ function startDeadlineChecker() {
       res.json(req.user);
     });
     app.post(api.users.addFunds.path,authMiddleware, async (req: any, res) => {
-    /*const isPaymentCallback = req.headers["x-provider-signature"]; 
-    if (!isPaymentCallback) {
-      return res.status(403).json({ message: "Direct deposit not allowed" });
-    }*/
-      try {
-        const telegramId = req.user.telegramId;
-        if (!telegramId) return res.status(401).json({ message: "Telegram ID missing" });
-        const user = await storage.getUserByTelegramId(telegramId);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        const { amount,acceptedTerms } = addFundsSchema.parse(req.body);
-        const updatedUser = await storage.updateUserBalance(user.id, amount);
-        
-        await storage.createTransaction({
-          userId: user.id,
-          amount: amount,
-          type: "topup",
-          status: "completed",
-          description: "Пополнение баланса",
-          metadata: { 
-          acceptedTerms: true,
-          ip: req.ip 
-      }
-        });
-
-        res.json(updatedUser);
-      } catch (err: any) {
-        res.status(400).json({ message: err.message || "Ошибка пополнения" });
-      }
+  try {
+    const user = req.user;
+    const { amount } = addFundsSchema.parse(req.body);
+    const transaction = await storage.createTransaction({
+      userId: user.id,
+      amount: amount,
+      type: "topup",
+      status: "pending", 
+      description: "Пополнение баланса через Робокассу",
     });
+    const paymentUrl = generateRobokassaUrl(transaction.id, amount, "Пополнение баланса");
+
+    res.json({ paymentUrl }); 
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+app.post("/api/payment/result", async (req, res) => {
+  const { OutSum, InvId, SignatureValue } = req.body;
+  const mySignature = crypto
+    .createHash("md5")
+    .update(`${OutSum}:${InvId}:${PASS2}`)
+    .digest("hex")
+    .toUpperCase();
+
+  if (mySignature !== (SignatureValue as string).toUpperCase()) {
+    return res.status(400).send("bad signature");
+  }
+
+  const transactionId = Number(InvId);
+  const tx = await storage.getTransaction(transactionId);
+
+  if (tx && tx.status === "pending") {
+    await storage.updateTransactionStatus(transactionId, "completed");
+    await storage.updateUserBalance(tx.userId, tx.amount);
+    const user = await storage.getUser(tx.userId);
+    if (user?.telegramId) {
+      await sendTelegramNotification(user.telegramId, `✅ <b>Баланс пополнен!</b>\nСумма <b>${tx.amount / 100} ₽</b> зачислена.`);
+    }
+  }
+
+  res.send(`OK${InvId}`);
+});
+
   app.get("/api/admin/withdrawals",authMiddleware, async (req: any, res) => {
 const telegramId = req.user.telegramId;
   if (!telegramId) return res.status(401).send("Unauthorized");
@@ -570,7 +600,12 @@ const telegramId = req.user.telegramId;
   • Что если я не успел? Предоплата удерживается в счет оплаты услуг.
 
   <b>🤖 Техподдержка:</b>
-  Если у вас остались вопросы или возникли проблемы, напишите @Vacorik`;
+  Если у вас остались вопросы или возникли проблемы, любым удоьным способом:
+  • Telegram: @cena_slova_help
+  • Email: cena.slova.help@gmail.com
+  • Тел: +7XXXXXXXXXX
+
+  <i>Все условия и реквизиты указаны в Пользовательском соглашении в приложении.</i>`;
   const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

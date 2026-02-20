@@ -84,9 +84,11 @@ export const api = {
     addFunds: {
       method: 'POST' as const,
       path: '/api/users/funds',
-      input: z.object({ amount: z.number().positive() }),
+      input: z.object({ amount: z.number().positive(),acceptedTerms: z.boolean().optional() }),
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.object({ 
+      paymentUrl: z.string() 
+    }),
       }
     },
     setRole: {

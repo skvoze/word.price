@@ -192,24 +192,28 @@ const handleFinalTopUp = async () => {
   setIsRedirecting(true); 
   
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    await addFunds.mutateAsync({ 
+    const result = await addFunds.mutateAsync({ 
       amount: topUpAmount, 
       acceptedTerms: agreed 
     });
     
     toast({ 
-      title: "Перенаправление...", 
-      description: "Открываем страницу оплаты " 
+      title: "Готово", 
+      description: "Переходим к оплате..." 
     });
+    if (result && result.paymentUrl) {
+       window.location.href = result.paymentUrl;
+    } else {
+       throw new Error("Не удалось получить ссылку на оплату");
+    }
     
-    setIsTopUpConfirmOpen(false);
-    setTopUpAmount(0);
-  } catch (error) {
-    toast({ title: "Ошибка", variant: "destructive" });
-  } finally {
-    setIsRedirecting(false);
+  } catch (error: any) {
+    toast({ 
+      title: "Ошибка", 
+      description: error.message || "Не удалось создать платеж",
+      variant: "destructive" 
+    });
+    setIsRedirecting(false); // Возвращаем кнопку в рабочее состояние только при ошибке
   }
 };
 const handleWithdrawSubmit = async () => {
@@ -363,9 +367,9 @@ const handleWithdrawSubmit = async () => {
               >
                 Я ознакомлен и согласен с{" "}
                 <Dialog>
-                  <DialogTrigger className="text-primary underline">условиями использования</DialogTrigger>
+                  <DialogTrigger className="text-primary underline">пользовательским соглашением</DialogTrigger>
                   <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
-                    <DialogHeader><DialogTitle>Условия использования</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Пользовательское соглашение (оферта)</DialogTitle></DialogHeader>
                     <Terms />
                   </DialogContent>
                 </Dialog>

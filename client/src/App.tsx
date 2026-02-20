@@ -15,7 +15,8 @@ import Landing from "@/pages/Landing";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Refund from "@/pages/Refund";
-
+import SuccessPage from "@/pages/SuccessPage";
+import FailPage from "@/pages/FailPage";
 import { useUser } from "@/hooks/use-user";
 
 function Router() {
@@ -36,6 +37,8 @@ function Router() {
         <Route path="/terms" component={Terms} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/refund" component={Refund} />
+         <Route path="/success" component={SuccessPage} />
+        <Route path="/fail" component={FailPage} />
         <Route>
             <Redirect to="/" />
         </Route>
@@ -51,6 +54,8 @@ function Router() {
         <Route path="/create" component={CreateTask} />
         <Route path="/task/:id" component={TaskDetails} />
         <Route path="/wallet" component={Wallet} />
+        <Route path="/success" component={SuccessPage} />
+        <Route path="/fail" component={FailPage} />
         
         {/* Admin Routes */}
         <Route path="/verify" component={Verify} />

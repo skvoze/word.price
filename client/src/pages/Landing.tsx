@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ChevronDown, ArrowRight, ShieldCheck, Mail, User, Send, Wallet } from "lucide-react";
+import { ChevronDown, ArrowRight, ShieldCheck, Mail, User, Send, Wallet, Phone } from "lucide-react";
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -178,6 +178,10 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-zinc-600" />
                   <a href="mailto:cena.slova.help@gmail.com" className="hover:text-white transition-colors">cena.slova.help@gmail.com</a>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-zinc-600" />
+                  <a href="tel:+79958653767" className="hover:text-white transition-colors">+7 (985) 865-37-67</a>
                 </div>
                 <div className="pt-4 border-t border-zinc-900/50">
                   <div className="text-xs text-zinc-500 mb-1 tracking-wider uppercase font-bold flex items-center gap-2">
