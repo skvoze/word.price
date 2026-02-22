@@ -538,26 +538,7 @@ const telegramId = req.user.telegramId;
         res.status(500).json({ message: "Ошибка при загрузке истории задач" });
       }
     });
-    app.get("/success", (req, res) => {
-  res.send(`
-    <div style="text-align: center; padding: 40px; font-family: sans-serif;">
-      <h1 style="color: #4caf50;">✅ Оплата прошла!</h1>
-      <p>Деньги будут зачислены на баланс в течение минуты.</p>
-      <p>Вы можете закрыть это окно.</p>
-    </div>
-  `);
-});
-
-// Обработка возврата при отмене/ошибке
-app.get("/failed", (req, res) => {
-  res.send(`
-    <div style="text-align: center; padding: 40px; font-family: sans-serif;">
-      <h1 style="color: #f44336;">❌ Оплата не удалась</h1>
-      <p>Вы отменили оплату или произошла ошибка.</p>
-      <p>Попробуйте еще раз из приложения.</p>
-    </div>
-  `);
-});
+ 
   app.post("/api/webhook", async (req: any, res) => {
     try {
       const { message } = req.body;
