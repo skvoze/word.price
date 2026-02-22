@@ -516,7 +516,12 @@ const telegramId = req.user.telegramId;
         res.status(500).json({ message: "Ошибка сервера при получении задачи" });
       }
     });
-    
+    app.get("/success", (req, res) => {
+  res.send('<h1>✅ Оплата прошла успешно!</h1><p>Вернитесь в Telegram и обновите баланс.</p>');
+});
+app.get("/failed", (req, res) => {
+  res.send('<h1>❌ Оплата не удалась</h1><p>Попробуйте еще раз или свяжитесь с поддержкой.</p>');
+});
   app.get("/api/admin/tasks",authMiddleware, async (req: any, res) => {
       try {
         const telegramId = req.user.telegramId;

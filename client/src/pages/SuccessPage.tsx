@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter"; 
 
 export default function SuccessPage() {
-  const [seconds, setSeconds] = useState(5);
+  const [seconds, setSeconds] = useState(10);
   const [, setLocation] = useLocation();
   
 
