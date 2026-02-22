@@ -19,9 +19,17 @@ function generateRobokassaUrl(invoiceId: number, amount: number, description: st
     .createHash("md5")
     .update(`${MERCHANT_LOGIN}:${sum}:${invoiceId}:${PASS1}`)
     .digest("hex");
-
-return `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${MERCHANT_LOGIN}&OutSum=${sum}&InvId=${invoiceId}&Description=${encodeURIComponent(description)}&SignatureValue=${signature}&IsTest=${isTest}`;
-}
+const baseUrl = `https://task-guarantor.onrender.com`;
+return `https://auth.robokassa.ru/Merchant/Index.aspx?` +
+    `MerchantLogin=${MERCHANT_LOGIN}&` +
+    `OutSum=${sum}&` +
+    `InvId=${invoiceId}&` +
+    `Description=${encodeURIComponent(description)}&` +
+    `SignatureValue=${signature}&` +
+    `IsTest=${isTest}&` +
+    `SuccessURL=${encodeURIComponent(`${baseUrl}/success`)}&` +
+    `FailURL=${encodeURIComponent(`${baseUrl}/failed`)}`;
+    }
 
   function validateTelegramInitData(initData: string): { success: boolean; user?: any } {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -516,12 +524,6 @@ const telegramId = req.user.telegramId;
         res.status(500).json({ message: "Ошибка сервера при получении задачи" });
       }
     });
-    app.get("/success", (req, res) => {
-  res.send('<h1>✅ Оплата прошла успешно!</h1><p>Вернитесь в Telegram и обновите баланс.</p>');
-});
-app.get("/failed", (req, res) => {
-  res.send('<h1>❌ Оплата не удалась</h1><p>Попробуйте еще раз или свяжитесь с поддержкой.</p>');
-});
   app.get("/api/admin/tasks",authMiddleware, async (req: any, res) => {
       try {
         const telegramId = req.user.telegramId;
@@ -536,6 +538,26 @@ app.get("/failed", (req, res) => {
         res.status(500).json({ message: "Ошибка при загрузке истории задач" });
       }
     });
+    app.get("/success", (req, res) => {
+  res.send(`
+    <div style="text-align: center; padding: 40px; font-family: sans-serif;">
+      <h1 style="color: #4caf50;">✅ Оплата прошла!</h1>
+      <p>Деньги будут зачислены на баланс в течение минуты.</p>
+      <p>Вы можете закрыть это окно.</p>
+    </div>
+  `);
+});
+
+// Обработка возврата при отмене/ошибке
+app.get("/failed", (req, res) => {
+  res.send(`
+    <div style="text-align: center; padding: 40px; font-family: sans-serif;">
+      <h1 style="color: #f44336;">❌ Оплата не удалась</h1>
+      <p>Вы отменили оплату или произошла ошибка.</p>
+      <p>Попробуйте еще раз из приложения.</p>
+    </div>
+  `);
+});
   app.post("/api/webhook", async (req: any, res) => {
     try {
       const { message } = req.body;
