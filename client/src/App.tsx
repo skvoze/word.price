@@ -38,7 +38,7 @@ function Router() {
         <Route path="/privacy" component={Privacy} />
         <Route path="/refund" component={Refund} />
          <Route path="/success" component={SuccessPage} />
-        <Route path="/fail" component={FailPage} />
+        <Route path="/fail" component={FailPage} /> 
         <Route>
             <Redirect to="/" />
         </Route>

@@ -207,6 +207,12 @@ function startDeadlineChecker() {
     });
     const paymentUrl = generateRobokassaUrl(transaction.id, amount, "Пополнение баланса");
 
+    console.log("--- DEBUG ROBOKASSA ---");
+    console.log("Payment URL:", paymentUrl);
+    console.log("Merchant Login:", MERCHANT_LOGIN);
+    console.log("Is Test Mode:", IS_TEST);
+    console.log("-----------------------");
+
     res.json({ paymentUrl }); 
   } catch (err: any) {
     res.status(400).json({ message: err.message });
