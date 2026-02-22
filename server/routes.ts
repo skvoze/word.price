@@ -131,18 +131,20 @@ function startDeadlineChecker() {
             }
           }
           } else if (task.userTelegramId) {
-            if (diffMinutes === 1440 ) {
+            if (diffMinutes <= 1440 && diffMinutes > 60 &&  !task.notified24h) {
               await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Осталось меньше суток!</b>\n\n` +
           `Задача: "<b>${task.title}</b>"\n` +
           `Срок истекает: ${deadline.toLocaleString('ru-RU')}\n\n` +
           `Не забудь загрузить отчет, иначе предоплата будет удержана.`);
+          await storage.setTaskNotified(task.id, '24h');
             }
-            if (diffMinutes === 60) {
+            if (diffMinutes <= 60 && diffMinutes > 0 && !task.notified1h) {
               await sendTelegramNotification(task.userTelegramId, `🚨 <b>Последний шанс!</b>\n\n` +
           `До конца задачи "<b>${task.title}</b>" осталось меньше часа!\n` +
           `Срочно загрузи доказательства выполнения.`);
+          await storage.setTaskNotified(task.id, '1h');
             }
-          }
+          } 
         }
         if (task.status === "submitted") {
           const dateToCompare = task.updatedAt || task.createdAt;
@@ -207,12 +209,6 @@ function startDeadlineChecker() {
     });
     const paymentUrl = generateRobokassaUrl(transaction.id, amount, "Пополнение баланса",1);
 
-    console.log("--- DEBUG ROBOKASSA ---");
-    console.log("Payment URL:", paymentUrl);
-    console.log("Merchant Login:", MERCHANT_LOGIN);
-    console.log("Is Test Mode:", IS_TEST);
-    console.log("-----------------------");
-
     res.json({ paymentUrl }); 
   } catch (err: any) {
     res.status(400).json({ message: err.message });
@@ -236,7 +232,7 @@ app.post("/api/payment/result", async (req, res) => {
   const tx = await storage.getTransaction(transactionId);
 
   if (tx && tx.status === "pending") {
-    await storage.updateTransactionStatus(transactionId, "completed");
+    await storage.updateTransactionStatusSafe(transactionId, "completed");
     await storage.updateUserBalance(tx.userId, tx.amount);
     const user = await storage.getUser(tx.userId);
     if (user?.telegramId) {
@@ -460,8 +456,8 @@ const telegramId = req.user.telegramId;
       if (user?.telegramId) {
       const isExtended = bonusDeadline > currentDeadline;
       const message = isExtended 
-        ? `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nМы продлили срок на 48 часов. Новый дедлайн: <b>${finalDeadline.toLocaleString('ru-RU')}</b>`
-        : `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nСрок задачи остается прежним. Успей загрузить до: <b>${finalDeadline.toLocaleString('ru-RU')}</b>`;
+        ? `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nМы продлили срок на 48 часов. Новый дедлайн: <b>${finalDeadline.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</b>`
+        : `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nСрок задачи остается прежним. Успей загрузить до: <b>${finalDeadline.toLocaleString('ru-RU'), { timeZone: 'Europe/Moscow' }}</b>`;
 
       await sendTelegramNotification(user.telegramId, message);
     }

@@ -27,9 +27,34 @@ export interface IStorage {
   getTransactionsByType(type: string): Promise<Transaction[]>;
   getTransaction(id: number): Promise<Transaction | undefined>;
   updateTransactionStatus(id: number, status: string,rejectionReason?:string): Promise<Transaction>;
+  setTaskNotified(id: number, type: '24h' | '1h'): Promise<void>;
+  updateTransactionStatusSafe(id: number, status: string, rejectionReason?: string): Promise<Transaction | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
+
+  async updateTransactionStatusSafe(id: number, status: string, rejectionReason?: string): Promise<Transaction | undefined> {
+    const [updated] = await db
+      .update(transactions)
+      .set({ 
+        status, 
+        rejectionReason: rejectionReason || null 
+      })
+      .where(
+        and(
+          eq(transactions.id, id),
+          eq(transactions.status, 'pending') 
+        )
+      )
+      .returning();
+    
+    return updated;
+  }
+
+  async setTaskNotified(id: number, type: '24h' | '1h'): Promise<void> {
+    const updateData = type === '24h' ? { notified24h: true } : { notified1h: true };
+    await db.update(tasks).set(updateData).where(eq(tasks.id, id));
+  }
   // Users
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -92,6 +117,8 @@ export class DatabaseStorage implements IStorage {
         deadline: tasks.deadline,
         evidenceUrl: tasks.evidenceUrl,
         createdAt: tasks.createdAt,
+        notified24h: tasks.notified24h,
+        notified1h: tasks.notified1h,
         rejectionReason: tasks.rejectionReason,
         userTelegramId: users.telegramId, 
       })
@@ -162,12 +189,17 @@ export class DatabaseStorage implements IStorage {
   newDeadline?: Date,
   clearEvidence: boolean = false
 ): Promise<Task> {
+  const shouldResetNotifications = status === 'failed';
   const [task] = await db.update(tasks)
     .set({ 
       status,
       rejectionReason: rejectionReason || null,
       ...(newDeadline && { deadline: newDeadline }),
       ...(clearEvidence && { evidenceUrl: null }),
+      ...(shouldResetNotifications && { 
+        notified24h: false, 
+        notified1h: false 
+      }),
       updatedAt: new Date()
     })
     .where(eq(tasks.id, id))

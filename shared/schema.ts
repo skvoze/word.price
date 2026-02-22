@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, timestamp,boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -24,6 +24,8 @@ export const tasks = pgTable("tasks", {
   evidenceUrl: text("evidence_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  notified24h: boolean("notified_24h").notNull().default(false),
+  notified1h: boolean("notified_1h").notNull().default(false),
 });
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
