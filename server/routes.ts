@@ -28,7 +28,7 @@ return `https://auth.robokassa.ru/Merchant/Index.aspx?` +
     `SignatureValue=${signature}&` +
     `IsTest=${isTest}&` +
     `SuccessURL=${encodeURIComponent(`${baseUrl}/success`)}&` +
-    `FailURL=${encodeURIComponent(`${baseUrl}/failed`)}`;
+    `FailURL=${encodeURIComponent(`${baseUrl}/fail`)}`;
     }
 
   function validateTelegramInitData(initData: string): { success: boolean; user?: any } {
