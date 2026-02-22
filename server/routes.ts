@@ -139,10 +139,10 @@ function startDeadlineChecker() {
             }
           }
           } else if (task.userTelegramId) {
-            if (diffMinutes <= 1440 && diffMinutes > 60 &&  !task.notified24h) {
+            if (diffMinutes <= 1440 && diffMinutes > 1000 &&  !task.notified24h) {
               await sendTelegramNotification(task.userTelegramId, `⚠️ <b>Осталось меньше суток!</b>\n\n` +
           `Задача: "<b>${task.title}</b>"\n` +
-          `Срок истекает: ${deadline.toLocaleString('ru-RU')}\n\n` +
+          `Срок истекает: ${deadline.toLocaleString('ru-RU',{ timeZone: 'Europe/Moscow' })}\n\n` +
           `Не забудь загрузить отчет, иначе предоплата будет удержана.`);
           await storage.setTaskNotified(task.id, '24h');
             }
