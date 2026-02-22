@@ -13,14 +13,14 @@ const PASS1 = process.env.ROBOKASSA_PASS1;
 const PASS2 = process.env.ROBOKASSA_PASS2; 
 const IS_TEST = process.env.NODE_ENV !== "production" ? 1 : 0;
 
-function generateRobokassaUrl(invoiceId: number, amount: number, description: string) {
+function generateRobokassaUrl(invoiceId: number, amount: number, description: string, isTest:number) {
   const sum = (amount / 100).toFixed(2); 
   const signature = crypto
     .createHash("md5")
     .update(`${MERCHANT_LOGIN}:${sum}:${invoiceId}:${PASS1}`)
     .digest("hex");
 
-  return `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${MERCHANT_LOGIN}&OutSum=${sum}&InvId=${invoiceId}&Description=${encodeURIComponent(description)}&SignatureValue=${signature}&IsTest=${IS_TEST}`;
+return `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${MERCHANT_LOGIN}&OutSum=${sum}&InvId=${invoiceId}&Description=${encodeURIComponent(description)}&SignatureValue=${signature}&IsTest=${isTest}`;
 }
 
   function validateTelegramInitData(initData: string): { success: boolean; user?: any } {
@@ -205,7 +205,7 @@ function startDeadlineChecker() {
       status: "pending", 
       description: "Пополнение баланса через Робокассу",
     });
-    const paymentUrl = generateRobokassaUrl(transaction.id, amount, "Пополнение баланса");
+    const paymentUrl = generateRobokassaUrl(transaction.id, amount, "Пополнение баланса",1);
 
     console.log("--- DEBUG ROBOKASSA ---");
     console.log("Payment URL:", paymentUrl);
