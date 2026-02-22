@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter"; 
 
 export default function FailPage() {
-  const [seconds, setSeconds] = useState(10);
+  const [seconds, setSeconds] = useState(20);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function FailPage() {
           <motion.div 
             initial={{ width: "100%" }}
             animate={{ width: "0%" }}
-            transition={{ duration: 5, ease: "linear" }}
+            transition={{ duration: 20, ease: "linear" }}
             className="absolute top-0 left-0 h-1 bg-red-500"
           />
 
