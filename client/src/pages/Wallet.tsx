@@ -4,7 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/CurrencyInput";
-import { Loader2, CreditCard, History, Wallet as WalletIcon, Clock, Check, ArrowUpRight } from "lucide-react";
+import { Loader2, CreditCard, History, Wallet as WalletIcon, Clock, Check, ArrowUpRight,X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion,AnimatePresence} from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -95,7 +95,15 @@ const stats = useMemo(() => {
 const [filter, setFilter] = useState<'all' | 'topup' | 'withdraw'>('all');
 const filteredTransactions = useMemo(() => {
   if (!transactions) return [];
-  const sorted = [...transactions].sort((a, b) => {
+  const now = new Date().getTime();
+  const ONE_HOUR = 60 * 60 * 1000;
+  const sorted = [...transactions].filter(tx => {
+      if (tx.status === 'pending' && tx.createdAt) {
+        const txTime = new Date(tx.createdAt).getTime();
+        if (now - txTime > ONE_HOUR) return false; 
+      }
+      return true;
+    }).sort((a, b) => {
     return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
   });
   if (filter === 'all') return sorted;
@@ -456,6 +464,8 @@ const handleWithdrawSubmit = async () => {
     ) : (filteredTransactions.map((tx) => {
   const isAmount = tx.type === "task_amount";
   const isPositive = tx.amount > 0;
+  const isPending = tx.status === "pending";
+  const isRejected = tx.status === "rejected";
   const isExpanded = expandedTx === tx.id;
 
   return (
@@ -472,11 +482,19 @@ const handleWithdrawSubmit = async () => {
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className={cn(
             "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
-            isPositive ? "bg-emerald-500/10 text-emerald-500" : 
-            isAmount ? "bg-blue-500/10 text-blue-500" : "bg-zinc-500/10 text-zinc-500"
+            isPending ? "bg-amber-500/10 text-amber-500" :
+          isRejected ? "bg-red-500/10 text-red-500" :
+          isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-blue-500"
           )}>
-            {isPositive ? <Check className="w-5 h-5" /> : isAmount ? <Clock className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5 rotate-45" />}
-          </div>
+{isPending ? (
+            <Clock className="w-5 h-5 animate-pulse" /> // Часики мигают, пока в обработке
+          ) : isRejected ? (
+            <X className="w-5 h-5" />
+          ) : isPositive ? (
+            <Check className="w-5 h-5" />
+          ) : (
+            <ArrowUpRight className="w-5 h-5 rotate-45" />
+          )}          </div>
           
           <div className="min-w-0 flex-1"> 
             <p className="text-sm font-bold text-foreground leading-tight truncate">
@@ -484,12 +502,12 @@ const handleWithdrawSubmit = async () => {
             </p>
             <p className={cn(
               "text-[9px] uppercase font-black tracking-wider mt-0.5",
-              tx.status === "pending" ? "text-amber-500" : 
-              tx.status === "completed" ? "text-emerald-500" : "text-red-500"
+              isPending ? "text-amber-500" : 
+            tx.status === "completed" ? "text-emerald-500" : "text-red-500"
             )}>
-              {tx.status === "pending" && "• В обработке"}
-              {tx.status === "completed" && (isAmount ? "• Предоплата" : "• Выполнено")}
-              {tx.status === "rejected" && "• Отклонено"}
+              {isPending && "• В обработке"}
+            {tx.status === "completed" && "• Выполнено"}
+            {isRejected && "• Отклонено"}
             </p>
           </div>
         </div>
@@ -680,7 +698,7 @@ const handleWithdrawSubmit = async () => {
     </div>
   </DialogContent>
 </Dialog>
-      <BottomNav />
+      
      <Dialog open={isTopUpConfirmOpen} onOpenChange={(open) => !isRedirecting && setIsTopUpConfirmOpen(open)}>
   <DialogContent className="rounded-[2.5rem] max-w-[90vw] sm:max-w-md border-none bg-card p-8">
     {isRedirecting ? (
