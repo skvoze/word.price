@@ -589,20 +589,41 @@ const handleWithdrawSubmit = async () => {
   </div>
 </div>
 <div className="pt-12 pb-8 flex flex-col items-center gap-4 border-t border-border/10 mt-10">
-  <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-    <Dialog>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Оферта</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
+  <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 w-full">
+    <Dialog onOpenChange={(open) => {
+      document.body.style.overflow = open ? 'hidden' : 'unset';
+    }}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary cursor-pointer hover:underline transition-all">
+        Оферта
+      </DialogTrigger>
+      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <Terms />
+      </DialogContent>
     </Dialog>
-    <Dialog>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Возврат</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
+
+    <Dialog onOpenChange={(open) => {
+      document.body.style.overflow = open ? 'hidden' : 'unset';
+    }}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary cursor-pointer hover:underline transition-all">
+        Возврат
+      </DialogTrigger>
+      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <Refund />
+      </DialogContent>
     </Dialog>
-    <Dialog>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Конфиденциальность</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
+
+    <Dialog onOpenChange={(open) => {
+      document.body.style.overflow = open ? 'hidden' : 'unset';
+    }}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary cursor-pointer hover:underline transition-all">
+        Приватность
+      </DialogTrigger>
+      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <Privacy />
+      </DialogContent>
     </Dialog>
   </div>
+  
   <p className="text-[8px] text-zinc-600 font-medium uppercase tracking-widest opacity-50 text-center">
     © 2026 ЦЕНА СЛОВА • ВСЕ ПРАВА ЗАЩИЩЕНЫ
   </p>
@@ -781,19 +802,20 @@ const handleWithdrawSubmit = async () => {
           >
             Оплатить
           </Button>
-          <div className="flex items-center gap-3 text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+          <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-3 text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest w-full">
       <Dialog>
-        <DialogTrigger className="hover:text-primary">Оферта</DialogTrigger>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Оферта</DialogTrigger>
         <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
       </Dialog>
-      <span>•</span>
+      <span className="opacity-30">•</span>
       <Dialog>
-        <DialogTrigger className="hover:text-primary">Возврат</DialogTrigger>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Возврат</DialogTrigger>
         <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
       </Dialog>
-      <span>•</span>
+      <span className="opacity-30">•</span>
       <Dialog>
-        <DialogTrigger className="hover:text-primary">Приватность</DialogTrigger>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Приватность</DialogTrigger>
         <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
       </Dialog>
     </div>
@@ -809,6 +831,7 @@ const handleWithdrawSubmit = async () => {
               Безопасность • 256-bit SSL
             </p>
           </div>
+        </div>
         </div>
       </>
     )}
