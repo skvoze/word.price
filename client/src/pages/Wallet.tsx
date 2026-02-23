@@ -588,38 +588,42 @@ const handleWithdrawSubmit = async () => {
 }))}
   </div>
 </div>
-<div className="pt-12 pb-10 flex flex-col items-center gap-6 border-t border-white/5 mt-10">
-  <div className="flex justify-center items-center gap-4 w-full">
-    <Dialog onOpenChange={(open) => { document.body.style.overflow = open ? 'hidden' : 'unset'; }}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4">
-        Оферта
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
+<div className="pt-12 pb-8 flex flex-col items-center gap-4 border-t border-border/10 mt-10">
+  <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+    <Dialog onOpenChange={(open) => {
+  if (open) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'unset';
+  }
+}}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Оферта</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
     </Dialog>
-
-    <Dialog onOpenChange={(open) => { document.body.style.overflow = open ? 'hidden' : 'unset'; }}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4">
-        Возврат
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
+    <Dialog onOpenChange={(open) => {
+  if (open) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'unset';
+  }
+}}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Возврат</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
     </Dialog>
-
-    <Dialog onOpenChange={(open) => { document.body.style.overflow = open ? 'hidden' : 'unset'; }}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-primary active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4">
-        Приватность
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
+    <Dialog onOpenChange={(open) => {
+  if (open) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'unset';
+  }
+}}>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Конфиденциальность</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
     </Dialog>
   </div>
-  
-  <div className="text-center space-y-1">
-    <p className="text-[8px] text-zinc-600 font-black uppercase tracking-[0.4em] opacity-30">
-      © 2026 ЦЕНА СЛОВА
-    </p>
-    <p className="text-[7px] text-zinc-700 font-bold uppercase tracking-widest opacity-20">
-      Все права защищены
-    </p>
-  </div>
+  <p className="text-[8px] text-zinc-600 font-medium uppercase tracking-widest opacity-50 text-center">
+    © 2026 ЦЕНА СЛОВА • ВСЕ ПРАВА ЗАЩИЩЕНЫ
+  </p>
 </div>
       </main>
       
@@ -779,46 +783,53 @@ const handleWithdrawSubmit = async () => {
     </p>
   </div>
 </div>
-        <div className="flex flex-col items-center gap-6 mt-2">
-  <div className="flex items-center justify-center gap-2 w-full">
-    <Dialog>
-      <DialogTrigger className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white active:scale-95 transition-all cursor-pointer decoration-primary/50 underline-offset-4 hover:underline">
-        Оферта
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
-    </Dialog>
-    
-    <span className="text-zinc-800 font-light">|</span>
-    
-    <Dialog>
-      <DialogTrigger className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white active:scale-95 transition-all cursor-pointer decoration-primary/50 underline-offset-4 hover:underline">
-        Возврат
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
-    </Dialog>
-    
-    <span className="text-zinc-800 font-light">|</span>
-    
-    <Dialog>
-      <DialogTrigger className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white active:scale-95 transition-all cursor-pointer decoration-primary/50 underline-offset-4 hover:underline">
-        Приватность
-      </DialogTrigger>
-      <DialogContent onCloseAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
-    </Dialog>
-  </div>
-  
-  <div className="flex flex-col items-center gap-3">
-    <div className="flex items-center gap-4 opacity-40 grayscale brightness-125 scale-90">
-       <img src="https://img.icons8.com/color/48/visa.png" className="h-5" alt="visa" />
-       <img src="https://img.icons8.com/color/48/mastercard.png" className="h-5" alt="mc" />
-       <img src="https://img.icons8.com/color/48/mir.png" className="h-5" alt="mir" />
-       <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
+        <div className="mb-6 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
+          <div className="mt-1 bg-emerald-500 rounded-full p-1">
+            <Check className="w-3 h-3 text-white" />
+          </div>
+          <p className="text-[11px] font-medium leading-relaxed text-emerald-700/80">
+            <strong>Совет:</strong> Выбирайте оплату через <span className="text-emerald-600 font-bold uppercase">СБП</span> на странице банка. Это самый быстрый способ без ввода данных карты.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <Button 
+            className="w-full h-14 rounded-2xl text-lg font-black italic uppercase bg-[#24A1DE] hover:bg-[#208bbf] shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            onClick={handleFinalTopUp}
+          >
+            Оплатить
+          </Button>
+          <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-3 text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest w-full">
+      <Dialog>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Оферта</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
+      </Dialog>
+      <span className="opacity-30">•</span>
+      <Dialog>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Возврат</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
+      </Dialog>
+      <span className="opacity-30">•</span>
+      <Dialog>
+        <DialogTrigger className="hover:text-primary cursor-pointer hover:underline transition-all">Приватность</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
+      </Dialog>
     </div>
-    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.3em]">
-      Безопасность • 256-bit SSL
-    </p>
-  </div>
-</div>
+          
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 opacity-30 grayscale scale-75">
+               <img src="https://img.icons8.com/color/48/visa.png" className="h-6" alt="visa" />
+               <img src="https://img.icons8.com/color/48/mastercard.png" className="h-6" alt="mc" />
+               <img src="https://img.icons8.com/color/48/mir.png" className="h-6" alt="mir" />
+               <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
+            </div>
+            <p className="text-[9px] text-center text-muted-foreground leading-tight px-6 uppercase font-bold tracking-widest opacity-40">
+              Безопасность • 256-bit SSL
+            </p>
+          </div>
+        </div>
+        </div>
       </>
     )}
   </DialogContent>
