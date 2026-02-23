@@ -326,7 +326,7 @@ buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground h
   </p>
 ) : (
   <p className="text-xs text-muted-foreground mt-3">
-    Фото или видео подтверждение необходимо для разморозки средтсв.
+    Фото или видео подтверждение необходимо для возврата предоплаты.
   </p>
 )}
             </div>

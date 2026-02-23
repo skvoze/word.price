@@ -28,9 +28,14 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const tg = (window as any).Telegram?.WebApp;
+  const initData = tg?.initData;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  if (initData) {
+    headers["x-telegram-init-data"] = initData;
+  }
   
   const telegramId = getTelegramId();
   if (telegramId) {

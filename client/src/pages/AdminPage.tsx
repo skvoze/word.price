@@ -32,7 +32,7 @@ export default function AdminPage() {
   mutationFn: async ({ id, status, rejectionReason }: { id: number; status: string; rejectionReason?: string }) => {
     const res = await apiRequest("PATCH", `/api/admin/transactions/${id}`, { 
       status, 
-      rejectionReason // Отправляем на сервер
+      rejectionReason 
     });
     return res.json();
   },
