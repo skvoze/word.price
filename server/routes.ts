@@ -449,7 +449,7 @@ const telegramId = req.user.telegramId;
       if (!task) return res.status(404).json({ message: "Task not found" });
 
       const bonusDeadline = new Date();
-    bonusDeadline.setHours(bonusDeadline.getHours() + 48);
+    bonusDeadline.setHours(bonusDeadline.getHours() + 24);
     const currentDeadline = new Date(task.deadline);
     const finalDeadline = bonusDeadline > currentDeadline ? bonusDeadline : currentDeadline;
 
@@ -464,7 +464,7 @@ const telegramId = req.user.telegramId;
       if (user?.telegramId) {
       const isExtended = bonusDeadline > currentDeadline;
       const message = isExtended 
-        ? `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nМы продлили срок на 48 часов. Новый дедлайн: <b>${finalDeadline.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</b>`
+        ? `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nМы продлили срок на 24 часа. Новый дедлайн: <b>${finalDeadline.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</b>`
         : `⚠️ <b>Отчет не принят</b>\n\nПричина: ${rejectionReason}\n\nСрок задачи остается прежним. Успей загрузить до: <b>${finalDeadline.toLocaleString('ru-RU'), { timeZone: 'Europe/Moscow' }}</b>`;
 
       await sendTelegramNotification(user.telegramId, message);
@@ -616,6 +616,11 @@ const telegramId = req.user.telegramId;
   • Telegram: @cena_slova_help
   • Email: cena.slova.help@gmail.com
   • Тел: +7XXXXXXXXXX
+
+  <b>📜 Документы:</b>
+  • <a href="${appUrl}/terms">Пользовательское соглашение</a>
+  • <a href="${appUrl}/privacy">Политика конфиденциальности</a>
+  • <a href="${appUrl}/refund">Политика возврата</a>
 
   <i>Все условия и реквизиты указаны в Пользовательском соглашении в приложении.</i>`;
   const response = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

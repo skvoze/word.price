@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import Refund from "@/pages/Refund";
 
 
 
@@ -374,21 +375,29 @@ const handleWithdrawSubmit = async () => {
                 className="text-[11px] leading-tight text-zinc-400 font-medium cursor-pointer select-none"
               >
                 Я ознакомлен и согласен с{" "}
-                <Dialog>
-                  <DialogTrigger className="text-primary underline">пользовательским соглашением</DialogTrigger>
-                  <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
-                    <DialogHeader><DialogTitle>Пользовательское соглашение (оферта)</DialogTitle></DialogHeader>
-                    <Terms />
-                  </DialogContent>
-                </Dialog>
-                {" "}и{" "}
-                <Dialog>
-                  <DialogTrigger className="text-primary underline">политикой конфиденциальности</DialogTrigger>
-                  <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
-                    <DialogHeader><DialogTitle>Приватность</DialogTitle></DialogHeader>
-                    <Privacy />
-                  </DialogContent>
-                </Dialog>
+               <Dialog>
+      <DialogTrigger className="text-primary underline">соглашением</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <DialogHeader><DialogTitle>Пользовательское соглашение</DialogTitle></DialogHeader>
+        <Terms />
+      </DialogContent>
+    </Dialog>
+    {", "}
+    <Dialog>
+      <DialogTrigger className="text-primary underline">приватностью</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <DialogHeader><DialogTitle>Политика конфиденциальности</DialogTitle></DialogHeader>
+        <Privacy />
+      </DialogContent>
+    </Dialog>
+    {" и "}
+    <Dialog>
+      <DialogTrigger className="text-primary underline">правилами возврата</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
+        <DialogHeader><DialogTitle>Политика возврата средств</DialogTitle></DialogHeader>
+        <Refund />
+      </DialogContent>
+    </Dialog>
                 . Вносимая сумма является предоплатой за услуги мониторинга.
               </label>
             </div>
@@ -579,6 +588,25 @@ const handleWithdrawSubmit = async () => {
 }))}
   </div>
 </div>
+<div className="pt-12 pb-8 flex flex-col items-center gap-4 border-t border-border/10 mt-10">
+  <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+    <Dialog>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Оферта</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
+    </Dialog>
+    <Dialog>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Возврат</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
+    </Dialog>
+    <Dialog>
+      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Конфиденциальность</DialogTrigger>
+      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
+    </Dialog>
+  </div>
+  <p className="text-[8px] text-zinc-600 font-medium uppercase tracking-widest opacity-50 text-center">
+    © 2026 ЦЕНА СЛОВА • ВСЕ ПРАВА ЗАЩИЩЕНЫ
+  </p>
+</div>
       </main>
       
       <BottomNav />
@@ -753,12 +781,29 @@ const handleWithdrawSubmit = async () => {
           >
             Оплатить
           </Button>
+          <div className="flex items-center gap-3 text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+      <Dialog>
+        <DialogTrigger className="hover:text-primary">Оферта</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
+      </Dialog>
+      <span>•</span>
+      <Dialog>
+        <DialogTrigger className="hover:text-primary">Возврат</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
+      </Dialog>
+      <span>•</span>
+      <Dialog>
+        <DialogTrigger className="hover:text-primary">Приватность</DialogTrigger>
+        <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
+      </Dialog>
+    </div>
           
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 opacity-30 grayscale scale-75">
                <img src="https://img.icons8.com/color/48/visa.png" className="h-6" alt="visa" />
                <img src="https://img.icons8.com/color/48/mastercard.png" className="h-6" alt="mc" />
                <img src="https://img.icons8.com/color/48/mir.png" className="h-6" alt="mir" />
+               <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
             </div>
             <p className="text-[9px] text-center text-muted-foreground leading-tight px-6 uppercase font-bold tracking-widest opacity-40">
               Безопасность • 256-bit SSL
