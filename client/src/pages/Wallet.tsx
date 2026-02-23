@@ -378,7 +378,7 @@ const handleWithdrawSubmit = async () => {
               >
                 Я ознакомлен и согласен с{" "}
                <Dialog>
-      <DialogTrigger className="text-primary underline">соглашением</DialogTrigger>
+      <DialogTrigger className="text-primary underline">пользовательским соглашением</DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
         <DialogHeader><DialogTitle>Пользовательское соглашение</DialogTitle></DialogHeader>
         <Terms />
@@ -386,7 +386,7 @@ const handleWithdrawSubmit = async () => {
     </Dialog>
     {", "}
     <Dialog>
-      <DialogTrigger className="text-primary underline">приватностью</DialogTrigger>
+      <DialogTrigger className="text-primary underline">политикой конфиденциальности</DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
         <DialogHeader><DialogTitle>Политика конфиденциальности</DialogTitle></DialogHeader>
         <Privacy />
@@ -394,7 +394,7 @@ const handleWithdrawSubmit = async () => {
     </Dialog>
     {" и "}
     <Dialog>
-      <DialogTrigger className="text-primary underline">правилами возврата</DialogTrigger>
+      <DialogTrigger className="text-primary underline">политикой возврата</DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]">
         <DialogHeader><DialogTitle>Политика возврата средств</DialogTitle></DialogHeader>
         <Refund />
@@ -589,33 +589,6 @@ const handleWithdrawSubmit = async () => {
   );
 }))}
   </div>
-</div>
-<div className="pt-12 pb-10 flex flex-col items-center gap-6 border-t border-white/5 mt-10">
-  <div className="flex justify-center items-center gap-4 w-full">
-    <button 
-      onClick={() => setLocation("/terms")}
-      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
-    >
-      Оферта
-    </button>
-
-    <button 
-      onClick={() => setLocation("/refund")}
-      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
-    >
-      Возврат
-    </button>
-
-    <button 
-      onClick={() => setLocation("/privacy")}
-      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
-    >
-      Приватность
-    </button>
-  </div>
-  <p className="text-[8px] text-zinc-600 font-medium uppercase tracking-widest opacity-50 text-center">
-    © 2026 ЦЕНА СЛОВА • ВСЕ ПРАВА ЗАЩИЩЕНЫ
-  </p>
 </div>
       </main>
       
