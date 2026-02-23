@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Refund from "@/pages/Refund";
+import { useLocation } from "wouter";
 
 
 
@@ -70,6 +71,7 @@ const [withdrawAmount, setWithdrawAmount] = useState(0);
 const [cardNumber, setCardNumber] = useState("");
 const [withdrawNote, setWithdrawNote] = useState("");
 const [isRedirecting, setIsRedirecting] = useState(false);
+const [, setLocation] = useLocation();
 const [isTopUpConfirmOpen, setIsTopUpConfirmOpen] = useState(false);
 const [expandedTx, setExpandedTx] = useState<number | null>(null);
 const activeInputStyles = cn(
@@ -588,38 +590,28 @@ const handleWithdrawSubmit = async () => {
 }))}
   </div>
 </div>
-<div className="pt-12 pb-8 flex flex-col items-center gap-4 border-t border-border/10 mt-10">
-  <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-    <Dialog onOpenChange={(open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
-  }
-}}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Оферта</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Terms /></DialogContent>
-    </Dialog>
-    <Dialog onOpenChange={(open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
-  }
-}}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Возврат</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Refund /></DialogContent>
-    </Dialog>
-    <Dialog onOpenChange={(open) => {
-  if (open) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
-  }
-}}>
-      <DialogTrigger className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors">Конфиденциальность</DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[80vh] overflow-y-auto rounded-[2rem]"><Privacy /></DialogContent>
-    </Dialog>
+<div className="pt-12 pb-10 flex flex-col items-center gap-6 border-t border-white/5 mt-10">
+  <div className="flex justify-center items-center gap-4 w-full">
+    <button 
+      onClick={() => setLocation("/terms")}
+      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
+    >
+      Оферта
+    </button>
+
+    <button 
+      onClick={() => setLocation("/refund")}
+      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
+    >
+      Возврат
+    </button>
+
+    <button 
+      onClick={() => setLocation("/privacy")}
+      className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 active:scale-95 transition-all underline decoration-zinc-800 underline-offset-4"
+    >
+      Приватность
+    </button>
   </div>
   <p className="text-[8px] text-zinc-600 font-medium uppercase tracking-widest opacity-50 text-center">
     © 2026 ЦЕНА СЛОВА • ВСЕ ПРАВА ЗАЩИЩЕНЫ
@@ -819,10 +811,11 @@ const handleWithdrawSubmit = async () => {
           
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 opacity-30 grayscale scale-75">
+               <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
                <img src="https://img.icons8.com/color/48/visa.png" className="h-6" alt="visa" />
                <img src="https://img.icons8.com/color/48/mastercard.png" className="h-6" alt="mc" />
                <img src="https://img.icons8.com/color/48/mir.png" className="h-6" alt="mir" />
-               <img src="https://gist.githubusercontent.com/PonomareVlad/e901e3e50e7b1c1b80c2f05f7b968758/raw/1abed6186b7c7a69ea5f4d284d2e767a9245650b/SBP.svg" className="h-4 brightness-200" alt="sbp" />
+
             </div>
             <p className="text-[9px] text-center text-muted-foreground leading-tight px-6 uppercase font-bold tracking-widest opacity-40">
               Безопасность • 256-bit SSL

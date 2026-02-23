@@ -56,6 +56,9 @@ function Router() {
         <Route path="/wallet" component={Wallet} />
         <Route path="/success" component={SuccessPage} />
         <Route path="/fail" component={FailPage} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/refund" component={Refund} />
         
         {/* Admin Routes */}
         <Route path="/verify" component={Verify} />
