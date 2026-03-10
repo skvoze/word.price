@@ -41,6 +41,7 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/tasks',
+      // Важно: coerce.date() превращает строку из формы в объект Date
       input: insertTaskSchema.extend({ deadline: z.coerce.date() }),
       responses: {
         201: z.custom<typeof tasks.$inferSelect>(),
@@ -56,7 +57,7 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
-    complete: { // Admin/Verifier action mock
+    complete: {
       method: 'POST' as const,
       path: '/api/tasks/:id/complete',
       responses: {
@@ -64,7 +65,7 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
-    fail: { // Admin/Verifier action mock
+    fail: {
       method: 'POST' as const,
       path: '/api/tasks/:id/fail',
       responses: {
@@ -74,29 +75,23 @@ export const api = {
     }
   },
   users: {
-    me: { // Mock "me" endpoint
+    me: {
       method: 'GET' as const,
       path: '/api/users/me',
       responses: {
         200: z.custom<typeof users.$inferSelect>(),
       }
     },
+    // Изменили на синхронизацию депозита из блокчейна
     addFunds: {
       method: 'POST' as const,
       path: '/api/users/funds',
-      input: z.object({ amount: z.number().positive(),acceptedTerms: z.boolean().optional() }),
+      input: z.object({ 
+        amount: z.number().positive(),
+        txHash: z.string() // Добавили хэш транзакции вместо Robokassa
+      }),
       responses: {
-        200: z.object({ 
-      paymentUrl: z.string() 
-    }),
-      }
-    },
-    setRole: {
-      method: 'POST' as const,
-      path: '/api/users/role',
-      input: z.object({ role: z.enum(['user', 'admin']) }),
-      responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.object({ success: z.boolean() }),
       }
     }
   }

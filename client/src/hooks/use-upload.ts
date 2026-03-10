@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { UppyFile } from "@uppy/core";
+import { useAccount } from "wagmi";
 
 interface UploadMetadata {
   name: string;
@@ -19,18 +20,20 @@ interface UseUploadOptions {
 }
 
 export function useUpload(options: UseUploadOptions = {}) {
+  const { address } = useAccount();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
 
-  const getAuthHeaders = () => {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const tg = (window as any).Telegram?.WebApp;
-    if (tg?.initData) {
-      headers["x-telegram-init-data"] = tg.initData;
+  const getAuthHeaders = useCallback((isJson = true) => {
+    const headers: Record<string, string> = {};
+    if (isJson) headers["Content-Type"] = "application/json";
+    
+    if (address) {
+      headers["x-user-address"] = address.toLowerCase();
     }
     return headers;
-  };
+  }, [address]);
 
   const requestUploadUrl = useCallback(
     async (file: File): Promise<UploadResponse> => {
@@ -62,7 +65,7 @@ export function useUpload(options: UseUploadOptions = {}) {
       const response = await fetch(targetURL, {
         method: "POST", 
         body: formData,
-      
+      headers: getAuthHeaders(false)
       });
 
       if (!response.ok) {
@@ -86,7 +89,6 @@ export function useUpload(options: UseUploadOptions = {}) {
         const requestResponse = await requestUploadUrl(file);
 
         setProgress(30);
-        // Загружаем файл и получаем реальную ссылку
         const finalUrl = await uploadToCloudinaryViaServer(file, requestResponse.uploadURL, taskId);
 
         const result = {
@@ -110,53 +112,43 @@ export function useUpload(options: UseUploadOptions = {}) {
     [requestUploadUrl, uploadToCloudinaryViaServer, options]
   );
 
-  // Заглушка для Uppy, если он используется
   const getUploadParameters = useCallback(
-    async (
-      file: UppyFile<Record<string, unknown>, Record<string, unknown>>
-    ): Promise<{
-      method: "POST";
-      url: string;
-      headers?: Record<string, string>;
-      getResponseData?: (responseText: string) => any;
-    }> => {
-      const response = await fetch("/api/uploads/request-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: file.name,
-          size: file.size,
-          contentType: file.type || "application/octet-stream",
-        }),
-      });
+    async (file: UppyFile<any, any>) => {
+      const authHeaders = getAuthHeaders(false);
 
-      if (!response.ok) {
-        throw new Error("Failed to get upload URL");
-      }
+     const response = await fetch("/api/uploads/request-url", {
+      method: "POST",
+      headers: { 
+        ...getAuthHeaders(true), 
+      },
+      body: JSON.stringify({
+  name: file.name,
+  size: file.size ?? 0, 
+  contentType: file.type || "application/octet-stream",
+}),
+    });
 
+      if (!response.ok) throw new Error("Failed to get upload URL");
       const data = await response.json();
-      
+     
+
       return {
-        method: "POST", 
-        url: data.uploadURL,
-        headers: {
-         
-        },
-       
-        getResponseData: (responseText) => {
-          try {
-            const json = JSON.parse(responseText);
-            return { location: json.url || json.uploadURL }; 
-          } catch (e) {
-            return {};
-          }
-        }
-      };
-    },
-    []
-  );
+      method: "POST" as const, 
+      url: data.uploadURL, // Это наш "/api/uploads/direct"
+      headers: {
+        ...authHeaders, // ПЕРЕДАЕМ x-user-address СЮДА
+      },
+      // Не добавляй здесь 'Content-Type', Uppy сам поставит multipart/form-data
+      getResponseData: (responseText: string) => {
+        try {
+          const json = JSON.parse(responseText);
+          return { url: json.url || json.uploadURL };
+        } catch (e) { return {}; }
+      }
+    };
+  },
+  [getAuthHeaders]
+);
 
   return {
     uploadFile,

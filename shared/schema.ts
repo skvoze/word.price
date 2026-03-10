@@ -1,20 +1,21 @@
-import { pgTable, text, serial, integer, jsonb, timestamp,boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, timestamp, boolean,decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export * from "./models/chat";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  telegramId: text("telegram_id").notNull().unique(),
-  balance: integer("balance").notNull().default(0), 
+
+  address: text("address").primaryKey(),
+  balance: decimal("balance", { precision: 12, scale: 2 }).notNull().default("0.00"),
   role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), 
+  userAddress: text("user_address").notNull().references(() => users.address), 
   title: text("title").notNull(),
   description: text("description"),
   amount: integer("amount").notNull(), 
@@ -27,19 +28,40 @@ export const tasks = pgTable("tasks", {
   notified24h: boolean("notified_24h").notNull().default(false),
   notified1h: boolean("notified_1h").notNull().default(false),
 });
+
+
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userAddress: text("user_address").notNull().references(() => users.address),
   amount: integer("amount").notNull(), 
   type: text("type").notNull(), 
   status: text("status").notNull().default("completed"), 
   rejectionReason: text("rejection_reason"),
   description: text("description"),
-  metadata: jsonb("metadata").$type<{ cardNumber?: string; bankName?: string;userNote?: string;acceptedTerms?: boolean;[key: string]: any; }>(),
+  txHash: text("tx_hash").unique(), 
+  metadata: jsonb("metadata").$type<{ 
+    cardNumber?: string; 
+    bankName?: string;
+    userNote?: string;
+    acceptedTerms?: boolean;
+    [key: string]: any; 
+  }>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, balance: true, createdAt: true, role: true });
-export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, status: true, evidenceUrl: true, createdAt: true });
+
+export const insertUserSchema = createInsertSchema(users).omit({ balance: true, createdAt: true, role: true });
+export const insertTaskSchema = createInsertSchema(tasks, {
+  deadline: z.coerce.date(),
+}).omit({ 
+  id: true, 
+  status: true, 
+  evidenceUrl: true, 
+  createdAt: true, 
+  updatedAt: true,
+  notified24h: true,
+  notified1h: true,
+  rejectionReason: true,
+});
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;
@@ -48,12 +70,13 @@ export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
 export type CreateTaskRequest = InsertTask;
 export type SubmitEvidenceRequest = { evidenceUrl: string };
 export const addFundsSchema = z.object({
-  amount: z.number().min(10000, "Минимальная сумма — 100 ₽"), 
   acceptedTerms: z.boolean().refine(val => val === true, {
-    message: "Вы должны принять условия"
+    message: "You must accept the terms"
   })
 });
+
 export type AddFundsRequest = z.infer<typeof addFundsSchema>;

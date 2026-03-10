@@ -1,66 +1,137 @@
 import { useLocation } from "wouter";
-import { useUser } from "@/hooks/use-user";
+import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { parseUnits } from "viem";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
+import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { RoleToggle } from "@/components/RoleToggle";
-import { Loader2, TrendingUp, ShieldCheck, Target } from "lucide-react";
+import { Loader2, Target, TrendingUp, PlusCircle } from "lucide-react";
+import { type Task } from "@shared/schema";
+import { USDC_ADDRESS, TREASURY_ADDRESS, USDC_ABI } from "@/lib/constants";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const { address, isConnected } = useAccount();
+  const queryClient = useQueryClient();
+  
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: tasks, isLoading: isLoadingTasks } = useTasks();
 
-  // Redirect admin to verify page
-  if (!isLoadingUser && user?.role === "admin") {
-    setLocation("/verify");
-    return null;
-  }
+  const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
+  const syncDeposit = useMutation({
+    mutationFn: async (txHash: string) => {
+      const res = await fetch("/api/users/deposit", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "x-user-address": address?.toLowerCase() || "" 
+        },
+        body: JSON.stringify({ amount: 10, txHash })
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    }
+  });
+const activeTasks = (tasks as Task[])?.filter((t: Task) => 
+    ((t.status === "pending" || t.status === "failed" || t.status === 'submitted') && new Date(t.deadline) > new Date()) || 
+    (t.status === 'submitted' && new Date(t.deadline) < new Date())
+  ) || [];
 
-  if (isLoadingUser || isLoadingTasks) {
+  const completedTasks = (tasks as Task[])?.filter((t: Task) => 
+    (t.status === "completed") || (t.status === "failed" && new Date(t.deadline) < new Date())
+  ) || [];
+  // Эффект после подтверждения транзакции в блокчейне
+  if (hash && !isConfirming && !syncDeposit.isSuccess && !syncDeposit.isPending) {
+    syncDeposit.mutate(hash);
+  }
+const displayBalance = user 
+  ? (Number(user.balance) / 100).toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    }) 
+  : "0.00";
+  const handleDeposit = () => {
+    const amount = "10"; 
+    writeContract({
+      address: USDC_ADDRESS,
+      abi: USDC_ABI,
+      functionName: "transfer",
+      args: [TREASURY_ADDRESS, parseUnits(amount, 6)], 
+    });
+  };
+
+  if (isLoadingTasks || isLoadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
 
-  const activeTasks = tasks?.filter(t => ((t.status === "pending" || t.status === "failed" || t.status === 'submitted')&& new Date(t.deadline) > new Date)|| (t.status === 'submitted'&& new Date(t.deadline) < new Date)) || [];
-  const completedTasks = tasks?.filter(t => (t.status === "completed")|| (t.status==="failed"&& new Date(t.deadline)<new Date)) || [];
-
   return (
     <div className="min-h-screen pb-24 bg-background">
-      {/* Header / Wallet Summary */}
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
-        
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">Текущий Баланс</h1>
-          <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold text-foreground tracking-tight">
-              {user ? (user.balance / 100).toLocaleString('ru-RU') : "0"} ₽
-            </span>
-            <span className="text-sm font-medium text-primary">РУБ</span>
-          </div>
-          
-          <div className="mt-6 flex gap-4 text-xs font-medium text-muted-foreground">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">
+                Available Balance
+              </h1>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-foreground tracking-tight">
+                  {displayBalance}
+                </span>
+                <span className="text-sm font-bold text-[#2775CA]">USDC</span>
+              </div>
+            </div>
             
+            <div className="flex items-center gap-3"> {/* Кнопка теперь СЛЕВА */}
+              {isConnected && (
+                <button 
+                  onClick={handleDeposit}
+                  disabled={isWaitingSignature || isConfirming}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {isWaitingSignature || isConfirming ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <PlusCircle className="w-3.5 h-3.5" />
+                  )}
+                  {isConfirming ? "Confirming..." : "Deposit 10"}
+                </button>
+              )}
+
+              <ConnectButton 
+                accountStatus="avatar"
+                chainStatus="icon"
+                showBalance={false}
+              />
+            </div>
           </div>
+
+          <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">
+            Network: Base Mainnet
+          </p>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="px-4 py-6 space-y-8">
-        {/* Active Tasks Section */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-lg font-bold flex items-center gap-2">
+            <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tighter italic">
               <Target className="w-5 h-5 text-primary" />
-              Активные Задачи
+              Active Challenges
             </h2>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-              {activeTasks.length}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-black uppercase">
+              {activeTasks.length} RUNNING
             </span>
           </div>
 
@@ -69,8 +140,10 @@ export default function Home() {
               <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
                 <Target className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-foreground font-medium">Нет активных задач</p>
-              <p className="text-sm text-muted-foreground mt-1">Начните новую задачу, чтобы прекратить прокрастинацию.</p>
+              <p className="text-foreground font-bold uppercase text-sm">No active tasks</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Decentralize your discipline. Start your first challenge.
+              </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -81,10 +154,12 @@ export default function Home() {
           )}
         </section>
 
-        {/* History Section */}
         {completedTasks.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground">История</h2>
+            <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground uppercase tracking-tighter italic flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              History
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2 opacity-80 hover:opacity-100 transition-opacity">
               {completedTasks.map((task) => (
                 <TaskCard key={task.id} task={task} />

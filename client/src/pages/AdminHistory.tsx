@@ -5,26 +5,29 @@ import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
 import { RoleToggle } from "@/components/RoleToggle";
 import { Loader2, Target, History } from "lucide-react";
+import { useAccount } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit'; 
 
 export default function AdminHistory() {
   const { data: user } = useUser();
-  const { data: tasks, isLoading, error } = useQuery({
-  queryKey: ["/api/admin/tasks"],
-  queryFn: async () => {
-    const tg = (window as any).Telegram?.WebApp;
-    const res = await fetch("/api/admin/tasks", { 
-      headers: {
-        "x-telegram-init-data": tg?.initData || "" 
-      } 
-    });
-    if (!res.ok) {
-      const errData = await res.json();
-      throw new Error(errData.message || "Failed to fetch admin tasks");
-    }
-    return await res.json();
-  },
-  enabled: !!user,
-});
+  const { address } = useAccount();
+  
+  const { data: tasks, isLoading } = useQuery({
+    queryKey: [api.tasks.list.path, address], 
+    queryFn: async () => {
+      const res = await fetch(api.tasks.list.path, { 
+        headers: {
+          "x-user-address": address || ""
+        } 
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to fetch admin tasks");
+      }
+      return await res.json();
+    },
+    enabled: !!user && !!address,
+  });
 
   if (isLoading) {
     return (
@@ -34,23 +37,39 @@ export default function AdminHistory() {
     );
   }
 
-  const activeTasks = tasks?.filter((t: any) => ((t.status === "pending" || t.status === "failed" || t.status === 'submitted')&& new Date(t.deadline) > new Date)|| (t.status === 'submitted'&& new Date(t.deadline) < new Date)) || [];
-  const completedTasks = tasks?.filter((t: any)=> (t.status === "completed")|| (t.status==="failed"&& new Date(t.deadline)<new Date)) || [];
+  const activeTasks = tasks?.filter((t: any) => 
+    ((t.status === "pending" || t.status === "failed" || t.status === 'submitted') && new Date(t.deadline) > new Date()) || 
+    (t.status === 'submitted' && new Date(t.deadline) < new Date())
+  ) || [];
+
+  const completedTasks = tasks?.filter((t: any) => 
+    (t.status === "completed") || 
+    (t.status === "failed" && new Date(t.deadline) < new Date())
+  ) || [];
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
-        <div className="absolute top-6 right-6 z-20">
-          <RoleToggle />
+        {/* Кнопки управления в верхнем углу */}
+        <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+          <ConnectButton chainStatus="none" showBalance={false} />
+
         </div>
+
         <div className="relative z-10">
-          <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">Global Overview</h1>
+          <h1 className="text-sm font-medium text-muted-foreground mb-1 tracking-wider uppercase">
+            Global Overview
+          </h1>
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold text-foreground tracking-tight">System History</span>
+            <span className="text-4xl font-bold text-foreground tracking-tight">
+              System History
+            </span>
           </div>
         </div>
       </header>
 
       <main className="px-4 py-6 space-y-8">
+        {/* Секция активных задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -68,6 +87,7 @@ export default function AdminHistory() {
           </div>
         </section>
 
+        {/* Секция завершенных задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">

@@ -1,75 +1,70 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { Transaction } from "@shared/schema";
+import { useAccount } from "wagmi";
 
-const getHeaders = () => {
+const getHeaders = (address?: string) => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const tg = (window as any).Telegram?.WebApp;
-  const initData = tg?.initData; 
-  if (initData) {
-    headers["x-telegram-init-data"] = initData;
-  }
-  const tid = tg?.initDataUnsafe?.user?.id?.toString();
-  if (tid) {
-    headers["x-telegram-id"] = tid;
+  if (address) {
+    headers["x-user-address"] = address.toLowerCase();
   }
   return headers;
 };
-const getTid = () => {
-  const tg = (window as any).Telegram?.WebApp;
-  return tg?.initDataUnsafe?.user?.id?.toString();
-};
 
 export function useUser() {
-  const tid = getTid();
+  const { address, isConnected } = useAccount();
 
   return useQuery({
-    queryKey: [api.users.me.path],
+    queryKey: [api.users.me.path, address],
     queryFn: async () => {
+      if (!address) return null;
       const res = await fetch(api.users.me.path, { 
-        headers: getHeaders(), 
-        credentials: "include" 
+        headers: getHeaders(address), 
       });
-
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
-      return api.users.me.responses[200].parse(await res.json());
+      return await res.json();
     },
-    enabled: !!tid, // Ждем появления ID
+    enabled: isConnected && !!address,
     retry: false,
-    staleTime: Infinity
+    staleTime: 30000
   });
 }
 
 export function useTransactions() {
-  const tid = getTid();
+  const { address } = useAccount();
 
   return useQuery<Transaction[]>({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", address],
     queryFn: async () => {
       const res = await fetch("/api/transactions", { 
-        headers: getHeaders(),
-        credentials: "include" 
+        headers: getHeaders(address),
       });
       if (!res.ok) throw new Error("Failed to fetch transactions");
       return await res.json();
     },
-    enabled: !!tid, // ПРАВКА: тоже ждем ID, чтобы не ловить 401
+    enabled: !!address, 
     retry: false
   });
 }
-export function useAddFunds() {
+
+// ВОТ ЭТОТ ХУК НУЖНО ДОБАВИТЬ
+export function useWithdraw() {
   const queryClient = useQueryClient();
+  const { address } = useAccount();
+
   return useMutation({
-    mutationFn: async ({ amount, acceptedTerms }: { amount: number; acceptedTerms: boolean }) => {
-      const res = await fetch(api.users.addFunds.path, {
-        method: api.users.addFunds.method,
-        headers: getHeaders(),
-        body: JSON.stringify({ amount, acceptedTerms }),
-        credentials: "include",
+    mutationFn: async (data: { amount: number; description: string; metadata?: any }) => {
+      const res = await fetch("/api/users/withdraw", {
+        method: "POST",
+        headers: getHeaders(address),
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to add funds");
-      return api.users.addFunds.responses[200].parse(await res.json());
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to withdraw");
+      }
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.users.me.path] });
@@ -77,20 +72,19 @@ export function useAddFunds() {
     },
   });
 }
-export function useWithdraw() {
+
+export function useAddFunds() {
   const queryClient = useQueryClient();
+  const { address } = useAccount();
+
   return useMutation({
-    mutationFn: async (data: { amount: number; metadata: any; description: string }) => {
-      const res = await fetch("/api/users/withdraw", {
+    mutationFn: async ({ amount, txHash }: { amount: number; txHash: string }) => {
+      const res = await fetch("/api/users/funds", {
         method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-        credentials: "include",
+        headers: getHeaders(address),
+        body: JSON.stringify({ amount, txHash }),
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to withdraw");
-      }
+      if (!res.ok) throw new Error("Failed to sync deposit");
       return await res.json();
     },
     onSuccess: () => {

@@ -24,7 +24,12 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "wagmi/experimental": "wagmi",
     },
+    
+  },
+  optimizeDeps: {
+    include: ['wagmi', 'viem', '@coinbase/onchainkit','@metamask/sdk'],
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -36,8 +41,11 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
-    headers: {
+    /*headers: {
       "Content-Security-Policy": "script-src 'self' 'unsafe-eval' 'unsafe-inline'; object-src 'none';"
-    }
+    }*/
+   hmr: {
+      overlay: false, 
+    },
   },
 });

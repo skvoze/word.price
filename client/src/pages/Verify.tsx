@@ -7,15 +7,19 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
+import { useAccount } from 'wagmi';
+import { useQueryClient } from "@tanstack/react-query";
+
 
 export default function Verify() {
   const { toast } = useToast();
+  const { address } = useAccount();
   const { data: allSubmissions, isLoading } = useSubmittedTasks();
   const completeTask = useCompleteTask();
   const failTask = useFailTask();
+ const queryClient = useQueryClient();
 
-  // Filter only tasks that are still in "submitted" status
-  const pendingSubmissions = allSubmissions?.filter(t => t.status === "submitted") || [];
+  const pendingSubmissions = allSubmissions?.filter((t: any) => t.status === "submitted") || [];
 
   if (isLoading) {
     return (
@@ -26,20 +30,31 @@ export default function Verify() {
   }
 
   const handleApprove = async (taskId: number) => {
-    try {
-      await completeTask.mutateAsync(taskId);
+   
+  try {
+    await completeTask.mutateAsync(taskId);
+    toast({
+      title: "Approved!",
+      description: "Task marked as completed.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+  } catch (error: any) {
+    if (error.message?.includes("Already approved")) {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
       toast({
-        title: "Approved!",
-        description: "Task marked as completed. Funds returned to user.",
+        title: "Already processed",
+        description: "This task was already approved in a previous attempt.",
       });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to approve",
-        variant: "destructive",
-      });
+      return;
     }
-  };
+
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to approve",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleReject = async (taskId: number) => {
   const reason = window.prompt("Укажите причину отклонения (её увидит пользователь):");
@@ -48,6 +63,7 @@ export default function Verify() {
   try {
 
     await failTask.mutateAsync({ id: taskId, reason }); 
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
     toast({
       title: "Rejected",
       description: "Причина сохранена, задача отклонена.",
@@ -83,7 +99,7 @@ export default function Verify() {
           </div>
         ) : (
           <div className="space-y-4">
-            {(pendingSubmissions || []).map((task, idx) => (
+            {(pendingSubmissions || []).map((task:any, idx:any) => (
               <motion.div
                 key={task.id}
                 initial={{ opacity: 0, y: 20 }}

@@ -76,20 +76,34 @@ export function ObjectUploader({
       restrictions: { maxNumberOfFiles, maxFileSize },
       autoProceed: true,
     }).use(XHRUpload, {
-      // Типизируем как any, чтобы избежать глубокого конфликта Record vs Meta
-      endpoint: async (fileOrFiles: any) => {
-        const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
-        const params = await onGetUploadParameters(file);
-        return params.url;
-      },
       method: 'POST',
       formData: true,
       fieldName: 'file',
+      endpoint: 'placeholder', 
     })
   );
 
   useEffect(() => {
-    // Используем 'any' для результата, чтобы прокинуть его в onComplete
+    uppy.addPreProcessor(async (fileIds) => {
+      for (const fileId of fileIds) {
+        const file = uppy.getFile(fileId);
+        try {
+          const params = await onGetUploadParameters(file as any);
+          
+          uppy.setFileState(fileId, {
+            xhrUpload: {
+              endpoint: params.url,
+              method: params.method,
+              headers: params.headers, 
+            }
+          });
+        } catch (err) {
+          console.error("Failed to prepare upload params:", err);
+          uppy.info("Ошибка подготовки загрузки", "error", 5000);
+          throw err;
+        }
+      }
+    });
     const handleComplete = (result: any) => {
       setIsUploading(false);
       onComplete?.(result);
@@ -103,18 +117,20 @@ export function ObjectUploader({
     uppy.on('error', handleError);
 
     return () => {
+      uppy.removePreProcessor(async () => {});
       if ((uppy as any).close) {
         (uppy as any).close();
       }
     };
-  }, [uppy, onComplete]);
+  }, [uppy, onComplete, onGetUploadParameters]);
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click(); // Эмулируем нажатие на скрытый инпут
+    fileInputRef.current?.click(); 
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    uppy.cancelAll();
     files.forEach((file) => {
       try {
         uppy.addFile({
@@ -149,7 +165,7 @@ export function ObjectUploader({
         {isUploading ? (
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
         ) : null}
-        {isUploading ? "Загрузка..." : children}
+        {isUploading ? "Loading..." : children}
       </Button>
     </div>
   );
