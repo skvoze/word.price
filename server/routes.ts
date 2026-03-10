@@ -17,13 +17,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
-
-  if (!userAddress) {
-    return res.status(401).json({ message: "Wallet address required" });
+  if (!userAddress || userAddress === 'undefined' || userAddress.length < 20) {
+    return res.status(401).json({ message: "Valid wallet address required" });
   }
-
   const lowerAddress = userAddress.toLowerCase();
-
   try {
     let user = await storage.getUserByAddress(lowerAddress);
     
@@ -38,6 +35,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
         }
       }
     }
+
     if (!user) {
       return res.status(404).json({ message: "User could not be created" });
     }
@@ -45,10 +43,11 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     (req as any).user = user;
     next();
   } catch (error: any) {
-    console.error("[Auth Error]:", error.message);
+    console.error(`[Database Error for ${lowerAddress}]:`, error.message);
+    
     if (!res.headersSent) {
       res.status(503).json({ 
-        message: "Database connection busy. Please refresh the page." 
+        message: "Service temporarily unavailable. Please try again in 5 seconds." 
       });
     }
   }
