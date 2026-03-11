@@ -16,7 +16,8 @@ cloudinary.config({
 const upload = multer({ storage: multer.memoryStorage() });
 
 const userCache = new Map<string, { user: any, expires: number }>();
-const CACHE_TTL = 60 * 1000; // Кэшируем юзера на 1 минуту
+const CACHE_TTL = 60 * 1000;
+
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
@@ -26,9 +27,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 
   const lowerAddress = userAddress.toLowerCase();
-
-  // 2. ПРОВЕРЯЕМ КЭШ ПЕРЕД ТЕМ КАК ИДТИ В БД
   const cachedData = userCache.get(lowerAddress);
+
   if (cachedData && cachedData.expires > Date.now()) {
     (req as any).user = cachedData.user;
     return next();
@@ -38,9 +38,11 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     let user = await storage.getUserByAddress(lowerAddress);
     
     if (!user) {
+      // Пытаемся создать, если нет
       try {
         user = await storage.createUser({ address: lowerAddress });
       } catch (createErr: any) {
+        // Если кто-то создал параллельно (23505 - unique violation)
         if (createErr.code === '23505') {
           user = await storage.getUserByAddress(lowerAddress);
         } else {
@@ -49,37 +51,29 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       }
     }
 
-    if (!user) return res.status(404).json({ message: "User profile not found" });
+    if (!user) throw new Error("User not found after creation attempt");
 
-    // 3. СОХРАНЯЕМ В КЭШ
-    userCache.set(lowerAddress, { 
-      user, 
-      expires: Date.now() + CACHE_TTL 
-    });
-
+    userCache.set(lowerAddress, { user, expires: Date.now() + CACHE_TTL });
     (req as any).user = user;
     next();
+
   } catch (error: any) {
     console.error(`[Auth DB Error]: ${error.message}`);
-    // Если база упала, но у нас есть СТАРЫЙ кэш (пусть даже просроченный), используем его
     if (cachedData) {
       (req as any).user = cachedData.user;
       return next();
     }
-    res.status(429).json({ message: "Server is very busy, try again in 5s" });
+    res.status(503).json({ message: "Database busy" });
   }
 }
 
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      // Вместо того чтобы тянуть ВСЕ задачи, 
-      // лучше иметь метод getActiveTasks() в хранилище, но пока просто добавим паузы
       const allTasks = await storage.getTasks();
       const now = new Date();
 
       for (const task of allTasks) {
-        // Пропускаем завершенные сразу, чтобы не нагружать логику
         if (task.status === "completed" || task.status === "failed" && !task.evidenceUrl) continue;
 
         try {

@@ -301,8 +301,6 @@ export default function TaskDetails() {
         </div>
       </main>
 
-      <BottomNav />
-
       {/* Success Dialog */}
       <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <DialogContent className="max-w-sm">
