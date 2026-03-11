@@ -138,6 +138,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { amount, txHash } = req.body; 
     try {
       const updatedUser = await storage.updateUserBalance(req.user.address, parseFloat(amount));
+      userCache.delete(req.user.address.toLowerCase());
       await storage.createTransaction({
         userAddress: req.user.address,
         amount: Math.round(parseFloat(amount) * 100),
@@ -158,18 +159,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const taskData = insertTaskSchema.parse(req.body);
-      // УБРАНО /100: работаем в целых числах (копейках) как в базе
       const cost = taskData.amount; 
 
       if (user.balance < cost) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
-      // Пытаемся списать баланс
       await storage.updateUserBalance(user.address, -cost);
       moneyWasDeducted = true;
-
-      // Создаем задачу
+      userCache.delete(user.address.toLowerCase());
       const task = await storage.createTask({ ...taskData, userAddress: user.address });
       res.status(201).json(task);
 
@@ -277,7 +275,7 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
       storage.updateTaskStatus(id, "completed")
     ]);
     await storage.updateUserBalance(workerAddress, task.amount); 
-    
+    userCache.delete(workerAddress);
     res.json({ success: true });
   } catch (err) {
     console.error("Approve failed:", err);

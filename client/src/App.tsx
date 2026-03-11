@@ -44,8 +44,6 @@ function Router() {
       </div>
     );
   }
-
-  // 2. Если кошелек НЕ подключен — показываем ТОЛЬКО лендинг
   if (!isConnected) {
     return (
       <Switch>
@@ -60,8 +58,7 @@ function Router() {
     );
   }
 
-  // 3. Если кошелек ПОДКЛЮЧЕН, но база данных выдала ошибку (тот самый 503)
-  // ВАЖНО: Мы остаемся на этом экране и НЕ рендерим Switch ниже, пока не будет юзера
+
   if (isError && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center">
