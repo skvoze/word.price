@@ -16,7 +16,6 @@ export async function apiRequest(
     "Content-Type": "application/json",
   };
 
-  // Берем только адрес кошелька
   const userAddress = localStorage.getItem("userAddress");
   if (userAddress) {
     headers["x-user-address"] = userAddress;
@@ -67,11 +66,9 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 30000, 
-      retry: false, 
-    },
-    mutations: {
-      retry: false, 
+      retry: false,
+      staleTime: 60000, 
+      gcTime: 300000, 
     },
   },
 });

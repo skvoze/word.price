@@ -15,19 +15,29 @@ export function useUser() {
   const { address, isConnected } = useAccount();
 
   return useQuery({
-    queryKey: [api.users.me.path, address],
+
+    queryKey: [api.users.me.path, address?.toLowerCase()],
     queryFn: async () => {
       if (!address) return null;
+      
       const res = await fetch(api.users.me.path, { 
         headers: getHeaders(address), 
       });
+
       if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch user");
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Server Error");
+      }
+      
       return await res.json();
     },
     enabled: isConnected && !!address,
     retry: false,
-    staleTime: 30000
+    staleTime: 120000, 
+    gcTime: 300000, 
+    refetchOnWindowFocus: false, 
   });
 }
 
