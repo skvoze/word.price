@@ -15,13 +15,24 @@ cloudinary.config({
 });
 const upload = multer({ storage: multer.memoryStorage() });
 
+const userCache = new Map<string, { user: any, expires: number }>();
+const CACHE_TTL = 60 * 1000; // Кэшируем юзера на 1 минуту
+
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
+  
   if (!userAddress || userAddress === 'undefined' || userAddress === 'null' || userAddress.length < 20) {
     return res.status(401).json({ message: "Wallet connection required" });
   }
 
   const lowerAddress = userAddress.toLowerCase();
+
+  // 2. ПРОВЕРЯЕМ КЭШ ПЕРЕД ТЕМ КАК ИДТИ В БД
+  const cachedData = userCache.get(lowerAddress);
+  if (cachedData && cachedData.expires > Date.now()) {
+    (req as any).user = cachedData.user;
+    return next();
+  }
 
   try {
     let user = await storage.getUserByAddress(lowerAddress);
@@ -40,21 +51,37 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 
     if (!user) return res.status(404).json({ message: "User profile not found" });
 
+    // 3. СОХРАНЯЕМ В КЭШ
+    userCache.set(lowerAddress, { 
+      user, 
+      expires: Date.now() + CACHE_TTL 
+    });
+
     (req as any).user = user;
     next();
   } catch (error: any) {
     console.error(`[Auth DB Error]: ${error.message}`);
-    res.status(429).json({ message: "Database is temporarily busy" });
+    // Если база упала, но у нас есть СТАРЫЙ кэш (пусть даже просроченный), используем его
+    if (cachedData) {
+      (req as any).user = cachedData.user;
+      return next();
+    }
+    res.status(429).json({ message: "Server is very busy, try again in 5s" });
   }
 }
 
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
+      // Вместо того чтобы тянуть ВСЕ задачи, 
+      // лучше иметь метод getActiveTasks() в хранилище, но пока просто добавим паузы
       const allTasks = await storage.getTasks();
       const now = new Date();
 
       for (const task of allTasks) {
+        // Пропускаем завершенные сразу, чтобы не нагружать логику
+        if (task.status === "completed" || task.status === "failed" && !task.evidenceUrl) continue;
+
         try {
           if (task.status === "pending" && now > new Date(task.deadline)) {
             await storage.updateTaskStatus(task.id, "failed", "Deadline expired");
@@ -75,7 +102,7 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Global Error]:", err);
     }
-  }, 30 * 60 * 1000); 
+  }, 10 * 60 * 1000); // Раз в 10 минут достаточно
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
