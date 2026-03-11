@@ -48,7 +48,6 @@ export function useTransactions() {
   });
 }
 
-// ВОТ ЭТОТ ХУК НУЖНО ДОБАВИТЬ
 export function useWithdraw() {
   const queryClient = useQueryClient();
   const { address } = useAccount();

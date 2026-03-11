@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { enUS } from "date-fns/locale"; 
 
-type TaskWithUser = Task & { userTelegramId?: string };
+type TaskWithUser = Task & { userAddress?: string };
 
 const statusConfig = {
   pending: {
@@ -43,7 +43,7 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
   const isRejected = task.status === "failed" && !isExpired;
   const configKey = (task.status as keyof typeof statusConfig) || "pending";
   const status = statusConfig[configKey];
-  
+  const formatAddress = (addr: string) => `${addr.slice(0, 4)}...${addr.slice(-4)}`;
   const currentStatusLabel = isRejected ? "Rejected" : status.label;
   const StatusIcon = status.icon;
 
@@ -67,14 +67,14 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
           </div>
         </div>
 
-        {isAdmin && task.userTelegramId && (
-          <div className="flex items-center gap-1.5 mb-3 bg-secondary/50 w-fit px-2 py-0.5 rounded-lg border border-border/50">
-            <User className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] font-bold text-muted-foreground tracking-tighter">
-              ID: {String(task.userTelegramId)}
-            </span>
-          </div>
-        )}
+        {isAdmin && task.userAddress && (
+  <div className="flex items-center gap-1.5 mb-3 bg-secondary/50 w-fit px-2 py-0.5 rounded-lg border border-border/50">
+    <User className="w-3 h-3 text-muted-foreground" />
+    <span className="text-[10px] font-bold text-muted-foreground tracking-tighter">
+      Wallet: {formatAddress(task.userAddress)}
+    </span>
+  </div>
+)}
 
         <h3 className="text-lg font-bold text-foreground mb-1 line-clamp-1">
           {task.title}

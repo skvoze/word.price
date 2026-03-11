@@ -134,11 +134,11 @@ export function useUpload(options: UseUploadOptions = {}) {
 
       return {
       method: "POST" as const, 
-      url: data.uploadURL, // Это наш "/api/uploads/direct"
+      url: data.uploadURL,
       headers: {
-        ...authHeaders, // ПЕРЕДАЕМ x-user-address СЮДА
+        ...authHeaders, 
       },
-      // Не добавляй здесь 'Content-Type', Uppy сам поставит multipart/form-data
+
       getResponseData: (responseText: string) => {
         try {
           const json = JSON.parse(responseText);

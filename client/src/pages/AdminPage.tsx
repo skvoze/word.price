@@ -13,16 +13,17 @@ import { useUser } from "@/hooks/use-user";
 export default function AdminPage() {
   const { toast } = useToast();
   const { data: user } = useUser();
+    const formatAddress = (addr: string) => `${addr.slice(0, 4)}...${addr.slice(-4)}`;
   const { data: withdrawals, isLoading, error } = useQuery<Transaction[]>({
   queryKey: ["/api/admin/withdrawals"],
   queryFn: async () => {
-    const tg = (window as any).Telegram?.WebApp;
+    const userAddress = localStorage.getItem("userAddress");
     const res = await fetch("/api/admin/withdrawals", {
       headers: {
-        "x-telegram-init-data": tg?.initData || "" 
+        "x-user-address": userAddress || "" 
       }
     });
-    if (!res.ok) throw new Error("Ошибка доступа");
+    if (!res.ok) throw new Error("Access denied (Admin only)");
     return res.json();
   },
   enabled: !!user?.role
@@ -118,7 +119,7 @@ if (error) {
 
     {/* 2. Пользователь (теперь берем из JOIN) */}
     <TableCell className="font-medium text-white">
-      {tx.telegramId || `ID: ${tx.userId}`}
+      {tx.userAddress ? formatAddress(tx.userAddress) : `ID: ${tx.userId}`}
     </TableCell>
 
     {/* 3. Сумма */}
@@ -203,7 +204,7 @@ if (error) {
             </TableCell>
             <TableCell className="text-zinc-300">
               <span className="text-[10px] text-zinc-600 block">ID: {tx.userId}</span>
-              {tx.telegramId || "User"}
+              {tx.userAddress || "User"}
             </TableCell>
             <TableCell className="font-bold">
               {Math.abs(tx.amount / 100).toLocaleString()} ₽
