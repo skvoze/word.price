@@ -34,12 +34,10 @@ const queryClient = new QueryClient();
 
 function Router() {
   const { isConnected, isConnecting } = useAccount();
-  const { data: user, isLoading: isUserLoading } = useUser();
+  const { data: user, isLoading: isUserLoading, isError } = useUser();
   
-  const isLoading = isConnecting || (isConnected && isUserLoading);
-  const isAdmin = user?.role === "admin";
-
-  if (isLoading) {
+  // 1. Состояние первичной загрузки (когда wagmi еще думает)
+  if (isConnecting) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
@@ -47,8 +45,8 @@ function Router() {
     );
   }
 
-  // Если кошелек не подключен или юзер не найден в БД — показываем Landing и доп. страницы
-  if (!isConnected || !user) {
+  // 2. Если кошелек НЕ подключен — показываем ТОЛЬКО лендинг
+  if (!isConnected) {
     return (
       <Switch>
         <Route path="/" component={Landing} />
@@ -57,17 +55,47 @@ function Router() {
         <Route path="/refund" component={Refund} />
         <Route path="/success" component={SuccessPage} />
         <Route path="/failed" component={FailPage} />
-        <Route>
-          <Redirect to="/" />
-        </Route>
+        <Route><Redirect to="/" /></Route>
       </Switch>
     );
   }
 
+  // 3. Если кошелек ПОДКЛЮЧЕН, но база данных выдала ошибку (тот самый 503)
+  // ВАЖНО: Мы остаемся на этом экране и НЕ рендерим Switch ниже, пока не будет юзера
+  if (isError && !user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center">
+        <div className="bg-zinc-900 border border-white/10 p-8 rounded-2xl max-w-sm">
+          <h1 className="text-xl font-bold mb-4 text-red-500">Connection Busy</h1>
+          <p className="text-zinc-400 text-sm mb-6">
+            Database is under heavy load. We'll try to connect you in a moment.
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Если кошелек ПОДКЛЮЧЕН, но данные юзера еще в пути
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  // 5. ТОЛЬКО ТЕПЕРЬ, когда у нас есть и коннект, и данные юзера, рисуем основной интерфейс
+  const isAdmin = user?.role === "admin";
+
   return (
     <AnimatePresence mode="wait">
       <Switch>
-        {/* Главная: админа кидает на Verify, юзера на Home */}
         <Route path="/">
           {isAdmin ? <Verify /> : <Home />}
         </Route>
@@ -81,7 +109,6 @@ function Router() {
         <Route path="/privacy" component={Privacy} />
         <Route path="/refund" component={Refund} />
         
-        {/* Admin Routes */}
         <Route path="/verify" component={Verify} />
         <Route path="/admin/history" component={AdminHistory} />
         <Route path="/admin">
@@ -97,7 +124,6 @@ function Router() {
 export default function App() {
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
         <OnchainKitProvider chain={base}>
           <RainbowKitProvider 
             theme={darkTheme({ 
@@ -115,7 +141,6 @@ export default function App() {
             </TooltipProvider>
           </RainbowKitProvider>
         </OnchainKitProvider>
-      </QueryClientProvider>
     </WagmiProvider>
   );
 }
