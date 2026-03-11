@@ -44,7 +44,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     next();
   } catch (error: any) {
     console.error(`[Auth DB Error]: ${error.message}`);
-    res.status(503).json({ message: "Database is temporarily busy" });
+    res.status(429).json({ message: "Database is temporarily busy" });
   }
 }
 
