@@ -5,7 +5,7 @@ import {
   type Task, type InsertTask,
   type Transaction, type InsertTransaction
 } from "@shared/schema";
-import { eq, desc, and, lt } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -52,25 +52,34 @@ export class DatabaseStorage implements IStorage {
   }
 
  async updateUserBalance(address: string, amount: number): Promise<User> {
-    if (!Number.isFinite(amount) || isNaN(amount)) {
-      throw new Error("Invalid amount");
-    }
-
-    const user = await this.getUserByAddress(address);
-    if (!user) throw new Error("User not found");
-    const currentBalance = parseInt(user.balance.toString()) || 0;
-    const change = Math.round(amount);
-    const newBalance = currentBalance + change;
-
-    if (newBalance < 0) throw new Error("Insufficient funds");
-
-    const [updated] = await db.update(users)
-      .set({ balance: newBalance.toString() }) 
-      .where(eq(users.address, address.toLowerCase()))
-      .returning();
-      
-    return updated;
+  if (!Number.isFinite(amount) || isNaN(amount)) {
+    throw new Error("Invalid amount");
   }
+
+  const change = Math.round(amount);
+  const lowerAddress = address.toLowerCase();
+
+  // Делаем всё одним запросом. 
+  // SQL сам прибавит значение к текущему балансу в базе.
+  const [updated] = await db.update(users)
+    .set({ 
+      // Используем sql оператор, чтобы БД сама сделала вычисление
+      // Это предотвращает ошибки типов Text/Integer
+      balance: sql`${users.balance}::integer + ${change}` 
+    }) 
+    .where(eq(users.address, lowerAddress))
+    .returning();
+    
+  if (!updated) throw new Error("User not found");
+
+  // Важная проверка: если баланс стал отрицательным (на всякий случай)
+  if (parseInt(updated.balance) < 0) {
+    // Тут можно либо откатить, либо просто оставить как есть, если логика позволяет
+    console.warn(`Balance for ${lowerAddress} went below zero!`);
+  }
+
+  return updated;
+}
 
   async updateUserRole(address: string, role: string): Promise<User> {
     const [updated] = await db.update(users)

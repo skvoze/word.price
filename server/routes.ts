@@ -17,10 +17,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
-  if (!userAddress || userAddress === 'undefined' || userAddress.length < 20) {
-    return res.status(401).json({ message: "Valid wallet address required" });
+  if (!userAddress || userAddress === 'undefined' || userAddress === 'null' || userAddress.length < 20) {
+    return res.status(401).json({ message: "Wallet connection required" });
   }
+
   const lowerAddress = userAddress.toLowerCase();
+
   try {
     let user = await storage.getUserByAddress(lowerAddress);
     
@@ -36,20 +38,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       }
     }
 
-    if (!user) {
-      return res.status(404).json({ message: "User could not be created" });
-    }
+    if (!user) return res.status(404).json({ message: "User profile not found" });
 
     (req as any).user = user;
     next();
   } catch (error: any) {
-    console.error(`[Database Error for ${lowerAddress}]:`, error.message);
-    
-    if (!res.headersSent) {
-      res.status(503).json({ 
-        message: "Service temporarily unavailable. Please try again in 5 seconds." 
-      });
-    }
+    console.error(`[Auth DB Error]: ${error.message}`);
+    res.status(503).json({ message: "Database is temporarily busy" });
   }
 }
 
@@ -60,35 +55,27 @@ function startDeadlineChecker() {
       const now = new Date();
 
       for (const task of allTasks) {
-        if (task.status === "pending") {
-          const deadline = new Date(task.deadline);
-          if (now > deadline) {
+        try {
+          if (task.status === "pending" && now > new Date(task.deadline)) {
             await storage.updateTaskStatus(task.id, "failed", "Deadline expired");
-            console.log(`[Deadline] Task #${task.id} marked as failed`);
           }
-        }
-        
-        if (task.status === "submitted") {
-          const submissionDate = new Date(task.updatedAt || task.createdAt);
-          const hoursPassed = (now.getTime() - submissionDate.getTime()) / (1000 * 3600);
-
-          if (hoursPassed >= 24) {
-            await storage.updateUserBalance(task.userAddress, task.amount);
-            await storage.createTransaction({
-              userAddress: task.userAddress,
-              amount: task.amount,
-              type: "refund",
-              status: "completed",
-              description: `Auto-approval: ${task.title}`
-            });
-            await storage.updateTaskStatus(task.id, "completed");
+          
+          if (task.status === "submitted") {
+            const submissionDate = new Date(task.updatedAt || task.createdAt);
+            const hoursPassed = (now.getTime() - submissionDate.getTime()) / (1000 * 3600);
+            if (hoursPassed >= 24) {
+               await storage.updateUserBalance(task.userAddress, task.amount);
+               await storage.updateTaskStatus(task.id, "completed");
+            }
           }
+        } catch (taskErr) {
+          console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
         }
       }
     } catch (err) {
-      console.error("[Deadline Checker Error]:", err);
+      console.error("[Deadline Checker Global Error]:", err);
     }
-  }, 10 * 60 * 1000);
+  }, 30 * 60 * 1000); 
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {

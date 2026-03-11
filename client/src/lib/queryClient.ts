@@ -6,42 +6,22 @@ async function throwIfResNotOk(res: Response) {
     throw new Error(`${res.status}: ${text}`);
   }
 }
-const getTelegramId = () => {
-  const tg = (window as any).Telegram?.WebApp;
-  console.log("Checking TG ID...");
-
-  if (tg?.initDataUnsafe?.user?.id) {
-    const realId = tg.initDataUnsafe.user.id.toString();
-    console.log("SUCCESS: Found ID", realId);
-    return realId;
-  }
-  
-
-  const fallbackId = localStorage.getItem("testTelegramId");
-  console.log("FALLBACK: Using localStorage ID", fallbackId);
-  
-  return fallbackId || "";
-};
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const tg = (window as any).Telegram?.WebApp;
-  const initData = tg?.initData;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  if (initData) {
-    headers["x-telegram-init-data"] = initData;
+
+  // Берем только адрес кошелька
+  const userAddress = localStorage.getItem("userAddress");
+  if (userAddress) {
+    headers["x-user-address"] = userAddress;
   }
-  
-  const telegramId = getTelegramId();
-  if (telegramId) {
-    headers["x-telegram-id"] = telegramId;
-  }
-  
+
   const res = await fetch(url, {
     method,
     headers,
@@ -60,26 +40,18 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const headers: Record<string, string> = {};
     
-  
-    const tg = (window as any).Telegram?.WebApp;
-const initData = tg?.initData;
-
-if (initData) {
-  headers["x-telegram-init-data"] = initData;
-}
-const tid = tg?.initDataUnsafe?.user?.id?.toString() || localStorage.getItem("testTelegramId");
-if (tid) {
-  headers["x-telegram-id"] = tid;
-}
+    const userAddress = localStorage.getItem("userAddress");
+    if (userAddress) {
+      headers["x-user-address"] = userAddress;
+    }
     
-   
     const path = queryKey.join("/");
-const url = path.startsWith("api") ? `/${path}` : `/api/${path}`;
+    const url = path.startsWith("api") ? `/${path}` : `/api/${path}`;
 
-const res = await fetch(url + "?t=" + Date.now(), {
-  headers,
-  credentials: "include",
-});
+    const res = await fetch(url + "?t=" + Date.now(), {
+      headers,
+      credentials: "include",
+    });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
@@ -95,7 +67,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5000,
+      staleTime: 30000, 
       retry: false, 
     },
     mutations: {
