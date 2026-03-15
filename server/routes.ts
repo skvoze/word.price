@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "../server/storage";
 import { api } from "@shared/routes";
 import { insertTaskSchema } from "@shared/schema";
-import { z } from "zod";
+import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockchain";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -14,35 +14,25 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 const upload = multer({ storage: multer.memoryStorage() });
-
 const userCache = new Map<string, { user: any, expires: number }>();
 const CACHE_TTL = 60 * 1000;
-
-
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
-  
   if (!userAddress || userAddress === 'undefined' || userAddress === 'null' || userAddress.length < 20) {
     return res.status(401).json({ message: "Wallet connection required" });
   }
-
   const lowerAddress = userAddress.toLowerCase();
   const cachedData = userCache.get(lowerAddress);
-
   if (cachedData && cachedData.expires > Date.now()) {
     (req as any).user = cachedData.user;
     return next();
   }
-
   try {
     let user = await storage.getUserByAddress(lowerAddress);
-    
     if (!user) {
-      // Пытаемся создать, если нет
       try {
         user = await storage.createUser({ address: lowerAddress });
       } catch (createErr: any) {
-        // Если кто-то создал параллельно (23505 - unique violation)
         if (createErr.code === '23505') {
           user = await storage.getUserByAddress(lowerAddress);
         } else {
@@ -153,7 +143,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // --- TASKS CORE ---
- app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
+app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
     let moneyWasDeducted = false;
     const user = req.user;
 
@@ -164,6 +154,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (user.balance < cost) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
+      await lockUserFunds(user.address, cost);
 
       await storage.updateUserBalance(user.address, -cost);
       moneyWasDeducted = true;
@@ -173,18 +164,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     } catch (err: any) {
       console.error("[Create Task Error]:", err.message);
-      if (moneyWasDeducted) {
-        try {
-          const taskData = req.body;
-          await storage.updateUserBalance(user.address, taskData.amount);
-        } catch (restoreErr) {
-          console.error("CRITICAL: Failed to restore balance!", restoreErr);
-        }
-      }
-
-      res.status(503).json({ message: "Database is busy. Please try again." });
+      res.status(503).json({ message: "Blockchain transaction failed or database busy." });
     }
-  });
+});
 
  app.get(api.tasks.list.path, authMiddleware, async (req: any, res) => {
     try {
@@ -254,9 +236,8 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
     res.status(503).json({ message: "Database busy. Please try again." });
   }
 });
- app.post("/api/admin/tasks/:id/approve", authMiddleware, async (req: any, res) => {
+app.post("/api/admin/tasks/:id/approve", authMiddleware, async (req: any, res) => {
   if (req.user.role !== "admin") return res.sendStatus(403);
-  
   const id = Number(req.params.id);
   
   try {
@@ -264,6 +245,8 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
     if (!task) return res.status(404).json({ message: "Task not found" });
     if (task.status === "completed") return res.json({ success: true });
     const workerAddress = task.userAddress.toLowerCase();
+    await unlockUserFunds(workerAddress, task.amount);
+
     await Promise.all([
       storage.createTransaction({
         userAddress: workerAddress,
@@ -279,7 +262,7 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Approve failed:", err);
-    res.status(503).json({ message: "Database connection lost. Try again." });
+    res.status(503).json({ message: "Blockchain error or database connection lost." });
   }
 });
 

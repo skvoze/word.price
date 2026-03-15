@@ -10,9 +10,9 @@ import { Loader2, Target, TrendingUp, PlusCircle } from "lucide-react";
 import { type Task } from "@shared/schema";
 import { USDC_ADDRESS, TREASURY_ADDRESS, USDC_ABI } from "@/lib/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { DepositDialog } from "@/components/DepositDialog";
 
 export default function Home() {
-  const [, setLocation] = useLocation();
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
   
@@ -45,7 +45,6 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
   const completedTasks = (tasks as Task[])?.filter((t: Task) => 
     (t.status === "completed") || (t.status === "failed" && new Date(t.deadline) < new Date())
   ) || [];
-  // Эффект после подтверждения транзакции в блокчейне
   if (hash && !isConfirming && !syncDeposit.isSuccess && !syncDeposit.isPending) {
     syncDeposit.mutate(hash);
   }
@@ -94,18 +93,7 @@ const displayBalance = user
             
             <div className="flex items-center gap-3"> {/* Кнопка теперь СЛЕВА */}
               {isConnected && (
-                <button 
-                  onClick={handleDeposit}
-                  disabled={isWaitingSignature || isConfirming}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {isWaitingSignature || isConfirming ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <PlusCircle className="w-3.5 h-3.5" />
-                  )}
-                  {isConfirming ? "Confirming..." : "Deposit 10"}
-                </button>
+                <DepositDialog />
               )}
 
               <ConnectButton 
