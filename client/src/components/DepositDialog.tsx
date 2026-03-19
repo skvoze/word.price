@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState} from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { parseUnits } from "viem";
 import { VAULT_ADDRESS, USDC_ADDRESS, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
@@ -8,22 +8,22 @@ import { Loader2, PlusCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function DepositDialog() {
- const { address } = useAccount();
+  const { address } = useAccount();
   const queryClient = useQueryClient();
+  
+  // Состояния
   const [step, setStep] = useState<'approve' | 'deposit' | 'success'>('approve');
-  const [amount] = useState("10"); 
+  const [amount, setAmount] = useState("10"); // Сумма по умолчанию
+  const [isOpen, setIsOpen] = useState(false); // Управление открытием диалога
 
-  // Разделяем управление транзакциями
   const approve = useWriteContract();
   const deposit = useWriteContract();
 
-  // Ждем подтверждения Approve
   const { isSuccess: approveConfirmed, isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({ 
     hash: approve.data 
   });
 
-  // Ждем подтверждения Deposit
-  const { isSuccess: depositConfirmed, isLoading: isConfirmingDeposit, data: depositReceipt } = useWaitForTransactionReceipt({ 
+  const { isSuccess: depositConfirmed, isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({ 
     hash: deposit.data 
   });
 
@@ -35,7 +35,6 @@ export function DepositDialog() {
           "Content-Type": "application/json",
           "x-user-address": address?.toLowerCase() || "" 
         },
-        // Важно: передаем число как есть ("10"), бэкенд сам умножит на 100 для базы
         body: JSON.stringify({ amount, txHash })
       });
       return res.json();
@@ -45,6 +44,19 @@ export function DepositDialog() {
       setStep('success');
     }
   });
+
+  // Сброс состояния при закрытии/открытии
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Даем небольшую задержку, чтобы пользователь не видел "прыжок" интерфейса при закрытии
+      setTimeout(() => {
+        setStep('approve');
+        approve.reset();
+        deposit.reset();
+      }, 300);
+    }
+  };
 
   const handleApprove = () => {
     approve.writeContract({
@@ -64,32 +76,45 @@ export function DepositDialog() {
     });
   };
 
-  // Эффект: переход от Approve к Deposit
-  if (approveConfirmed && step === 'approve') {
-    setStep('deposit');
-  }
-  
-  // Эффект: синхронизация с БД после успешного депозита
+  if (approveConfirmed && step === 'approve') setStep('deposit');
   if (depositConfirmed && step === 'deposit' && !syncDeposit.isPending && !syncDeposit.isSuccess) {
     syncDeposit.mutate(deposit.data!);
   }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="rounded-full bg-primary font-bold uppercase text-xs tracking-widest px-6">
           <PlusCircle className="w-4 h-4 mr-2" />
-          Deposit {amount} USDC
+          Deposit
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter">
+          <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter text-white">
             Refill Balance
           </DialogTitle>
         </DialogHeader>
 
         <div className="py-6 space-y-6">
+          {/* Инпут суммы (скрываем, если транзакция уже пошла) */}
+          {step === 'approve' && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">Amount (USDC)</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-colors"
+                  placeholder="0.00"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA]">USDC</span>
+              </div>
+            </div>
+          )}
+
+          {/* Индикатор шагов */}
           <div className="flex justify-between items-center px-2">
             <Step circle="1" label="Approve" active={step === 'approve'} done={step !== 'approve'} />
             <ArrowRight className="text-muted-foreground w-4 h-4" />
@@ -98,48 +123,28 @@ export function DepositDialog() {
             <Step circle="3" label="Finish" active={step === 'success'} done={step === 'success'} />
           </div>
 
-          <div className="bg-black/20 p-6 rounded-2xl border border-border/50 text-center">
-             <span className="text-4xl font-black text-white">{amount}</span>
-             <span className="ml-2 text-sm font-bold text-[#2775CA]">USDC</span>
-          </div>
-
+          {/* Кнопки управления */}
           {step === 'approve' && (
-  <Button 
-    onClick={handleApprove} 
-    className="w-full h-12 font-bold uppercase tracking-wider" 
-    disabled={approve.isPending || isConfirmingApprove}
-  >
-    {(approve.isPending || isConfirmingApprove) ? (
-      <>
-        <Loader2 className="animate-spin mr-2 w-5 h-5" />
-        {isConfirmingApprove ? "Confirming on Base..." : "Check Wallet..."}
-      </>
-    ) : (
-      "Step 1: Allow 10 USDC"
-    )}
-  </Button>
-)}
-{step === 'deposit' && (
-  <Button 
-    onClick={handleDeposit} 
-    className="w-full h-12 font-bold bg-green-600 hover:bg-green-700 uppercase tracking-wider" 
-    disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}
-  >
-    {(deposit.isPending || isConfirmingDeposit || syncDeposit.isPending) ? (
-      <>
-        <Loader2 className="animate-spin mr-2 w-5 h-5" />
-        {syncDeposit.isPending ? "Updating Balance..." : "Processing Deposit..."}
-      </>
-    ) : (
-      "Step 2: Confirm Deposit"
-    )}
-  </Button>
-)}
+            <Button onClick={handleApprove} className="w-full h-12 font-bold" disabled={approve.isPending || isConfirmingApprove || !amount || parseFloat(amount) <= 0}>
+              {isConfirmingApprove ? <Loader2 className="animate-spin mr-2" /> : null}
+              {isConfirmingApprove ? "Confirming..." : "Step 1: Approve USDC"}
+            </Button>
+          )}
+
+          {step === 'deposit' && (
+            <Button onClick={handleDeposit} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700 text-white" disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}>
+              {(isConfirmingDeposit || syncDeposit.isPending) ? <Loader2 className="animate-spin mr-2" /> : null}
+              {syncDeposit.isPending ? "Syncing with DB..." : "Step 2: Confirm Deposit"}
+            </Button>
+          )}
 
           {step === 'success' && (
-            <div className="text-center py-2 text-green-500 animate-in zoom-in-95 duration-300">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
-              <p className="font-bold uppercase italic">Funds added successfully!</p>
+            <div className="space-y-4">
+              <div className="text-center py-2 text-green-400 animate-in zoom-in-95 duration-300">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-2" />
+                <p className="font-bold uppercase italic">{amount} USDC Added!</p>
+              </div>
+              <Button onClick={() => setIsOpen(false)} className="w-full variant-outline">Close</Button>
             </div>
           )}
         </div>
