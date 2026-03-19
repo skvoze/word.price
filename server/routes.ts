@@ -125,22 +125,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.post("/api/users/deposit", authMiddleware, async (req: any, res) => {
-    const { amount, txHash } = req.body; 
-    try {
-      const updatedUser = await storage.updateUserBalance(req.user.address, parseFloat(amount));
-      userCache.delete(req.user.address.toLowerCase());
-      await storage.createTransaction({
-        userAddress: req.user.address,
-        amount: Math.round(parseFloat(amount) * 100),
-        type: "deposit",
-        status: "completed",
-        description: `Deposit via tx: ${txHash.slice(0, 6)}...`
-      });
-      res.json(updatedUser);
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
-  });
+  const { amount, txHash } = req.body; 
+  try {
+    const amountInCents = Math.round(parseFloat(amount) * 100);
+
+    const updatedUser = await storage.updateUserBalance(req.user.address, amountInCents);
+    userCache.delete(req.user.address.toLowerCase());
+
+    await storage.createTransaction({
+      userAddress: req.user.address,
+      amount: amountInCents,
+      type: "deposit",
+      status: "completed",
+      description: `Deposit via tx: ${txHash.slice(0, 6)}...`
+    });
+
+    res.json(updatedUser);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
   // --- TASKS CORE ---
 app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
