@@ -64,13 +64,17 @@ export function DepositDialog() {
   };
 
   const handleDeposit = () => {
-    deposit.writeContract({
-      address: VAULT_ADDRESS,
-      abi: VAULT_ABI,
-      functionName: "deposit",
-      args: [parseUnits(amount, 6)],
-    });
-  };
+  if (!amount || isNaN(parseFloat(amount))) {
+    console.error("Invalid amount");
+    return;
+  }
+  deposit.writeContract({
+    address: VAULT_ADDRESS,
+    abi: VAULT_ABI,
+    functionName: "deposit",
+    args: [parseUnits(amount.toString().replace(',', '.'), 6)], 
+  });
+};
 
   if (approveConfirmed && step === 'approve') setStep('deposit');
   if (depositConfirmed && step === 'deposit' && !syncDeposit.isPending && !syncDeposit.isSuccess) {
@@ -123,14 +127,14 @@ export function DepositDialog() {
           {step === 'approve' && (
             <Button onClick={handleApprove} className="w-full h-12 font-bold" disabled={approve.isPending || isConfirmingApprove || !amount || parseFloat(amount) <= 0}>
               {isConfirmingApprove ? <Loader2 className="animate-spin mr-2" /> : null}
-              {isConfirmingApprove ? "Confirming..." : "Step 1: Approve USDC"}
+              {isConfirmingApprove ? "Confirming..." : "Approve USDC"}
             </Button>
           )}
 
           {step === 'deposit' && (
             <Button onClick={handleDeposit} className="w-full h-12 font-bold bg-green-600 hover:bg-green-700 text-white" disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}>
               {(isConfirmingDeposit || syncDeposit.isPending) ? <Loader2 className="animate-spin mr-2" /> : null}
-              {syncDeposit.isPending ? "Syncing with DB..." : "Step 2: Confirm Deposit"}
+              {syncDeposit.isPending ? "Syncing with DB..." : "Confirm Deposit"}
             </Button>
           )}
 
