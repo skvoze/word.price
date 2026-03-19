@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { config } from "@/lib/web3Config";
-import { base } from 'wagmi/chains';
+import { baseSepolia } from 'viem/chains';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
@@ -121,7 +121,7 @@ function Router() {
 export default function App() {
   return (
     <WagmiProvider config={config}>
-        <OnchainKitProvider chain={base}>
+        <OnchainKitProvider chain={baseSepolia as any}>
           <RainbowKitProvider 
             theme={darkTheme({ 
               accentColor: '#ffffff', 

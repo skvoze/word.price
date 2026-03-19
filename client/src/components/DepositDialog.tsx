@@ -10,11 +10,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export function DepositDialog() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
-  
-  // Состояния
   const [step, setStep] = useState<'approve' | 'deposit' | 'success'>('approve');
-  const [amount, setAmount] = useState("10"); // Сумма по умолчанию
-  const [isOpen, setIsOpen] = useState(false); // Управление открытием диалога
+  const [amount, setAmount] = useState("10"); 
+  const [isOpen, setIsOpen] = useState(false); 
 
   const approve = useWriteContract();
   const deposit = useWriteContract();
@@ -45,11 +43,9 @@ export function DepositDialog() {
     }
   });
 
-  // Сброс состояния при закрытии/открытии
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      // Даем небольшую задержку, чтобы пользователь не видел "прыжок" интерфейса при закрытии
       setTimeout(() => {
         setStep('approve');
         approve.reset();
@@ -106,7 +102,7 @@ export function DepositDialog() {
                   type="number" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-colors"
+                  className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-colors"
                   placeholder="0.00"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA]">USDC</span>

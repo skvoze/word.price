@@ -145,7 +145,7 @@ export default function CreateTask() {
                           type="number"
                           step="1"
                           {...field}
-                          className="h-12 text-lg bg-card border-border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all outline-none"
+                          className="no-spinner h-12 text-lg bg-card border-border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all outline-none"
                           placeholder="0"
                         />
                         <span className="absolute right-4 top-3 font-bold text-primary">USDC</span>
