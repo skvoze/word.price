@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { parseUnits } from "viem";
-import { VAULT_ADDRESS, USDC_ADDRESS, VAULT_ABI, USDC_ABI } from "shared/contracts";
+import { VAULT_ADDRESS, USDC_ADDRESS, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, PlusCircle, CheckCircle2, ArrowRight } from "lucide-react";
@@ -11,7 +11,7 @@ export function DepositDialog() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'approve' | 'deposit' | 'success'>('approve');
-  const [amount] = useState("10"); // Фиксированная сумма или добавь Input
+  const [amount] = useState("10"); 
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: txSuccess } = useWaitForTransactionReceipt({ hash });
@@ -52,7 +52,6 @@ export function DepositDialog() {
     });
   };
 
-  // Автоматический переход по шагам
   if (txSuccess && step === 'approve' && !isWaitingSignature) {
      setStep('deposit');
   }
