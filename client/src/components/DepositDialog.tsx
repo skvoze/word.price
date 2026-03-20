@@ -63,8 +63,10 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
     if (!open) {
       setTimeout(() => {
         setStep('approve');
+        setAmount("");
         approve.reset();
         deposit.reset();
+        syncDeposit.reset();
       }, 300);
     }
   };
@@ -102,10 +104,7 @@ useEffect(() => {
   }
 }, [depositConfirmed, step, syncDeposit, deposit.data]);
 
-  if (approveConfirmed && step === 'approve') setStep('deposit');
-  if (depositConfirmed && step === 'deposit' && !syncDeposit.isPending && !syncDeposit.isSuccess) {
-    syncDeposit.mutate(deposit.data!);
-  }
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>

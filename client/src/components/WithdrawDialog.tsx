@@ -32,14 +32,14 @@ const vaultBalance = vaultBalanceRaw
 
 
   const syncWithdraw = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (txHash: string) => {
       const res = await fetch("/api/users/withdraw", { 
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
           "x-user-address": address?.toLowerCase() || "" 
         },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ amount,txHash })
       });
       return res.json();
     },
@@ -62,9 +62,6 @@ const vaultBalance = vaultBalanceRaw
     });
   };
 
-  if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
-    syncWithdraw.mutate();
-  }
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -78,7 +75,9 @@ const vaultBalance = vaultBalanceRaw
   };
   useEffect(() => {
   if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
-    syncWithdraw.mutate();
+    if (withdraw.data) {
+      syncWithdraw.mutate(withdraw.data);
+    }
   }
 }, [withdraw.isSuccess, isConfirming, syncWithdraw, isSuccess]);
 

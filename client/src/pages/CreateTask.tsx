@@ -5,13 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTaskSchema } from "@shared/schema";
 import { useCreateTask } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
-// Оставляем только нужные Web3 импорты
-import { useAccount } from "wagmi";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { BottomNav } from "@/components/BottomNav";
+import { useReadContract, useAccount } from "wagmi";
+import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Calendar as CalendarIcon, Wallet } from "lucide-react";
 import { z } from "zod";
@@ -49,6 +48,16 @@ export default function CreateTask() {
       userAddress: address || "", 
     },
   });
+  const { data: vaultBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
+    address: VAULT_ADDRESS,
+    abi: VAULT_ABI,
+    functionName: 'availableBalance',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    }
+  });
+  const blockchainBalance = vaultBalanceRaw ? Number(vaultBalanceRaw) / 1_000_000 : 0;
 
   useEffect(() => {
     if (address) {
@@ -60,20 +69,21 @@ export default function CreateTask() {
     try {
       if (!address) throw new Error("Please connect your wallet first");
 
-      const taskAmount = Math.round(Number(data.amount) * 100);
-      const userBalance = Number(user?.balance || 0);
-
-      if (userBalance < taskAmount) {
-        throw new Error(`Insufficient balance. You have ${userBalance} USDC, but need ${taskAmount} USDC`);
+      const taskAmountUnits = Number(data.amount);
+      
+      if (blockchainBalance < taskAmountUnits) {
+        throw new Error(`Insufficient balance in Vault. Real balance: ${blockchainBalance} USDC`);
       }
 
+      const taskAmountForDb = Math.round(taskAmountUnits * 100); 
+
       await createTask.mutateAsync({
-      title: data.title.trim(),
-      description: data.description?.trim() || "",
-      amount: taskAmount, 
-      deadline: data.deadline, 
-      userAddress: address.toLowerCase(),
-    });
+        title: data.title.trim(),
+        description: data.description?.trim() || "",
+        amount: taskAmountForDb, 
+        deadline: data.deadline, 
+        userAddress: address.toLowerCase(),
+      });
       
       toast({
         title: "Challenge Created!",
@@ -152,7 +162,7 @@ export default function CreateTask() {
                       </div>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider flex items-center gap-1">
                         <Wallet className="w-3 h-3" />
-                        Available: {user?.balance / 100 || "0.00"} USDC
+                        Available: {isBalanceLoading ? "..." : blockchainBalance.toFixed(2)} USDC
                       </p>
                     </div>
                   </FormControl>
