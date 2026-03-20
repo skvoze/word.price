@@ -28,13 +28,15 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (vaultBalanceRaw !== undefined) {
-      console.log("💰 [Smart Contract] Available Balance:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
-    }
-    if (user) {
-      console.log("📊 [Database] Total Balance:", (Number(user.balance) / 100).toFixed(2), "USDC");
-    }
-  }, [vaultBalanceRaw, user]);
+  console.log("🔄 Log Check: wallet connected?", isConnected);
+  if (vaultBalanceRaw !== undefined) {
+    console.log("💰 [Smart Contract] Raw Value:", vaultBalanceRaw.toString());
+    console.log("💰 [Smart Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
+  }
+  if (user) {
+    console.log("📊 [Database] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
+  }
+}, [vaultBalanceRaw, user, isConnected]);
   
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
@@ -67,17 +69,14 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     syncDeposit.mutate(hash);
   }
   const lockedAmount = activeTasks.reduce((acc, task) => acc + Number(task.amount), 0);
-  const withdrawableBalance = user ? (Number(user.balance) - lockedAmount) : 0;
-  const displayWithdrawable = (withdrawableBalance / 100).toLocaleString('en-US', { 
+const contractBalance = vaultBalanceRaw 
+  ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
+  : (user ? Number(user.balance) / 100 : 0);
+
+const displayBalance = contractBalance.toLocaleString('en-US', { 
   minimumFractionDigits: 2, 
   maximumFractionDigits: 2 
 });
-const displayBalance = user 
-  ? (Number(user.balance) / 100).toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    }) 
-  : "0.00";
   
   const handleDeposit = () => {
     const amount = "10"; 

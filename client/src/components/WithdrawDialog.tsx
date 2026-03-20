@@ -22,8 +22,10 @@ export function WithdrawDialog() {
     args: address ? [address] : undefined,
   });
 
-  const vaultBalance = vaultBalanceRaw ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) : 0;
-
+const vaultBalance = vaultBalanceRaw 
+  ? Number(vaultBalanceRaw) / 1_000_000 
+  : 0;
+  
   const withdraw = useWriteContract();
 
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ 
