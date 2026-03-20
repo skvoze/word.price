@@ -143,7 +143,7 @@ const { data: usdcBalanceRaw } = useReadContract({
 
             {/* Сообщение об ошибке, если баланса не хватает */}
             {parseFloat(amount) > usdcBalance && (
-              <p className="text-[10px] text-red-500 font-bold uppercase italic ml-1 animate-pulse">
+              <p className="text-[10px] text-red-500 font-bold uppercase italic text-center ml-1 animate-pulse">
                 Insufficient USDC on wallet
               </p>
             )}
