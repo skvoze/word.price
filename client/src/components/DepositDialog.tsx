@@ -141,7 +141,6 @@ const { data: usdcBalanceRaw } = useReadContract({
               </span>
             </div>
 
-            {/* Сообщение об ошибке, если баланса не хватает */}
             {parseFloat(amount) > usdcBalance && (
               <p className="text-[10px] text-red-500 font-bold uppercase italic text-center ml-1 animate-pulse">
                 Insufficient USDC on wallet
@@ -150,7 +149,6 @@ const { data: usdcBalanceRaw } = useReadContract({
           </div>
         )}
 
-        {/* Индикатор шагов */}
         <div className="flex justify-between items-center px-4 py-2 bg-white/5 rounded-2xl border border-white/5">
           <Step circle="1" label="Approve" active={step === 'approve'} done={step !== 'approve'} />
           <ArrowRight className="text-muted-foreground/30 w-4 h-4" />

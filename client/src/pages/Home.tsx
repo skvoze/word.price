@@ -6,11 +6,12 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { Loader2, Target, TrendingUp, PlusCircle } from "lucide-react";
+import { Loader2, Target, TrendingUp, ArrowUpRight, PlusCircle } from "lucide-react";
 import { type Task } from "@shared/schema";
 import { USDC_ADDRESS, TREASURY_ADDRESS, USDC_ABI } from "@/lib/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
+import { WithdrawDialog } from "@/components/WithdrawDialog";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -48,12 +49,19 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
   if (hash && !isConfirming && !syncDeposit.isSuccess && !syncDeposit.isPending) {
     syncDeposit.mutate(hash);
   }
+  const lockedAmount = activeTasks.reduce((acc, task) => acc + Number(task.amount), 0);
+  const withdrawableBalance = user ? (Number(user.balance) - lockedAmount) : 0;
+  const displayWithdrawable = (withdrawableBalance / 100).toLocaleString('en-US', { 
+  minimumFractionDigits: 2, 
+  maximumFractionDigits: 2 
+});
 const displayBalance = user 
   ? (Number(user.balance) / 100).toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     }) 
   : "0.00";
+  
   const handleDeposit = () => {
     const amount = "10"; 
     writeContract({
@@ -90,11 +98,23 @@ const displayBalance = user
                 <span className="text-sm font-bold text-[#2775CA]">USDC</span>
               </div>
             </div>
+            {lockedAmount > 0 && (
+  <p className="text-[10px] text-muted-foreground mt-1">
+    <span className="text-orange-500 font-bold">{ (lockedAmount/100).toFixed(2) } USDC</span> LOCKED IN CHALLENGES
+  </p>
+)}
             
-            <div className="flex items-center gap-3"> {/* Кнопка теперь СЛЕВА */}
+            <div className="flex items-center gap-3">
               {isConnected && (
-                <DepositDialog />
-              )}
+        <>
+          <div className="flex-1 md:flex-none">
+            <DepositDialog />
+          </div>
+          <div className="flex-1 md:flex-none">
+            <WithdrawDialog />
+          </div>
+        </>
+      )}
 
               <ConnectButton 
                 accountStatus="avatar"
