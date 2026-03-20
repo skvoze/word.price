@@ -26,17 +26,16 @@ export default function Home() {
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
   });
-
   useEffect(() => {
-  console.log("🔄 Log Check: wallet connected?", isConnected);
-  if (vaultBalanceRaw !== undefined) {
-    console.log("💰 [Smart Contract] Raw Value:", vaultBalanceRaw.toString());
-    console.log("💰 [Smart Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
-  }
-  if (user) {
-    console.log("📊 [Database] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
-  }
-}, [vaultBalanceRaw, user, isConnected]);
+    if (isConnected) {
+      if (vaultBalanceRaw !== undefined) {
+        console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
+      }
+      if (user) {
+        console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
+      }
+    }
+  }, [vaultBalanceRaw, user, isConnected]);
   
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
@@ -69,24 +68,16 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     syncDeposit.mutate(hash);
   }
   const lockedAmount = activeTasks.reduce((acc, task) => acc + Number(task.amount), 0);
-const contractBalance = vaultBalanceRaw 
-  ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
-  : (user ? Number(user.balance) / 100 : 0);
+  const contractBalance = vaultBalanceRaw 
+    ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
+    : (user ? Number(user.balance) / 100 : 0);
 
-const displayBalance = contractBalance.toLocaleString('en-US', { 
-  minimumFractionDigits: 2, 
-  maximumFractionDigits: 2 
-});
+  const displayBalance = contractBalance.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
   
-  const handleDeposit = () => {
-    const amount = "10"; 
-    writeContract({
-      address: USDC_ADDRESS,
-      abi: USDC_ABI,
-      functionName: "transfer",
-      args: [TREASURY_ADDRESS, parseUnits(amount, 6)], 
-    });
-  };
+  
 
   if (isLoadingTasks || isLoadingUser) {
     return (
@@ -114,10 +105,13 @@ const displayBalance = contractBalance.toLocaleString('en-US', {
                 <span className="text-sm font-bold text-[#2775CA]">USDC</span>
               </div>
             {lockedAmount > 0 && (
-  <p className="text-[10px] text-muted-foreground mt-1">
-    <span className="text-orange-500 font-bold">{ (lockedAmount/100).toFixed(2) } USDC</span> LOCKED IN CHALLENGES
-  </p>
-)}
+                <div className="mt-2 flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md w-fit">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  <p className="text-[10px] text-orange-200 font-bold uppercase tracking-wider">
+                    {(lockedAmount/100).toFixed(2)} USDC Locked
+                  </p>
+                </div>
+              )}
 </div>
             
             
