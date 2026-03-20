@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState,useEffect} from "react";
 import { VAULT_ADDRESS, USDC_ADDRESS, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,9 +11,9 @@ export function DepositDialog() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'approve' | 'deposit' | 'success'>('approve');
-  const [amount, setAmount] = useState("0"); 
+  const [amount, setAmount] = useState(""); 
   const [isOpen, setIsOpen] = useState(false); 
-const { data: usdcBalanceRaw } = useReadContract({
+const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: 'balanceOf',
@@ -90,6 +90,17 @@ const { data: usdcBalanceRaw } = useReadContract({
     args: [parseUnits(amount.toString().replace(',', '.'), 6)], 
   });
 };
+useEffect(() => {
+  if (approveConfirmed && step === 'approve') {
+    refetchUSDC(); 
+    setStep('deposit');
+  }
+}, [approveConfirmed]);
+useEffect(() => {
+  if (depositConfirmed && step === 'deposit' && !syncDeposit.isPending && !syncDeposit.isSuccess) {
+    syncDeposit.mutate(deposit.data!);
+  }
+}, [depositConfirmed, step, syncDeposit, deposit.data]);
 
   if (approveConfirmed && step === 'approve') setStep('deposit');
   if (depositConfirmed && step === 'deposit' && !syncDeposit.isPending && !syncDeposit.isSuccess) {
@@ -132,7 +143,17 @@ const { data: usdcBalanceRaw } = useReadContract({
               <input 
                 type="number" 
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
+                          setAmount(value.substring(1));
+                        } else {
+                          setAmount(value);
+                        }
+                      }}
+                    onFocus={(e) => {
+                        if (amount === "0") setAmount("");
+                    }}
                 className={`no-spinner w-full bg-black/40 border ${!isAmountValid && amount !== "0" ? 'border-red-500/50' : 'border-border/50'} rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner`}
                 placeholder="0.00"
               />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,11 +10,9 @@ import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
 export function WithdrawDialog() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
-  const [amount, setAmount] = useState("0");
+  const [amount, setAmount] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // 1. Получаем баланс пользователя ВНУТРИ контракта Vault
   const { data: vaultBalanceRaw, refetch: refetchVaultBalance } = useReadContract({
     address: VAULT_ADDRESS,
     abi: VAULT_ABI,
@@ -25,17 +23,17 @@ export function WithdrawDialog() {
 const vaultBalance = vaultBalanceRaw 
   ? Number(vaultBalanceRaw) / 1_000_000 
   : 0;
-  
+
   const withdraw = useWriteContract();
 
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ 
     hash: withdraw.data 
   });
 
-  // 2. Синхронизация с бэкендом (чтобы баланс в БД обновился сразу)
+
   const syncWithdraw = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/users/withdraw", { // Убедись, что этот роут есть на бэкенде
+      const res = await fetch("/api/users/withdraw", { 
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -47,8 +45,9 @@ const vaultBalance = vaultBalanceRaw
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      setIsSuccess(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       refetchVaultBalance();
+      setIsSuccess(true);
     }
   });
 
@@ -63,7 +62,6 @@ const vaultBalance = vaultBalanceRaw
     });
   };
 
-  // Следим за завершением транзакции в блокчейне
   if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
     syncWithdraw.mutate();
   }
@@ -74,10 +72,15 @@ const vaultBalance = vaultBalanceRaw
       setTimeout(() => {
         setIsSuccess(false);
         withdraw.reset();
-        setAmount("0");
+        setAmount("");
       }, 300);
     }
   };
+  useEffect(() => {
+  if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
+    syncWithdraw.mutate();
+  }
+}, [withdraw.isSuccess, isConfirming, syncWithdraw, isSuccess]);
 
   const isInvalid = !amount || parseFloat(amount) <= 0 || parseFloat(amount) > vaultBalance;
 
@@ -115,7 +118,17 @@ const vaultBalance = vaultBalanceRaw
                   <input 
                     type="number"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
+                          setAmount(value.substring(1));
+                        } else {
+                          setAmount(value);
+                        }
+                      }}
+                    onFocus={(e) => {
+                        if (amount === "0") setAmount("");
+                    }}
                     className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all"
                   />
                 </div>
