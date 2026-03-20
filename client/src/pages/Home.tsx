@@ -1,6 +1,6 @@
-import { useLocation } from "wouter";
-import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits } from "viem";
+import { useEffect } from "react";
+import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { parseUnits, formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
@@ -12,13 +12,30 @@ import { USDC_ADDRESS, TREASURY_ADDRESS, USDC_ABI } from "@/lib/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
+import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
+
 
 export default function Home() {
   const { address, isConnected } = useAccount();
   const queryClient = useQueryClient();
-  
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: tasks, isLoading: isLoadingTasks } = useTasks();
+  const { data: vaultBalanceRaw } = useReadContract({
+    address: VAULT_ADDRESS,
+    abi: VAULT_ABI,
+    functionName: 'availableBalance',
+    args: address ? [address] : undefined,
+  });
+
+  useEffect(() => {
+    if (vaultBalanceRaw !== undefined) {
+      console.log("💰 [Smart Contract] Available Balance:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
+    }
+    if (user) {
+      console.log("📊 [Database] Total Balance:", (Number(user.balance) / 100).toFixed(2), "USDC");
+    }
+  }, [vaultBalanceRaw, user]);
+  
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash });
@@ -97,12 +114,13 @@ const displayBalance = user
                 </span>
                 <span className="text-sm font-bold text-[#2775CA]">USDC</span>
               </div>
-            </div>
             {lockedAmount > 0 && (
   <p className="text-[10px] text-muted-foreground mt-1">
     <span className="text-orange-500 font-bold">{ (lockedAmount/100).toFixed(2) } USDC</span> LOCKED IN CHALLENGES
   </p>
 )}
+</div>
+            
             
             <div className="flex items-center gap-3">
               {isConnected && (

@@ -146,6 +146,44 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   }
 });
 
+app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
+    const { amount } = req.body;
+    const user = req.user;
+
+    try {
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      const amountInCents = Math.round(parseFloat(amount) * 100);
+      const tasks = await storage.getTasksByUser(user.address);
+      const activeTasks = tasks.filter(t => 
+        (t.status === "pending" || t.status === "submitted" || t.status === "failed") && 
+        new Date(t.deadline) > new Date()
+      );
+      
+      const totalLocked = activeTasks.reduce((sum, t) => sum + Number(t.amount), 0);
+      if (user.balance - totalLocked < amountInCents) {
+        return res.status(400).json({ 
+          message: "Insufficient withdrawable balance. Some funds are locked in active challenges." 
+        });
+      }
+      const updatedUser = await storage.updateUserBalance(user.address, -amountInCents);
+      userCache.delete(user.address.toLowerCase());
+      await storage.createTransaction({
+        userAddress: user.address,
+        amount: amountInCents,
+        type: "withdraw",
+        status: "completed",
+        description: `Withdrawal to wallet: ${amount} USDC`
+      });
+
+      res.json(updatedUser);
+    } catch (err: any) {
+      console.error("[Withdraw Error]:", err.message);
+      res.status(500).json({ message: "Failed to process withdrawal in database" });
+    }
+  });
   // --- TASKS CORE ---
 app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
     let moneyWasDeducted = false;
