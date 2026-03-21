@@ -134,10 +134,6 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
               />
             </div>
           </div>
-
-          <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold">
-            Network: Base Mainnet
-          </p>
         </div>
       </header>
 

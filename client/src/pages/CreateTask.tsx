@@ -25,9 +25,12 @@ const formSchema = insertTaskSchema.extend({
   description: z.string().max(500, "Max 500 characters").optional().or(z.literal('')),
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Enter valid USDC amount"), 
 deadline: z.coerce.date({
-    required_error: "Deadline is required",
-    invalid_type_error: "That's not a valid date",
-  }),});
+  required_error: "Deadline is required",
+  invalid_type_error: "That's not a valid date",
+}).refine((date) => {
+  return date > new Date();
+}, "Deadline must be in the future")
+  ,});
 
 export default function CreateTask() {
   const [, setLocation] = useLocation();
@@ -44,7 +47,7 @@ export default function CreateTask() {
     defaultValues: {
       title: "",
       description: "",
-      amount: "1",
+      amount: "",
       userAddress: address || "", 
     },
   });
@@ -98,6 +101,26 @@ export default function CreateTask() {
       });
     }
   }
+  const getValidTimeForDate = (date: Date) => {
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  if (isToday) {
+    const currentHour = now.getHours();
+    const [selectedH, selectedM] = selectedTime.split(':').map(Number);
+    
+    // Если выбранное время уже в прошлом или "впритык" (текущий час или раньше)
+    if (selectedH <= currentHour) {
+      const nextValidHour = Math.min(currentHour + 1, 23);
+      const newTime = `${nextValidHour.toString().padStart(2, '0')}:00`;
+      setSelectedTime(newTime);
+      return { h: nextValidHour, m: 0, timeStr: newTime };
+    }
+  }
+  
+  const [h, m] = selectedTime.split(':').map(Number);
+  return { h, m, timeStr: selectedTime };
+};
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -198,13 +221,13 @@ export default function CreateTask() {
                         selected={field.value}
                         locale={enUS}
                         onSelect={(date) => {
-                          if (date) {
-                            const newDate = new Date(date);
-                            const timeParts = selectedTime?.split(':') || ["23", "00"];
-                            newDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
-                            field.onChange(newDate);
-                          }
-                        }}
+                        if (date) {
+                          const newDate = new Date(date);
+                          const { h, m } = getValidTimeForDate(newDate);
+                          newDate.setHours(h, m, 0, 0);
+                          field.onChange(newDate);
+                        }
+                      }}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         modifiersStyles={{
                           selected: { 
@@ -222,20 +245,29 @@ export default function CreateTask() {
                         <select 
                           value={selectedTime.split(':')[0]} 
                           onChange={(e) => {
-                            const h = e.target.value;
-                            const m = selectedTime.split(':')[1];
-                            setSelectedTime(`${h}:${m}`);
-                            if (field.value) {
-                              const d = new Date(field.value);
-                              d.setHours(parseInt(h));
-                              field.onChange(d);
-                            }
-                          }}
+                          const h = e.target.value;
+                          const m = selectedTime.split(':')[1];
+                          const now = new Date();
+                          const isToday = field.value && new Date(field.value).toDateString() === now.toDateString();
+                          if (isToday && parseInt(h) < now.getHours()) return; 
+                          setSelectedTime(`${h}:${m}`);
+                          if (field.value) {
+                            const d = new Date(field.value);
+                            d.setHours(parseInt(h));
+                            field.onChange(d);
+                          }
+                        }}
                           className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold outline-none focus:border-primary transition-all appearance-none"
                         >
                           {Array.from({ length: 24 }).map((_, i) => {
                             const val = i.toString().padStart(2, '0');
-                            return <option key={val} value={val}>{val}</option>;
+                            const isToday = field.value && new Date(field.value).toDateString() === new Date().toDateString();
+                            const isPastHour = isToday && i < new Date().getHours();                                             
+                            return (
+                              <option key={val} value={val} disabled={isPastHour}>
+                                {val}
+                              </option>
+                            );
                           })}
                         </select>
                         <span className="text-xl font-bold">:</span>
