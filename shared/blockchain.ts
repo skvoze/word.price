@@ -34,6 +34,21 @@ export async function lockUserFunds(userAddress: string, amountInCents: number) 
   return await publicClient.waitForTransactionReceipt({ hash });
 }
 
+export async function getVaultBalance(userAddress: string): Promise<number> {
+  try {
+    const balanceRaw = await publicClient.readContract({
+      address: VAULT_ADDRESS as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'availableBalance',
+      args: [userAddress as `0x${string}`],
+    }) as bigint;
+    return Number(balanceRaw) / 1_000_000;
+  } catch (error) {
+    console.error(`[Blockchain Read Error] for ${userAddress}:`, error);
+    throw error;
+  }
+}
+
 export async function unlockUserFunds(userAddress: string, amountInCents: number) {
   const { request } = await publicClient.simulateContract({
     address: VAULT_ADDRESS,

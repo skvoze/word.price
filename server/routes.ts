@@ -6,6 +6,7 @@ import { insertTaskSchema } from "@shared/schema";
 import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockchain";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { getVaultBalance } from "../shared/blockchain";
 
 
 cloudinary.config({
@@ -64,29 +65,90 @@ function startDeadlineChecker() {
       const now = new Date();
 
       for (const task of allTasks) {
-        if (task.status === "completed" || task.status === "failed" && !task.evidenceUrl) continue;
+        if (task.status === "completed") continue;
+
+        const deadlineDate = new Date(task.deadline);
+        const isExpired = now > deadlineDate;
 
         try {
-          if (task.status === "pending" && now > new Date(task.deadline)) {
-            await storage.updateTaskStatus(task.id, "failed", "Deadline expired");
+          if ((task.status === "pending" || task.status === "failed") && isExpired) {
+            const alreadySlashed = task.status === "failed" && 
+                                   task.updatedAt && 
+                                   new Date(task.updatedAt) > deadlineDate;
+            if (alreadySlashed) continue;
+            console.log(`[Deadline] Slashing funds for task #${task.id}`);
+            const receipt = await slashUserFunds(task.userAddress, task.amount);
+            await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
+            
+            await storage.createTransaction({
+              userAddress: task.userAddress,
+              amount: task.amount,
+              type: "slash", 
+              status: "completed",
+              description: `Deadline expired: ${task.title}`,
+              txHash: receipt.transactionHash
+            });
+            
+            userCache.delete(task.userAddress.toLowerCase());
           }
           
           if (task.status === "submitted") {
             const submissionDate = new Date(task.updatedAt || task.createdAt);
             const hoursPassed = (now.getTime() - submissionDate.getTime()) / (1000 * 3600);
             if (hoursPassed >= 24) {
+              console.log(`[Deadline] Auto-approving task #${task.id}`);
+              const receipt = await unlockUserFunds(task.userAddress, task.amount);
+              await unlockUserFunds(task.userAddress, task.amount);
                await storage.updateUserBalance(task.userAddress, task.amount);
                await storage.updateTaskStatus(task.id, "completed");
+               await storage.createTransaction({
+                userAddress: task.userAddress,
+                amount: task.amount,
+                type: "refund",
+                status: "completed",
+                description: `Auto-approved (no admin review): ${task.title}`,
+                txHash: receipt.transactionHash
+              });
+
+              userCache.delete(task.userAddress.toLowerCase());
             }
           }
         } catch (taskErr) {
-          console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
+          console.error(`[Deadline Task #${task.id} Blockchain/DB Error]:`, taskErr);
         }
       }
     } catch (err) {
       console.error("[Deadline Checker Global Error]:", err);
     }
-  }, 10 * 60 * 1000); // Раз в 10 минут достаточно
+  }, 10 * 60 * 1000);
+}
+async function sendTelegramNotification(telegramId: string, message: string) {
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN || !telegramId) return;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramId,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (e) {
+    console.error("[TG Notification Error]:", e);
+  }
+}
+async function notifyAdmins(message: string) {
+  const MY_TELEGRAM_ID = "5014441551"; 
+  
+  try {
+    await sendTelegramNotification(MY_TELEGRAM_ID, message);
+    console.log(`[Notification] Sent to admin ${MY_TELEGRAM_ID}`);
+  } catch (e) {
+    console.error("[Notify Admin Error]:", e);
+  }
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
@@ -116,8 +178,27 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // --- USER & TRANSACTIONS ---
   app.get(api.users.me.path, authMiddleware, async (req: any, res) => {
-    res.json(req.user);
-  });
+  const user = req.user;
+  const lowerAddress = user.address.toLowerCase();
+
+  try {
+    const realBalanceUnits = await getVaultBalance(lowerAddress);
+    const realBalanceInCents = Math.round(realBalanceUnits * 100);
+    if (user.balance !== realBalanceInCents) {
+      console.log(`[Sync] Drift detected for ${lowerAddress}. DB: ${user.balance}, Chain: ${realBalanceInCents}. Fixing...`);
+      const diff = realBalanceInCents - user.balance;
+      const updatedUser = await storage.updateUserBalance(lowerAddress, diff);
+      userCache.delete(lowerAddress);
+      
+      return res.json(updatedUser);
+    }
+    res.json(user);
+    
+  } catch (error) {
+    console.error("[Sync Skip] Blockchain unreachable, using DB fallback");
+    res.json(user);
+  }
+});
 
   app.get("/api/transactions", authMiddleware, async (req: any, res) => {
     const history = await storage.getTransactionsByAddress(req.user.address);
@@ -186,28 +267,36 @@ app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
   });
   // --- TASKS CORE ---
 app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
-    let moneyWasDeducted = false;
-    const user = req.user;
+  const user = req.user;
 
-    try {
-      const taskData = insertTaskSchema.parse(req.body);
-      const cost = taskData.amount; 
+  try {
+    const taskData = insertTaskSchema.parse(req.body);
+    const cost = taskData.amount; 
 
-      if (user.balance < cost) {
-        return res.status(400).json({ message: "Insufficient balance" });
-      }
-      await lockUserFunds(user.address, cost);
-
-      await storage.updateUserBalance(user.address, -cost);
-      moneyWasDeducted = true;
-      userCache.delete(user.address.toLowerCase());
-      const task = await storage.createTask({ ...taskData, userAddress: user.address });
-      res.status(201).json(task);
-
-    } catch (err: any) {
-      console.error("[Create Task Error]:", err.message);
-      res.status(503).json({ message: "Blockchain transaction failed or database busy." });
+    if (user.balance < cost) {
+      return res.status(400).json({ message: "Insufficient balance" });
     }
+
+    const receipt = await lockUserFunds(user.address, cost);
+    await storage.updateUserBalance(user.address, -cost);
+    const task = await storage.createTask({ ...taskData, userAddress: user.address });
+    
+    await storage.createTransaction({
+      userAddress: user.address,
+      amount: cost,
+      type: "lock",
+      status: "completed",
+      description: `Locked for task: ${task.title}`,
+      txHash: receipt.transactionHash
+    });
+
+    userCache.delete(user.address.toLowerCase());
+    res.status(201).json(task);
+
+  } catch (err: any) {
+    console.error("[Create Task Error]:", err.message);
+    res.status(503).json({ message: "Blockchain failed or database busy." });
+  }
 });
 
  app.get(api.tasks.list.path, authMiddleware, async (req: any, res) => {
@@ -240,6 +329,14 @@ app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
       const { evidenceUrl } = req.body;
       if (!evidenceUrl) return res.status(400).json({ message: "evidenceUrl is required" });
       const task = await storage.submitEvidence(id, evidenceUrl);
+      const adminMessage = 
+      `<b>📦 Новое подтверждение!</b>\n\n` +
+      `📝 Задача #${task.id}: <b>${task.title}</b>\n` +
+      `👤 Юзер: <pre>${task.userAddress}</pre>\n` +
+      `💰 Сумма: ${task.amount / 100} USDC\n\n` +
+      `🔗 <a href="${evidenceUrl}">Открыть пруф</a>`;
+
+    await notifyAdmins(adminMessage);
       if (!task) return res.status(404).json({ message: "Task not found" });
       res.json(task);
     } catch (err: any) {
@@ -288,19 +385,17 @@ app.post("/api/admin/tasks/:id/approve", authMiddleware, async (req: any, res) =
     if (task.status === "completed") return res.json({ success: true });
     const workerAddress = task.userAddress.toLowerCase();
     await unlockUserFunds(workerAddress, task.amount);
-
-    await Promise.all([
-      storage.createTransaction({
-        userAddress: workerAddress,
-        amount: Math.round(task.amount), 
-        type: "refund",
-        status: "completed",
-        description: `Task approved: ${task.title}`
-      }),
-      storage.updateTaskStatus(id, "completed")
-    ]);
-    await storage.updateUserBalance(workerAddress, task.amount); 
+    await storage.updateUserBalance(workerAddress, task.amount);
+    await storage.updateTaskStatus(id, "completed");
+    await storage.createTransaction({
+      userAddress: workerAddress,
+      amount: Math.round(task.amount), 
+      type: "refund",
+      status: "completed",
+      description: `Task approved: ${task.title}`
+    });
     userCache.delete(workerAddress);
+
     res.json({ success: true });
   } catch (err) {
     console.error("Approve failed:", err);
