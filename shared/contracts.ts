@@ -1,4 +1,4 @@
-export const VAULT_ADDRESS = "0x09AC8b9A30f3b16cfC1228c98a51384F4218353a";
+export const VAULT_ADDRESS = "0xc426c6bC664540a1aDd73CE3b12D969BeF2faB02";
 export const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 export const VAULT_ABI = [
@@ -7,7 +7,9 @@ export const VAULT_ABI = [
   { name: "lockFunds", type: "function", stateMutability: "nonpayable", inputs: [{ name: "user", type: "address" }, { name: "amount", type: "uint256" }],outputs: [] },
   { name: "unlockFunds", type: "function", stateMutability: "nonpayable", inputs: [{ name: "user", type: "address" }, { name: "amount", type: "uint256" }],outputs: [] },
   { name: "slashFunds", type: "function", stateMutability: "nonpayable", inputs: [{ name: "user", type: "address" }, { name: "amount", type: "uint256" }],outputs: [] },
-  { name: "availableBalance", type: "function", stateMutability: "view", inputs: [{ name: "user", type: "address" }], outputs: [{ name: "", type: "uint256" }] }
+  { name: "availableBalance", type: "function", stateMutability: "view", inputs: [{ name: "user", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "reserveBalance", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { name: "releaseReserve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }
 ] as const;
 
 export const USDC_ABI = [

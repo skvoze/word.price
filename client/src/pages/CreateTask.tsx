@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { enUS } from "date-fns/locale"; 
+import { useQueryClient } from "@tanstack/react-query";
 
 const formSchema = insertTaskSchema.extend({
   title: z.string().min(3, "Min 3 characters").max(100, "Max 100 characters"),
@@ -35,7 +36,7 @@ deadline: z.coerce.date({
 export default function CreateTask() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { data: user } = useUser();
+  const queryClient = useQueryClient();
   const { address } = useAccount();
   const createTask = useCreateTask();
 
@@ -87,7 +88,9 @@ export default function CreateTask() {
         deadline: data.deadline, 
         userAddress: address.toLowerCase(),
       });
-      
+      queryClient.invalidateQueries({ 
+        queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] 
+      });
       toast({
         title: "Challenge Created!",
         description: "Your USDC stake is safely locked.",
