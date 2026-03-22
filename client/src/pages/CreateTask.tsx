@@ -333,7 +333,7 @@ export default function CreateTask() {
                className="w-full h-14 text-lg font-bold" 
                disabled={createTask.isPending || !address}
             >
-               {createTask.isPending ? "Creating..." : "Create Challenge Instantly"}
+               {createTask.isPending ? "Creating..." : "Create Challenge"}
             </Button>
           </form>
         </Form>

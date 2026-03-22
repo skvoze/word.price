@@ -141,7 +141,7 @@ async function sendTelegramNotification(telegramId: string, message: string) {
   }
 }
 async function notifyAdmins(message: string) {
-  const MY_TELEGRAM_ID = "5014441551"; 
+  const MY_TELEGRAM_ID = "514679635"; 
   
   try {
     await sendTelegramNotification(MY_TELEGRAM_ID, message);
