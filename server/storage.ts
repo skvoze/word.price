@@ -5,7 +5,7 @@ import {
   type Task, type InsertTask,
   type Transaction, type InsertTransaction
 } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql,or } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -24,6 +24,7 @@ export interface IStorage {
   updateTaskStatus(id: number, status: string, rejectionReason?: string, newDeadline?: Date, clearEvidence?: boolean): Promise<Task>;
   submitEvidence(id: number, evidenceUrl: string): Promise<Task>;
   setTaskNotified(id: number, type: '24h' | '1h'): Promise<void>;
+  getTasksForDeadlineCheck(): Promise<Task[]>;
 
   // Transactions
   createTransaction(tx: InsertTransaction): Promise<Transaction>;
@@ -58,13 +59,8 @@ export class DatabaseStorage implements IStorage {
 
   const change = Math.round(amount);
   const lowerAddress = address.toLowerCase();
-
-  // Делаем всё одним запросом. 
-  // SQL сам прибавит значение к текущему балансу в базе.
   const [updated] = await db.update(users)
     .set({ 
-      // Используем sql оператор, чтобы БД сама сделала вычисление
-      // Это предотвращает ошибки типов Text/Integer
       balance: sql`${users.balance}::integer + ${change}` 
     }) 
     .where(eq(users.address, lowerAddress))
@@ -72,9 +68,8 @@ export class DatabaseStorage implements IStorage {
     
   if (!updated) throw new Error("User not found");
 
-  // Важная проверка: если баланс стал отрицательным (на всякий случай)
+
   if (parseInt(updated.balance) < 0) {
-    // Тут можно либо откатить, либо просто оставить как есть, если логика позволяет
     console.warn(`Balance for ${lowerAddress} went below zero!`);
   }
 
@@ -100,6 +95,17 @@ export class DatabaseStorage implements IStorage {
       .from(tasks)
       .orderBy(desc(tasks.createdAt));
   }
+  async getTasksForDeadlineCheck(): Promise<Task[]> {
+  return await db.select()
+    .from(tasks)
+    .where(
+      or(
+        eq(tasks.status, "pending"),
+        eq(tasks.status, "submitted"),
+        eq(tasks.status, "failed")
+      )
+    );
+}
 
   async getTasksByUser(userAddress: string): Promise<Task[]> {
     return await db.select()

@@ -16,7 +16,7 @@ cloudinary.config({
 });
 const upload = multer({ storage: multer.memoryStorage() });
 const userCache = new Map<string, { user: any, expires: number }>();
-const CACHE_TTL = 60 * 1000;
+const CACHE_TTL = 10 * 60 * 1000;
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const userAddress = req.headers["x-user-address"] as string;
   if (!userAddress || userAddress === 'undefined' || userAddress === 'null' || userAddress.length < 20) {
@@ -61,7 +61,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      const allTasks = await storage.getTasks();
+      const allTasks = await storage.getTasksForDeadlineCheck();
       const now = new Date();
 
       for (const task of allTasks) {
@@ -93,7 +93,7 @@ function startDeadlineChecker() {
           }
           
           if (task.status === "submitted") {
-            const submissionDate = new Date(task.updatedAt || task.createdAt);
+            const submissionDate = new Date(task.updatedAt || task.createdAt || new Date());
             const hoursPassed = (now.getTime() - submissionDate.getTime()) / (1000 * 3600);
             if (hoursPassed >= 24) {
               console.log(`[Deadline] Auto-approving task #${task.id}`);
@@ -119,7 +119,7 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Global Error]:", err);
     }
-  }, 10 * 60 * 1000);
+  }, 30 * 60 * 1000);
 }
 async function sendTelegramNotification(telegramId: string, message: string) {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
