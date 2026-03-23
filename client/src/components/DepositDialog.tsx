@@ -54,6 +54,12 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ 
+      queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] 
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['wagmi', 'readContract', USDC_ADDRESS] 
+    });
       setStep('success');
     }
   });

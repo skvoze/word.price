@@ -98,7 +98,6 @@ function startDeadlineChecker() {
             if (hoursPassed >= 24) {
               console.log(`[Deadline] Auto-approving task #${task.id}`);
               const receipt = await unlockUserFunds(task.userAddress, task.amount);
-              await unlockUserFunds(task.userAddress, task.amount);
                await storage.updateUserBalance(task.userAddress, task.amount);
                await storage.updateTaskStatus(task.id, "completed");
                await storage.createTransaction({

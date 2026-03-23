@@ -24,8 +24,10 @@ import { useQueryClient } from "@tanstack/react-query";
 const formSchema = insertTaskSchema.extend({
   title: z.string().min(3, "Min 3 characters").max(100, "Max 100 characters"),
   description: z.string().max(500, "Max 500 characters").optional().or(z.literal('')),
-  amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Enter valid USDC amount"), 
-deadline: z.coerce.date({
+amount: z.string().refine((val) => {
+    const num = Number(val);
+    return !isNaN(num) && num >= 1; 
+  }, "Minimum stake is 1 USDC"),deadline: z.coerce.date({
   required_error: "Deadline is required",
   invalid_type_error: "That's not a valid date",
 }).refine((date) => {
@@ -59,6 +61,7 @@ export default function CreateTask() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 3000,
     }
   });
   const blockchainBalance = vaultBalanceRaw ? Number(vaultBalanceRaw) / 1_000_000 : 0;
@@ -179,7 +182,7 @@ export default function CreateTask() {
                       <div className="relative">
                         <Input 
                           type="number"
-                          step="1"
+                          step="0.01"
                           {...field}
                           className="no-spinner h-12 text-lg bg-card border-border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all outline-none"
                           placeholder="0"
