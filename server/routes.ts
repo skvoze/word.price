@@ -177,25 +177,23 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // --- USER & TRANSACTIONS ---
   app.get(api.users.me.path, authMiddleware, async (req: any, res) => {
-  const user = req.user;
-  const lowerAddress = user.address.toLowerCase();
+  const lowerAddress = req.user.address.toLowerCase();
 
   try {
     const realBalanceUnits = await getVaultBalance(lowerAddress);
     const realBalanceInCents = Math.round(realBalanceUnits * 100);
-    if (user.balance !== realBalanceInCents) {
-      console.log(`[Sync] Drift detected for ${lowerAddress}. DB: ${user.balance}, Chain: ${realBalanceInCents}. Fixing...`);
-      const diff = realBalanceInCents - user.balance;
-      const updatedUser = await storage.updateUserBalance(lowerAddress, diff);
-      userCache.delete(lowerAddress);
-      
+    const currentDbBalance = Number(req.user.balance);
+
+    if (currentDbBalance !== realBalanceInCents) {
+      console.log(`[Sync] Drift! DB: ${currentDbBalance}, Chain: ${realBalanceInCents}`);
+      const updatedUser = await storage.updateUserBalance(lowerAddress, realBalanceInCents - currentDbBalance);
+      userCache.set(lowerAddress, { user: updatedUser, expires: Date.now() + CACHE_TTL });
       return res.json(updatedUser);
     }
-    res.json(user);
-    
+    res.json(req.user);
   } catch (error) {
-    console.error("[Sync Skip] Blockchain unreachable, using DB fallback");
-    res.json(user);
+    console.error("[Sync Skip] Using DB fallback:", error);
+    res.json(req.user);
   }
 });
 

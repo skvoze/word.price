@@ -41,7 +41,7 @@ export default function CreateTask() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
   const createTask = useCreateTask();
-
+  const { data: user } = useUser();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("23:00");
   
@@ -61,11 +61,13 @@ export default function CreateTask() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 3000,
+      refetchInterval: 5000,
     }
   });
-  const blockchainBalance = vaultBalanceRaw ? Number(vaultBalanceRaw) / 1_000_000 : 0;
-
+const dbBalance = user?.balance ? Number(user.balance) / 100 : 0;
+const blockchainBalance = vaultBalanceRaw 
+  ? Number(vaultBalanceRaw) / 1_000_000 
+  : dbBalance;
   useEffect(() => {
     if (address) {
       form.setValue("userAddress", address.toLowerCase());
