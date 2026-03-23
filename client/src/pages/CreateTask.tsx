@@ -61,7 +61,6 @@ export default function CreateTask() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
-      refetchInterval: 5000,
     }
   });
 const dbBalance = user?.balance ? Number(user.balance) / 100 : 0;
