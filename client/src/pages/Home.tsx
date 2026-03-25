@@ -27,16 +27,16 @@ export default function Home() {
     args: address ? [address] : undefined,
   });
   useEffect(() => {
-    if (isConnected) {
-      if (vaultBalanceRaw !== undefined) {
-        console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
-      }
-      if (user) {
-        console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
-        console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
-      }
+  if (isConnected && address) {
+    if (typeof vaultBalanceRaw === 'bigint') {
+      console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw, 6), "USDC");
     }
-  }, [vaultBalanceRaw, user, isConnected]);
+    
+    if (user && user.balance !== undefined) {
+      console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
+    }
+  }
+}, [vaultBalanceRaw, user, isConnected, address]);
   
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();
@@ -69,9 +69,9 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     syncDeposit.mutate(hash);
   }
   const lockedAmount = activeTasks.reduce((acc, task) => acc + Number(task.amount), 0);
-  const contractBalance = vaultBalanceRaw 
-    ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
-    : (user ? Number(user.balance) / 100 : 0);
+  const contractBalance = (typeof vaultBalanceRaw === 'bigint')
+  ? parseFloat(formatUnits(vaultBalanceRaw, 6)) 
+  : (user?.balance ? Number(user.balance) / 100 : 0);
 
   const displayBalance = contractBalance.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 

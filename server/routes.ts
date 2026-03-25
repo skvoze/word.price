@@ -183,8 +183,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const realBalanceUnits = await getVaultBalance(lowerAddress);
     const realBalanceInCents = Math.round(realBalanceUnits * 100);
     const currentDbBalance = Number(req.user.balance);
-    console.log(`[Sync] Drift! DB: ${currentDbBalance}, Chain: ${realBalanceInCents}`);
+    console.log(`[Balance Check] User: ${lowerAddress.slice(0, 6)}... | DB: ${currentDbBalance} | Chain: ${realBalanceInCents}`);    
     if (currentDbBalance !== realBalanceInCents) {
+      console.log(`[Sync] 🔄 Drift detected! Updating DB to match Blockchain.`);
       const updatedUser = await storage.updateUserBalance(lowerAddress, realBalanceInCents - currentDbBalance);
       userCache.set(lowerAddress, { user: updatedUser, expires: Date.now() + CACHE_TTL });
       return res.json(updatedUser);
