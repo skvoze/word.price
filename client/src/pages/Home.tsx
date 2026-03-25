@@ -33,6 +33,7 @@ export default function Home() {
       }
       if (user) {
         console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
+        console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw as bigint, 6), "USDC");
       }
     }
   }, [vaultBalanceRaw, user, isConnected]);
