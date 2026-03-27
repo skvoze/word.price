@@ -26,17 +26,7 @@ export default function Home() {
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
   });
-  useEffect(() => {
-  if (isConnected && address) {
-    if (typeof vaultBalanceRaw === 'bigint') {
-      console.log("💰 [Contract] Available:", formatUnits(vaultBalanceRaw, 6), "USDC");
-    }
-    
-    if (user && user.balance !== undefined) {
-      console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC","💰 [Contract] Available:", vaultBalanceRaw, "USDC");
-    }
-  }
-}, [vaultBalanceRaw, user, isConnected, address]);
+  
   
 
   const { writeContract, data: hash, isPending: isWaitingSignature } = useWriteContract();

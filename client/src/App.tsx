@@ -59,7 +59,7 @@ function Router() {
   }
 
 
-  if (isError && !user) {
+  /*if (isError && !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center">
         <div className="bg-zinc-900 border border-white/10 p-8 rounded-2xl max-w-sm">
@@ -76,9 +76,8 @@ function Router() {
         </div>
       </div>
     );
-  }
+  }*/
 
-  // 4. Если кошелек ПОДКЛЮЧЕН, но данные юзера еще в пути
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -87,7 +86,6 @@ function Router() {
     );
   }
 
-  // 5. ТОЛЬКО ТЕПЕРЬ, когда у нас есть и коннект, и данные юзера, рисуем основной интерфейс
   const isAdmin = user?.role === "admin";
 
   return (
