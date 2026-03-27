@@ -61,23 +61,29 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 function startDeadlineChecker() {
   setInterval(async () => {
     try {
-      const allTasks = await storage.getTasksForDeadlineCheck();
       const now = new Date();
-
-      for (const task of allTasks) {
+      const bufferTime = new Date(now.getTime() + 60000); 
+      const tasksToProcess = await storage.getTasksForDeadlineCheck(bufferTime);
+      if (tasksToProcess.length === 0) {
+        console.log(`[Deadline] ${now.toLocaleTimeString()}: No tasks to process.`);
+        return;
+      }
+      for (const task of tasksToProcess) {
         if (task.status === "completed") continue;
-
-        const deadlineDate = new Date(task.deadline);
-        const isExpired = now > deadlineDate;
-
+        const deadlineDate = new Date(task.deadline);  
+        const isExpired = bufferTime > deadlineDate;
         try {
           if ((task.status === "pending" || task.status === "failed") && isExpired) {
+
             const alreadySlashed = task.status === "failed" && 
                                    task.updatedAt && 
                                    new Date(task.updatedAt) > deadlineDate;
+            
             if (alreadySlashed) continue;
+
             console.log(`[Deadline] Slashing funds for task #${task.id}`);
             const receipt = await slashUserFunds(task.userAddress, task.amount);
+            
             await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
             
             await storage.createTransaction({
@@ -91,16 +97,16 @@ function startDeadlineChecker() {
             
             userCache.delete(task.userAddress.toLowerCase());
           }
-          
           if (task.status === "submitted") {
-            const submissionDate = new Date(task.updatedAt || task.createdAt || new Date());
-            const hoursPassed = (now.getTime() - submissionDate.getTime()) / (1000 * 3600);
-            if (hoursPassed >= 24) {
+            const submissionDate = new Date(task.updatedAt || task.createdAt || now);
+            const msPassed = now.getTime() - submissionDate.getTime();
+            if (msPassed >= (24 * 3600 * 1000 - 60000)) { 
               console.log(`[Deadline] Auto-approving task #${task.id}`);
               const receipt = await unlockUserFunds(task.userAddress, task.amount);
-               await storage.updateUserBalance(task.userAddress, task.amount);
-               await storage.updateTaskStatus(task.id, "completed");
-               await storage.createTransaction({
+              await storage.updateUserBalance(task.userAddress, task.amount);
+              await storage.updateTaskStatus(task.id, "completed");
+              
+              await storage.createTransaction({
                 userAddress: task.userAddress,
                 amount: task.amount,
                 type: "refund",
@@ -113,7 +119,7 @@ function startDeadlineChecker() {
             }
           }
         } catch (taskErr) {
-          console.error(`[Deadline Task #${task.id} Blockchain/DB Error]:`, taskErr);
+          console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
         }
       }
     } catch (err) {

@@ -5,7 +5,7 @@ import {
   type Task, type InsertTask,
   type Transaction, type InsertTransaction
 } from "@shared/schema";
-import { eq, desc, and, sql,or } from "drizzle-orm";
+import { eq, desc, and, sql,or,lte } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -24,7 +24,7 @@ export interface IStorage {
   updateTaskStatus(id: number, status: string, rejectionReason?: string, newDeadline?: Date, clearEvidence?: boolean): Promise<Task>;
   submitEvidence(id: number, evidenceUrl: string): Promise<Task>;
   setTaskNotified(id: number, type: '24h' | '1h'): Promise<void>;
-  getTasksForDeadlineCheck(): Promise<Task[]>;
+  getTasksForDeadlineCheck(threshold: Date): Promise<Task[]>;
 
   // Transactions
   createTransaction(tx: InsertTransaction): Promise<Transaction>;
@@ -95,14 +95,17 @@ export class DatabaseStorage implements IStorage {
       .from(tasks)
       .orderBy(desc(tasks.createdAt));
   }
-  async getTasksForDeadlineCheck(): Promise<Task[]> {
+  async getTasksForDeadlineCheck(threshold: Date): Promise<Task[]> {
   return await db.select()
     .from(tasks)
     .where(
-      or(
-        eq(tasks.status, "pending"),
-        eq(tasks.status, "submitted"),
-        eq(tasks.status, "failed")
+      and(
+        or(
+          eq(tasks.status, "pending"),
+          eq(tasks.status, "submitted"),
+          eq(tasks.status, "failed")
+        ),
+        lte(tasks.deadline, threshold)
       )
     );
 }
