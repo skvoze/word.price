@@ -292,7 +292,7 @@ const blockchainBalance = vaultBalanceRaw
                           }}
                           className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold outline-none focus:border-primary transition-all appearance-none"
                         >
-                          {["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map((m) => (
+                          {["00", "15", "30", "45"].map((m) => (
                             <option key={m} value={m}>{m}</option>
                           ))}
                         </select>

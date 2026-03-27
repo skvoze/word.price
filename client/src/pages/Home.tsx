@@ -33,7 +33,7 @@ export default function Home() {
     }
     
     if (user && user.balance !== undefined) {
-      console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC");
+      console.log("📊 [DB] Total:", (Number(user.balance) / 100).toFixed(2), "USDC","💰 [Contract] Available:", Number(vaultBalanceRaw), "USDC");
     }
   }
 }, [vaultBalanceRaw, user, isConnected, address]);

@@ -119,7 +119,7 @@ function startDeadlineChecker() {
     } catch (err) {
       console.error("[Deadline Checker Global Error]:", err);
     }
-  }, 30 * 60 * 1000);
+  }, 15 * 60 * 1000);
 }
 async function sendTelegramNotification(telegramId: string, message: string) {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
