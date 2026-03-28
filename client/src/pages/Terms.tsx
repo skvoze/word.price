@@ -1,119 +1,97 @@
 import { Card } from "@/components/ui/card";
-import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Terms() {
-  const [isTelegram, setIsTelegram] = useState(false);
-const handleBack = (e: React.MouseEvent) => {
-  e.preventDefault();
-  if (window.history.length > 1) {
-    window.history.back(); 
-  } else {
-    window.location.href = "/";
-  }
-};
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      window.history.back(); 
+    } else {
+      window.location.href = "/";
+    }
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (window.Telegram?.WebApp?.initData) {
-      setIsTelegram(true);
-    }
   }, []);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl pb-24">
-      {!isTelegram && (
-           
-                <button onClick={handleBack} className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-sm font-bold uppercase tracking-widest">
-                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  Назад на главную
-                </button>
-          
-            )}
-      <h1 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter text-white">Пользовательское соглашение</h1>
+      <button onClick={handleBack} className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-sm font-bold uppercase tracking-widest">
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        Back to App
+      </button>
+
+      <h1 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter text-white">Terms of Service</h1>
       
       <Card className="p-6 space-y-6 text-sm leading-relaxed border-white/5 bg-zinc-900/50 text-zinc-300 rounded-[2rem]">
+      <section className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-6">
+  <p className="text-red-200 font-semibold text-xs uppercase tracking-wider">Risk Disclosure</p>
+  <p className="text-red-100/80 text-[11px] mt-1">
+    The user assumes all risks associated with smart contract interactions and digital asset volatility. 
+    Blockchain transactions are irreversible.
+  </p>
+</section>
         <section>
-          <h2 className="font-semibold text-base text-white mb-2">1. Общие положения</h2>
+          <h2 className="font-semibold text-base text-white mb-2">1. General Provisions</h2>
           <p>
-            Настоящий документ является публичной офертой сервиса «Цена Слова». 
-            Использование Приложения, регистрация в нем или внесение средств является 
-            <b> полным и безоговорочным акцептом</b> условий данного соглашения.
+            This document constitutes a public agreement for the "Price of Word" protocol. 
+            By connecting a digital wallet and locking assets, the User provides 
+            <b> full and unconditional acceptance</b> of these terms.
           </p>
         </section>
         
         <section>
-          <h2 className="font-semibold text-base text-white mb-2">2. Предмет договора</h2>
+          <h2 className="font-semibold text-base text-white mb-2">2. Subject of Agreement</h2>
           <p>
-            2.1. Исполнитель предоставляет комплекс услуг по автоматизированному мониторингу, технической поддержке и верификации результатов достижения целей Пользователя (ст. 779 ГК РФ).
+            2.1. The Service provides a decentralized platform for automated monitoring and verification of User-defined goals.
             <br />
-            2.2. Сумма, вносимая Пользователем, является <b>предоплатой за услуги мониторинга</b>. Она включается в общую стоимость услуг и не является обеспечением обязательств (залогом) в смысле ст. 329 ГК РФ.
+            2.2. Any amount locked by the User is a <b>commitment stake</b> held via smart contract. It is not an investment, deposit, or regulated financial product.
             <br />
-            2.3. Предоплата не является ставкой, пари или инвестицией. Её возврат обусловлен исключительно выполнением условий задачи согласно ст. 782 ГК РФ.
+            2.3. The release or forfeiture of the stake is governed strictly by the smart contract logic based on task completion evidence.
           </p>
         </section>
 
         <section>
-          <h2 className="font-semibold text-base text-white mb-2">3. Финансовые условия</h2>
+          <h2 className="font-semibold text-base text-white mb-2">3. Financial & Network Conditions</h2>
           <p>
-            3.1. Оплата услуг осуществляется через сторонние платежные сервисы. Исполнитель не хранит данные банковских карт.
+            3.1. All transactions are processed on the <b>Base Network (Layer 2)</b>. Users are responsible for all network (Gas) fees.
             <br />
-            3.2. <b>Возврат предоплаты:</b> при успешном выполнении условий задачи сумма возвращается в полном объеме как возврат неиспользованной предоплаты в связи с отменой необходимости дальнейшего мониторинга. 
+            3.2. <b>Asset Release:</b> Upon successful verification of the task, the locked amount is released back to the User's wallet.
             <br />
-            3.3. В случае невыполнения задачи услуги мониторинга считаются оказанными в полном объеме, и предоплата не возвращается.
+            3.3. <b>Slashing:</b> If the task is not completed or verified by the deadline, the assets are "slashed" (forfeited) as per the protocol rules.
             <br />
-            3.4. <b>Сервисный сбор:</b> При выводе остатка баланса (не связанного с возвратом за выполненные задачи) удерживается сбор <b>5%</b>. Сбор покрывает комиссии платежных систем и затраты на обработку транзакций.
-            <br />
-            3.5. Подробные условия возврата средств и апелляций изложены в отдельном документе — <b>Политика возврата</b>.
+            3.4. <b>Service Fee:</b> A protocol fee of <b>5%</b> may be applied to non-task-related withdrawals or specified reward distributions to cover operational costs.
           </p>
         </section>
 
         <section>
-          <h2 className="font-semibold text-base text-white mb-2">4. Критерии выполнения и верификация</h2>
+          <h2 className="font-semibold text-base text-white mb-2">4. Verification Criteria</h2>
           <p>
-            4.1. Задача считается выполненной при предоставлении читаемых фото/видео доказательств. Исполнитель оставляет за собой право проверки достоверности данных (геолокация, временные метки, отсутствие цифровых манипуляций).
+            4.1. Tasks are deemed completed only upon submission of verifiable evidence (photos/videos). The Protocol reserves the right to audit metadata (geolocation, timestamps).
             <br />
-            4.2. Допустимые доказательства: фото с геотегом, скриншоты специализированных приложений (фитнес-трекеры и пр.), видеозаписи процесса без монтажа.
-            <br />
-            4.3. В случае отклонения отчета Пользователь вправе дополнить его в течение 24 часов или подать апелляцию на email. Срок рассмотрения — 3 рабочих дня. Решение Исполнителя по апелляции является окончательным.
+            4.2. In case of rejection, the User has 24 hours to provide additional proof or submit an appeal via the integrated support channel.
           </p>
         </section>
 
         <section>
-          <h2 className="font-semibold text-base text-white mb-2">5. Форс-мажор</h2>
+          <h2 className="font-semibold text-base text-white mb-2">5. Risks & Force Majeure</h2>
           <p>
-            5.1. Стороны освобождаются от ответственности при возникновении обстоятельств непреодолимой силы (стихийные бедствия, технические сбои на стороне платежных шлюзов или провайдеров).
+            5.1. The User assumes all risks related to smart contract vulnerabilities, wallet security, and Base network outages.
             <br />
-            5.2. Сторона обязана уведомить о форс-мажоре через email в течение 48 часов.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-semibold text-base text-white mb-2">6. Изменение условий и разрешение споров</h2>
-          <p>
-            6.1. Актуальная версия соглашения всегда доступна в приложении. Продолжение использования сервиса после обновления текста означает принятие новых условий.
-            <br />
-            6.2. Все споры разрешаются путем переговоров. При недостижении согласия — в суде по месту регистрации Исполнителя (г. Пермь).
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-semibold text-base text-white mb-2">7. Прекращение действия</h2>
-          <p>
-            7.1. Соглашение может быть расторгнуто по инициативе Пользователя путем удаления аккаунта. 
-            <br />
-            7.2. При удалении аккаунта остаток личных средств на балансе подлежит выводу с удержанием комиссии согласно п. 3.4.
+            5.2. Blockchain transactions are irreversible. The Service is not responsible for lost funds due to incorrect wallet usage or private key loss.
           </p>
         </section>
 
         <section className="pt-6 border-t border-white/10 mt-8">
-          <h2 className="font-semibold text-base text-white mb-3">8. Реквизиты Исполнителя</h2>
+          <h2 className="font-semibold text-base text-white mb-3">Protocol Details</h2>
           <div className="bg-black/20 p-4 rounded-xl space-y-1 font-mono text-[11px]">
-            <p>Статус: Самозанятый Коновалов Василий Андреевич</p>
-            <p>ИНН: 594204795787</p>
-            <p>Режим: Налог на профессиональный доход</p>
-            <p>Email: cena.slova.help@gmail.com</p>
+            <p>Network: Base Mainnet (L2)</p>
+            <p>Verification Model: Decentralized Oracle / Manual Audit Hybrid</p>
+            <p>Contact: cena.slova.help@gmail.com</p>
             <p className="mt-4 text-zinc-500 italic">
-              Версия от 15.02.2026. Приложение использует сертифицированные протоколы безопасности.
+              Version: 2.1 (Base Chain). Updated: March 2026.
             </p>
           </div>
         </section>
