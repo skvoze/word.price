@@ -50,7 +50,7 @@ export default function Refund() {
           <h2 className="font-semibold text-base text-white mb-2">3. Appeals Process</h2>
           <p>
             If you believe your stake was slashed incorrectly due to a verification error, you must contact <b>cena.slova.help@gmail.com</b> within 24 hours of the slashing event. 
-            Provide your wallet address and Task ID.
+            Provide your wallet address and Task Title.
           </p>
         </section>
 
@@ -64,7 +64,7 @@ export default function Refund() {
         </section>
 
         <section className="pt-6 border-t border-white/10 text-[11px] text-zinc-500 italic">
-          Protocol: Price of Word. Powered by Base Mainnet.
+          Protocol: Word Price. Powered by Base Mainnet.
         </section>
       </Card>
     </div>

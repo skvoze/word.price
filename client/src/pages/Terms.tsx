@@ -36,7 +36,7 @@ export default function Terms() {
         <section>
           <h2 className="font-semibold text-base text-white mb-2">1. General Provisions</h2>
           <p>
-            This document constitutes a public agreement for the "Price of Word" protocol. 
+            This document constitutes a public agreement for the "Word Price" protocol. 
             By connecting a digital wallet and locking assets, the User provides 
             <b> full and unconditional acceptance</b> of these terms.
           </p>

@@ -9,7 +9,7 @@ if (!import.meta.env.VITE_WC_PROJECT_ID) {
 
 
 export const config = getDefaultConfig({
-  appName: 'Price of Word',
+  appName: 'Word Price',
   projectId: import.meta.env.VITE_WC_PROJECT_ID,
   chains: [base, baseSepolia],
   ssr: true, 
