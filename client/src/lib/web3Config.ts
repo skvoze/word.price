@@ -1,5 +1,5 @@
 import { http } from 'wagmi';
-import { base, baseSepolia } from 'wagmi/chains';
+import { base } from 'wagmi/chains';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 
 
@@ -11,10 +11,9 @@ if (!import.meta.env.VITE_WC_PROJECT_ID) {
 export const config = getDefaultConfig({
   appName: 'Word Price',
   projectId: import.meta.env.VITE_WC_PROJECT_ID,
-  chains: [base, baseSepolia],
+  chains: [base],
   ssr: true, 
   transports: {
     [base.id]: http(),
-    [baseSepolia.id]: http(),
   },
 });

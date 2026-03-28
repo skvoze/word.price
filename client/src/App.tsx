@@ -4,17 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { config } from "@/lib/web3Config";
-import { baseSepolia } from 'viem/chains';
+import { base } from 'viem/chains'; 
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { useUser } from "@/hooks/use-user";
-
 import "./index.css";
 import '@rainbow-me/rainbowkit/styles.css';
-
-// Твои оригинальные страницы
 import Home from "@/pages/Home";
 import CreateTask from "@/pages/CreateTask";
 import TaskDetails from "@/pages/TaskDetails";
@@ -30,13 +27,11 @@ import Refund from "@/pages/Refund";
 import SuccessPage from "@/pages/SuccessPage";
 import FailPage from "@/pages/FailPage";
 
-const queryClient = new QueryClient();
 
 function Router() {
   const { isConnected, isConnecting } = useAccount();
   const { data: user, isLoading: isUserLoading, isError } = useUser();
   
-  // 1. Состояние первичной загрузки (когда wagmi еще думает)
   if (isConnecting) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -57,26 +52,6 @@ function Router() {
       </Switch>
     );
   }
-
-
-  /*if (isError && !user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center">
-        <div className="bg-zinc-900 border border-white/10 p-8 rounded-2xl max-w-sm">
-          <h1 className="text-xl font-bold mb-4 text-red-500">Connection Busy</h1>
-          <p className="text-zinc-400 text-sm mb-6">
-            Database is under heavy load. We'll try to connect you in a moment.
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }*/
 
   if (isUserLoading) {
     return (
@@ -119,7 +94,7 @@ function Router() {
 export default function App() {
   return (
     <WagmiProvider config={config}>
-        <OnchainKitProvider chain={baseSepolia as any}>
+        <OnchainKitProvider chain={base as any}>
           <RainbowKitProvider 
             theme={darkTheme({ 
               accentColor: '#ffffff', 
