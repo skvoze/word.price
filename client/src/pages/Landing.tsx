@@ -138,30 +138,57 @@ export default function Landing() {
 
         {/* ——— 5. THE COST OF FAILURE ——— */}
         <section className="mb-40">
-          <div className="bg-zinc-900/30 border border-zinc-800 rounded-[3rem] p-10 md:p-16">
-            <div className="max-w-xl mx-auto text-center space-y-8">
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter">Service Rules</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-4 border-b border-zinc-800">
-                  <span className="text-zinc-500 font-bold uppercase text-xs">Platform Fee (On Success)</span>
-                  <span className="text-white font-black">0%</span>
-                </div>
-                <div className="flex justify-between items-center py-4 border-b border-zinc-800">
-                  <span className="text-zinc-500 font-bold uppercase text-xs">Slashing Penalty</span>
-                  <span className="text-red-500 font-black">100% OF STAKE</span>
-                </div>
-                <div className="flex justify-between items-center py-4">
-                  <span className="text-zinc-500 font-bold uppercase text-xs">Withdrawal Fee</span>
-                  <span className="text-white font-black">5%</span>
-                </div>
-              </div>
-              <p className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest leading-relaxed">
-                Fees cover protocol maintenance and verification costs. <br/>
-                We only win when you fail. Don't let us win.
-              </p>
-            </div>
+  <div className="bg-zinc-900/30 border border-zinc-800 rounded-[3rem] p-10 md:p-16 relative overflow-hidden">
+    {/* Декоративный элемент USDC */}
+    <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full" />
+    
+    <div className="max-w-2xl mx-auto space-y-12">
+      <div className="text-center">
+        <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-4 text-white">Assets & Logic</h2>
+        <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] font-bold">Base Mainnet Protocol</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Левая колонка: Поддержка USDC */}
+        <div className="bg-zinc-950/50 p-6 rounded-2xl border border-zinc-800/50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-black italic">S</div>
+            <span className="text-white font-black uppercase italic tracking-tight">USDC Native</span>
           </div>
-        </section>
+          <p className="text-zinc-500 text-[11px] leading-relaxed">
+            We support <b>USDC on Base</b> for stable commitments. Your stake remains pegged to the dollar, unaffected by market volatility. No surprises when you recover your funds.
+          </p>
+        </div>
+
+        {/* Правая колонка: Комиссии */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
+            <span className="text-zinc-500 font-bold uppercase text-[10px]">Success Fee</span>
+            <span className="text-green-500 font-black tracking-tighter">0%</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
+            <span className="text-zinc-500 font-bold uppercase text-[10px]">Failure (Slash)</span>
+            <span className="text-red-500 font-black tracking-tighter">100%</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
+            <div className="flex flex-col">
+              <span className="text-zinc-500 font-bold uppercase text-[10px]">Withdrawal Fee</span>
+              <span className="text-[8px] text-zinc-600 uppercase">Operational Cost</span>
+            </div>
+            <span className="text-white font-black tracking-tighter">5%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center pt-6">
+        <p className="text-[10px] text-zinc-600 uppercase font-black tracking-[0.2em] leading-relaxed max-w-sm mx-auto">
+          Commit in ETH or USDC. Success costs nothing. <br/>
+          Withdrawal fees sustain the verification engine.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* ——— 6. FAQ ——— */}
         <section className="mb-40 max-w-2xl mx-auto">
