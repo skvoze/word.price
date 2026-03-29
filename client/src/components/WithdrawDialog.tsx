@@ -21,7 +21,7 @@ export function WithdrawDialog() {
   });
 
 const vaultBalance = vaultBalanceRaw 
-  ? Number(vaultBalanceRaw) / 1_000_000 
+  ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
   : 0;
 
   const withdraw = useWriteContract();

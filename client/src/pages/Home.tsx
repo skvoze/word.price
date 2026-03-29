@@ -8,7 +8,7 @@ import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Loader2, Target, TrendingUp, ArrowUpRight, PlusCircle } from "lucide-react";
 import { type Task } from "@shared/schema";
-import { USDC_ADDRESS, TREASURY_ADDRESS, USDC_ABI } from "@/lib/constants";
+import { USDC_ADDRESS, USDC_ABI } from "@/lib/constants";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";

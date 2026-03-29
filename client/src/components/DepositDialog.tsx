@@ -23,6 +23,12 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
       refetchInterval: 5000, 
     }
   });
+  const { data: currentAllowance } = useReadContract({
+  address: USDC_ADDRESS,
+  abi: USDC_ABI,
+  functionName: 'allowance',
+  args: address ? [address, VAULT_ADDRESS] : undefined,
+});
   const usdcBalance = usdcBalanceRaw ? parseFloat(formatUnits(usdcBalanceRaw as bigint, 6)) : 0;
   const setMaxAmount = () => {
     setAmount(usdcBalance.toString());
@@ -78,13 +84,20 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
   };
 
   const handleApprove = () => {
-    approve.writeContract({
-      address: USDC_ADDRESS,
-      abi: USDC_ABI,
-      functionName: "approve",
-      args: [VAULT_ADDRESS, parseUnits(amount, 6)],
-    });
-  };
+  const cleanAmount = amount.replace(',', '.');
+  const parsedAmount = parseUnits(cleanAmount, 6);
+  if (currentAllowance && (currentAllowance as bigint) >= parsedAmount) {
+    setStep('deposit');
+    return;
+  }
+
+  approve.writeContract({
+    address: USDC_ADDRESS,
+    abi: USDC_ABI,
+    functionName: "approve",
+    args: [VAULT_ADDRESS, parsedAmount],
+  });
+};
 
   const handleDeposit = () => {
   if (!amount || isNaN(parseFloat(amount))) {
