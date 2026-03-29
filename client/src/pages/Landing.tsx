@@ -229,12 +229,16 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="flex flex-col justify-end items-start md:items-end gap-3 text-[10px] uppercase font-black tracking-[0.2em] text-zinc-600">
-                <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-                <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-                <a href="/refund" className="hover:text-white transition-colors">Asset Recovery</a>
-                <div className="mt-6 flex items-center gap-2 text-zinc-800">
-                   <ShieldCheck className="w-3 h-3" /> Verified Smart Contract
+            <div className="flex flex-col justify-between items-start md:items-end gap-3">
+                <div className="hidden md:block h-8" /> 
+                
+                <div className="flex flex-col items-start md:items-end gap-3 text-[10px] uppercase font-black tracking-[0.2em] text-zinc-600">
+                    <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+                    <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="/refund" className="hover:text-white transition-colors">Asset Recovery</a>
+                    <div className="mt-6 flex items-center gap-2 text-zinc-800">
+                       <ShieldCheck className="w-3 h-3" /> Verified Smart Contract
+                    </div>
                 </div>
             </div>
           </div>
