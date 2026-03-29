@@ -214,40 +214,42 @@ export default function Landing() {
         </section>
 
         {/* ——— FOOTER ——— */}
-        <footer className="border-t border-zinc-900 pt-20 pb-10">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20 items-end">
-    <div className="space-y-8">
-      <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Protocol Support</h4>
-      <div className="space-y-4 text-sm text-zinc-500 font-bold uppercase tracking-tighter">
-        <a href="https://t.me/word_price_help" className="flex items-center gap-3 hover:text-white transition-colors">
-          <Send className="w-4 h-4" /> Telegram Support
-        </a>
-        <a href="mailto:word.price.help@gmail.com" className="flex items-center gap-3 hover:text-white transition-colors">
-          <Mail className="w-4 h-4" /> word.price.help@gmail.com
-        </a>
-      </div>
-    </div>
-    <div className="flex flex-col md:items-end md:text-right gap-3 text-[10px] uppercase font-black tracking-[0.2em] text-zinc-600">
-        <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-        <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-        <a href="/refund" className="hover:text-white transition-colors">Asset Recovery</a>
-        <div className="mt-6 flex items-center justify-start md:justify-end gap-2 text-zinc-800">
-          <ShieldCheck className="w-3 h-3" /> Verified Smart Contract
-        </div>
-    </div>
-  </div>
-  
-  <div className="text-[9px] text-zinc-700 uppercase tracking-[0.4em] text-center border-t border-zinc-900 pt-10 space-y-6">
-    <p className="text-zinc-500 italic">"The user assumes all risks associated with smart contract interactions and digital asset volatility."</p>
-    <p>© 2026 WORD PRICE. DECENTRALIZED ACCOUNTABILITY ON BASE.</p>
-    
-    <div className="flex justify-center items-center gap-8 opacity-20 hover:opacity-100 transition-opacity duration-700 grayscale">
-        <span className="font-black text-[10px]">BASE L2</span>
-        <span className="font-black text-[10px]">NON-CUSTODIAL</span>
-        <span className="font-black text-[10px]">SMART ESCROW</span>
-    </div>
-  </div>
-</footer>
+<footer className="border-t border-zinc-900 pt-20 pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+            
+            <div className="space-y-8">
+              <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Protocol Support</h4>
+              <div className="space-y-4 text-sm text-zinc-500 font-bold uppercase tracking-tighter">
+                <a href="https://t.me/word_price_help" className="flex items-center gap-3 hover:text-white transition-colors">
+                  <Send className="w-4 h-4" /> Telegram Support
+                </a>
+                <a href="mailto:word.price.help@gmail.com" className="flex items-center gap-3 hover:text-white transition-colors">
+                  <Mail className="w-4 h-4" /> word.price.help@gmail.com
+                </a>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-end items-start md:items-end gap-3 text-[10px] uppercase font-black tracking-[0.2em] text-zinc-600">
+                <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+                <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="/refund" className="hover:text-white transition-colors">Asset Recovery</a>
+                <div className="mt-6 flex items-center gap-2 text-zinc-800">
+                   <ShieldCheck className="w-3 h-3" /> Verified Smart Contract
+                </div>
+            </div>
+          </div>
+          
+          <div className="text-[9px] text-zinc-700 uppercase tracking-[0.4em] text-center border-t border-zinc-900 pt-10 space-y-6">
+            <p className="text-zinc-500 italic">"The user assumes all risks associated with smart contract interactions and digital asset volatility."</p>
+            <p>© 2026 WORD PRICE. DECENTRALIZED ACCOUNTABILITY ON BASE.</p>
+            
+            <div className="flex justify-center items-center gap-8 opacity-20 hover:opacity-100 transition-opacity duration-700 grayscale">
+                <span className="font-black text-[10px]">BASE L2</span>
+                <span className="font-black text-[10px]">NON-CUSTODIAL</span>
+                <span className="font-black text-[10px]">SMART ESCROW</span>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
