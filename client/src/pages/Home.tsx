@@ -26,6 +26,11 @@ export default function Home() {
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
   });
+  useEffect(() => {
+  if (isConnected && vaultBalanceRaw !== undefined) {
+    queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+  }
+}, [vaultBalanceRaw, isConnected, queryClient]);
   
   
 

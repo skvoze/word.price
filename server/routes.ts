@@ -271,14 +271,20 @@ app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
   });
   // --- TASKS CORE ---
 app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
-  const user = req.user;
- const currentBalance = Number(user.balance);
+ const userAddress = req.user.address.toLowerCase();
+  userCache.delete(userAddress);
   try {
-    const taskData = insertTaskSchema.parse(req.body);
-    const cost = taskData.amount; 
+    const user = await storage.getUserByAddress(userAddress);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (currentBalance < cost) {
-      return res.status(400).json({ message: "Insufficient balance" });
+    const taskData = insertTaskSchema.parse(req.body);
+    const cost = Number(taskData.amount);
+    const userBalance = Number(user.balance);
+
+    if (userBalance < cost) {
+      return res.status(400).json({ 
+        message: `Insufficient balance. Available: ${userBalance / 100} USDC` 
+      });
     }
 
     const receipt = await lockUserFunds(user.address, cost);
