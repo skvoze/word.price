@@ -33,7 +33,12 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
   const setMaxAmount = () => {
     setAmount(usdcBalance.toString());
   };
-
+const { refetch: refetchVault } = useReadContract({
+  address: VAULT_ADDRESS,
+  abi: VAULT_ABI,
+  functionName: 'availableBalance',
+  args: address ? [address] : undefined,
+});
   const isAmountValid = amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && parseFloat(amount) <= usdcBalance;
   const approve = useWriteContract();
   const deposit = useWriteContract();
@@ -47,28 +52,28 @@ const { data: usdcBalanceRaw,refetch: refetchUSDC } = useReadContract({
   });
 
   const syncDeposit = useMutation({
-    mutationFn: async (txHash: string) => {
-      const res = await fetch("/api/users/deposit", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-address": address?.toLowerCase() || "" 
-        },
-        body: JSON.stringify({ amount, txHash })
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      queryClient.invalidateQueries({ 
-      queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] 
+  mutationFn: async (txHash: string) => {
+    const res = await fetch("/api/users/deposit", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "x-user-address": address?.toLowerCase() || "" 
+      },
+      body: JSON.stringify({ amount, txHash })
     });
-    queryClient.invalidateQueries({ 
-      queryKey: ['wagmi', 'readContract', USDC_ADDRESS] 
-    });
-      setStep('success');
-    }
-  });
+    return res.json();
+  },
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    await Promise.all([
+      refetchUSDC(),
+      queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] }),
+      queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', USDC_ADDRESS] })
+    ]);
+    await refetchVault();
+    setStep('success');
+  }
+});
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);

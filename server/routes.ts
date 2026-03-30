@@ -7,6 +7,7 @@ import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockc
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { getVaultBalance } from "../shared/blockchain";
+import AdminHistory from "@/pages/AdminHistory";
 
 
 cloudinary.config({
@@ -146,11 +147,11 @@ async function sendTelegramNotification(telegramId: string, message: string) {
   }
 }
 async function notifyAdmins(message: string) {
-  const MY_TELEGRAM_ID = "514679635"; 
+  const admin = process.env.ADMIN_TELEGRAM_ID||""; 
   
   try {
-    await sendTelegramNotification(MY_TELEGRAM_ID, message);
-    console.log(`[Notification] Sent to admin ${MY_TELEGRAM_ID}`);
+    await sendTelegramNotification(admin, message);
+    console.log(`[Notification] Sent to admin ${admin}`);
   } catch (e) {
     console.error("[Notify Admin Error]:", e);
   }

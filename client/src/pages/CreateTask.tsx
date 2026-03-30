@@ -54,17 +54,18 @@ export default function CreateTask() {
       userAddress: address || "", 
     },
   });
-  const { data: vaultBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
+  const { data: vaultBalanceRaw, isLoading: isBalanceLoading,isError: isBalanceError } = useReadContract({
     address: VAULT_ADDRESS,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
+      refetchInterval: 3000
     }
   });
-const dbBalance = user?.balance ? Number(user.balance) / 100 : 0;
-const blockchainBalance = vaultBalanceRaw 
+const dbBalance = user?.balance ? Number(user.balance) / 1_000_000 : 0;
+const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== null)
   ? Number(vaultBalanceRaw) / 1_000_000 
   : dbBalance;
   useEffect(() => {
@@ -116,7 +117,6 @@ const blockchainBalance = vaultBalanceRaw
     const currentHour = now.getHours();
     const [selectedH, selectedM] = selectedTime.split(':').map(Number);
     
-    // Если выбранное время уже в прошлом или "впритык" (текущий час или раньше)
     if (selectedH <= currentHour) {
       const nextValidHour = Math.min(currentHour + 1, 23);
       const newTime = `${nextValidHour.toString().padStart(2, '0')}:00`;
@@ -335,9 +335,9 @@ const blockchainBalance = vaultBalanceRaw
             <Button 
                type="submit" 
                className="w-full h-14 text-lg font-bold" 
-               disabled={createTask.isPending || !address}
+               disabled={createTask.isPending || !address || isBalanceLoading}
             >
-               {createTask.isPending ? "Creating..." : "Create Challenge"}
+               {isBalanceLoading ? "Loading Balance..." : createTask.isPending ? "Creating..." : "Create Challenge"}
             </Button>
           </form>
         </Form>
