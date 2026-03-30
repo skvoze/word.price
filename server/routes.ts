@@ -272,12 +272,12 @@ app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
   // --- TASKS CORE ---
 app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
   const user = req.user;
-
+ const currentBalance = Number(user.balance);
   try {
     const taskData = insertTaskSchema.parse(req.body);
     const cost = taskData.amount; 
 
-    if (user.balance < cost) {
+    if (currentBalance < cost) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
