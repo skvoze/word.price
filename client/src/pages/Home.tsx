@@ -35,9 +35,6 @@ export default function Home() {
     const timer = setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
     }, 2000);
-    if (vaultBalanceRaw !== undefined) {
-      console.log("[Sync] Refreshing data from blockchain and DB...");
-    }
 
     return () => clearTimeout(timer);
   }

@@ -220,7 +220,7 @@ useEffect(() => {
           {step === 'deposit' && (
             <Button 
               onClick={handleDeposit} 
-              className="w-full h-14 font-black uppercase tracking-widest text-sm italic bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20" 
+              className="w-full h-14 font-black uppercase tracking-widest text-sm italic" 
               disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}
             >
               {(isConfirmingDeposit || syncDeposit.isPending) ? (

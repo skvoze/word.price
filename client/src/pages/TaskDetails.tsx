@@ -259,14 +259,7 @@ export default function TaskDetails() {
                 onComplete={(result) => {
   if (result.successful && result.successful.length > 0) {
     const success = result.successful[0];
-    
-    // 1. Пытаемся достать URL из ответа сервера (Cloudinary)
-    // 2. Если его нет, пробуем meta.objectPath
     const uploadedUrl = success.response?.body?.url || success.meta?.objectPath;
-
-    console.log("DEBUG: Full Uppy Success Object:", success);
-    console.log("DEBUG: Extracted URL for DB:", uploadedUrl);
-
     if (uploadedUrl && typeof uploadedUrl === "string") {
       handleEvidenceSubmit(uploadedUrl);
     } else {
