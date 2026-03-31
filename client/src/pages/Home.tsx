@@ -29,8 +29,12 @@ export default function Home() {
   useEffect(() => {
   if (isConnected && vaultBalanceRaw !== undefined) {
     queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    if (vaultBalanceRaw !== undefined) {
+      console.log("[Sync] Refreshing data from blockchain and DB...");
+    }
   }
-}, [vaultBalanceRaw, isConnected, queryClient]);
+}, [vaultBalanceRaw, isConnected, queryClient, user?.balance]);
   
   
 
