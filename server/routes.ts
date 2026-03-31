@@ -8,7 +8,7 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { getVaultBalance } from "../shared/blockchain";
 import AdminHistory from "@/pages/AdminHistory";
-
+import { VAULT_ADDRESS} from "../shared/contracts";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -185,7 +185,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // --- USER & TRANSACTIONS ---
   app.get(api.users.me.path, authMiddleware, async (req: any, res) => {
   const lowerAddress = req.user.address.toLowerCase();
-
+console.log(`[Debug] Checking Vault at: ${VAULT_ADDRESS} for user: ${lowerAddress}`);
   try {
     const realBalanceUnits = await getVaultBalance(lowerAddress);
     const realBalanceInCents = Math.round(realBalanceUnits * 100);

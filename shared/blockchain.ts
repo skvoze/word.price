@@ -1,21 +1,21 @@
 import { createWalletClient, createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { baseSepolia } from 'viem/chains';
+import { base } from 'viem/chains';
 import { VAULT_ADDRESS, VAULT_ABI } from '../shared/contracts';
 
-
+const rpcUrl = process.env.RPC_URL;
 const privateKey = (process.env.ADMIN_PRIVATE_KEY as `0x${string}`);
 const account = privateKeyToAccount(privateKey);
 
 export const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http()
+  chain: base,
+  transport: http(rpcUrl)
 });
 
 const walletClient = createWalletClient({
   account,
-  chain: baseSepolia,
-  transport: http()
+  chain: base,
+  transport: http(rpcUrl)
 });
 
 
@@ -42,6 +42,7 @@ export async function getVaultBalance(userAddress: string): Promise<number> {
       functionName: 'availableBalance',
       args: [userAddress as `0x${string}`],
     }) as bigint;
+    console.log(`[Blockchain Raw] Address: ${userAddress}, Raw Balance: ${balanceRaw.toString()}`);
     return Number(balanceRaw) / 1_000_000;
   } catch (error) {
     console.error(`[Blockchain Read Error] for ${userAddress}:`, error);
