@@ -93,9 +93,12 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
         deadline: data.deadline, 
         userAddress: address.toLowerCase(),
       });
+      await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       queryClient.invalidateQueries({ 
         queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] 
       });
+      
       toast({
         title: "Challenge Created!",
         description: "Your USDC stake is safely locked.",

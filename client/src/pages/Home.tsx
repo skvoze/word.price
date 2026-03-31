@@ -25,16 +25,23 @@ export default function Home() {
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
+    query: {
+    refetchInterval: 5000
+  }
   });
   useEffect(() => {
   if (isConnected && vaultBalanceRaw !== undefined) {
-    queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
     queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    const timer = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    }, 2000);
     if (vaultBalanceRaw !== undefined) {
       console.log("[Sync] Refreshing data from blockchain and DB...");
     }
+
+    return () => clearTimeout(timer);
   }
-}, [vaultBalanceRaw, isConnected, queryClient, user?.balance]);
+}, [vaultBalanceRaw, isConnected, queryClient]);
   
   
 
