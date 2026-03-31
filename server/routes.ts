@@ -66,7 +66,6 @@ function startDeadlineChecker() {
       const bufferTime = new Date(now.getTime() + 60000); 
       const tasksToProcess = await storage.getTasksForDeadlineCheck(bufferTime);
       if (tasksToProcess.length === 0) {
-        console.log(`[Deadline] ${now.toLocaleTimeString()}: No tasks to process.`);
         return;
       }
       for (const task of tasksToProcess) {
@@ -75,16 +74,21 @@ function startDeadlineChecker() {
         const isExpired = bufferTime > deadlineDate;
         try {
           if ((task.status === "pending" || task.status === "failed") && isExpired) {
+             const userHistory = await storage.getTransactionsByAddress(task.userAddress);
+            const alreadySlashedInChain = userHistory.some(tx => 
+              tx.type === "slash" && 
+              tx.description?.includes(task.title) && 
+              tx.status === "completed"
+            );
 
-            const alreadySlashed = task.status === "failed" && 
-                                   task.updatedAt && 
-                                   new Date(task.updatedAt) > deadlineDate;
-            
-            if (alreadySlashed) continue;
-
+            if (alreadySlashedInChain) {
+              if (task.status !== "failed") {
+                await storage.updateTaskStatus(task.id, "failed", "Deadline expired (Sync)");
+              }
+              continue;
+            }
             console.log(`[Deadline] Slashing funds for task #${task.id}`);
             const receipt = await slashUserFunds(task.userAddress, task.amount);
-            
             await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
             
             await storage.createTransaction({
