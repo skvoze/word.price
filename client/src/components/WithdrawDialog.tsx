@@ -117,6 +117,7 @@ const vaultBalance = vaultBalanceRaw
                   <input 
                     type="number"
                     value={amount}
+                    step="any"
                     onChange={(e) => {
                         const value = e.target.value;
                         if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
@@ -128,8 +129,8 @@ const vaultBalance = vaultBalanceRaw
                     onFocus={(e) => {
                         if (amount === "0") setAmount("");
                     }}
-                    className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all"
-                  />
+                    placeholder="0.00"
+                   className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner"                  />
                 </div>
 
                 {parseFloat(amount) > vaultBalance && (
