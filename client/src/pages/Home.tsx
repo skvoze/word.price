@@ -127,7 +127,7 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     </div>
 
     {isConnected && (
-      <div className="flex gap-3 w-full">
+      <div className="flex gap-3 w-full max-w-md mx-auto sm:mx-0">
         <div className="flex-1">
           <DepositDialog />
         </div>

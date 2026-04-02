@@ -459,6 +459,8 @@ app.post("/api/admin/tasks/:id/approve", authMiddleware, async (req: any, res) =
     }
   });
 
+  if (!process.env.VERCEL) {
   startDeadlineChecker();
+}
   return httpServer;
 }
