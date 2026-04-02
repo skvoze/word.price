@@ -59,78 +59,89 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-function startDeadlineChecker() {
-  setInterval(async () => {
+async function runDeadlineCheckLogic() {
+  const now = new Date();
+  const bufferTime = new Date(now.getTime() + 60000); 
+  const tasksToProcess = await storage.getTasksForDeadlineCheck(bufferTime);
+
+  if (tasksToProcess.length === 0) return;
+
+  for (const task of tasksToProcess) {
+    if (task.status === "completed") continue;
+    const deadlineDate = new Date(task.deadline);   
+    const isExpired = bufferTime > deadlineDate;
+
     try {
-      const now = new Date();
-      const bufferTime = new Date(now.getTime() + 60000); 
-      const tasksToProcess = await storage.getTasksForDeadlineCheck(bufferTime);
-      if (tasksToProcess.length === 0) {
-        return;
+      if ((task.status === "pending" || task.status === "failed") && isExpired) {
+        const userHistory = await storage.getTransactionsByAddress(task.userAddress);
+        const alreadySlashedInChain = userHistory.some(tx => 
+          tx.type === "slash" && 
+          tx.description?.includes(task.title) && 
+          tx.status === "completed"
+        );
+
+        if (alreadySlashedInChain) {
+          if (task.status !== "failed") {
+            await storage.updateTaskStatus(task.id, "failed", "Deadline expired (Sync)");
+          }
+          continue;
+        }
+
+        console.log(`[Deadline] Slashing funds for task #${task.id}`);
+        const receipt = await slashUserFunds(task.userAddress, task.amount);
+        await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
+        
+        await storage.createTransaction({
+          userAddress: task.userAddress,
+          amount: task.amount,
+          type: "slash", 
+          status: "completed",
+          description: `Deadline expired: ${task.title}`,
+          txHash: receipt.transactionHash
+        });
+        
+        userCache.delete(task.userAddress.toLowerCase());
       }
-      for (const task of tasksToProcess) {
-        if (task.status === "completed") continue;
-        const deadlineDate = new Date(task.deadline);  
-        const isExpired = bufferTime > deadlineDate;
-        try {
-          if ((task.status === "pending" || task.status === "failed") && isExpired) {
-             const userHistory = await storage.getTransactionsByAddress(task.userAddress);
-            const alreadySlashedInChain = userHistory.some(tx => 
-              tx.type === "slash" && 
-              tx.description?.includes(task.title) && 
-              tx.status === "completed"
-            );
 
-            if (alreadySlashedInChain) {
-              if (task.status !== "failed") {
-                await storage.updateTaskStatus(task.id, "failed", "Deadline expired (Sync)");
-              }
-              continue;
-            }
-            console.log(`[Deadline] Slashing funds for task #${task.id}`);
-            const receipt = await slashUserFunds(task.userAddress, task.amount);
-            await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
-            
-            await storage.createTransaction({
-              userAddress: task.userAddress,
-              amount: task.amount,
-              type: "slash", 
-              status: "completed",
-              description: `Deadline expired: ${task.title}`,
-              txHash: receipt.transactionHash
-            });
-            
-            userCache.delete(task.userAddress.toLowerCase());
-          }
-          if (task.status === "submitted") {
-            const submissionDate = new Date(task.updatedAt || task.createdAt || now);
-            const msPassed = now.getTime() - submissionDate.getTime();
-            if (msPassed >= (24 * 3600 * 1000 - 60000)) { 
-              console.log(`[Deadline] Auto-approving task #${task.id}`);
-              const receipt = await unlockUserFunds(task.userAddress, task.amount);
-              await storage.updateUserBalance(task.userAddress, task.amount);
-              await storage.updateTaskStatus(task.id, "completed");
-              
-              await storage.createTransaction({
-                userAddress: task.userAddress,
-                amount: task.amount,
-                type: "refund",
-                status: "completed",
-                description: `Auto-approved (no admin review): ${task.title}`,
-                txHash: receipt.transactionHash
-              });
-
-              userCache.delete(task.userAddress.toLowerCase());
-            }
-          }
-        } catch (taskErr) {
-          console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
+      if (task.status === "submitted") {
+        const submissionDate = new Date(task.updatedAt || task.createdAt || now);
+        const msPassed = now.getTime() - submissionDate.getTime();
+        if (msPassed >= (24 * 3600 * 1000 - 60000)) { 
+          console.log(`[Deadline] Auto-approving task #${task.id}`);
+          const receipt = await unlockUserFunds(task.userAddress, task.amount);
+          await storage.updateUserBalance(task.userAddress, task.amount);
+          await storage.updateTaskStatus(task.id, "completed");
+          
+          await storage.createTransaction({
+            userAddress: task.userAddress,
+            amount: task.amount,
+            type: "refund",
+            status: "completed",
+            description: `Auto-approved (no admin review): ${task.title}`,
+            txHash: receipt.transactionHash
+          });
+          userCache.delete(task.userAddress.toLowerCase());
         }
       }
-    } catch (err) {
-      console.error("[Deadline Checker Global Error]:", err);
+    } catch (taskErr) {
+      console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
     }
-  }, 8 * 60 * 1000);
+  }
+}
+
+function startDeadlineChecker() {
+  if (!process.env.VERCEL) {
+    console.log("[Deadline] Persistent mode: Starting interval checker (8m)");
+    setInterval(async () => {
+      try {
+        await runDeadlineCheckLogic();
+      } catch (err) {
+        console.error("[Deadline Checker Global Error]:", err);
+      }
+    }, 8 * 60 * 1000);
+  } else {
+    console.log("[Deadline] Vercel mode: Checker will be triggered via Cron route");
+  }
 }
 async function sendTelegramNotification(telegramId: string, message: string) {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -162,7 +173,15 @@ async function notifyAdmins(message: string) {
 }
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
-  
+  app.get("/api/cron/check-deadlines", async (req, res) => {
+    console.log("[Cron] Wake up call received");
+    try {
+      await runDeadlineCheckLogic();
+      res.status(200).json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
   // --- UPLOADS ---
   app.post("/api/uploads/request-url", authMiddleware, async (req, res) => {
     try {
