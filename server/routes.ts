@@ -174,14 +174,21 @@ async function notifyAdmins(message: string) {
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   app.get("/api/cron/check-deadlines", async (req, res) => {
-    console.log("[Cron] Wake up call received");
-    try {
-      await runDeadlineCheckLogic();
-      res.status(200).json({ success: true });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+  const authHeader = req.headers['authorization'];
+  if (process.env.VERCEL) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.error("[Cron] Unauthorized attempt to trigger cron");
+      return res.status(401).json({ error: "Unauthorized" });
     }
-  });
+  }
+  console.log("[Cron] Wake up call received and authorized");
+  try {
+    await runDeadlineCheckLogic();
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
   // --- UPLOADS ---
   app.post("/api/uploads/request-url", authMiddleware, async (req, res) => {
     try {
