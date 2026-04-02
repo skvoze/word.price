@@ -133,11 +133,11 @@ useEffect(() => {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
     <DialogTrigger asChild>
-      <Button className="rounded-full bg-primary font-bold uppercase text-xs tracking-widest px-6 transition-all hover:scale-105 active:scale-95">
-        <PlusCircle className="w-4 h-4 mr-2" />
-        Deposit
-      </Button>
-    </DialogTrigger>
+  <Button className="w-full h-12 rounded-full bg-primary font-black uppercase text-[10px] tracking-widest transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+    <PlusCircle className="w-4 h-4" />
+    Deposit
+  </Button>
+</DialogTrigger>
     
     <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl">
       <DialogHeader>

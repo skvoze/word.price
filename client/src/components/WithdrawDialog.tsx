@@ -86,11 +86,14 @@ const vaultBalance = vaultBalanceRaw
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full rounded-full border-border bg-card/50 font-bold uppercase text-[10px] tracking-widest h-10 px-6 hover:bg-secondary transition-all flex items-center justify-center gap-2">
-          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-          Withdraw
-        </Button>
-      </DialogTrigger>
+  <Button 
+    variant="outline" 
+    className="w-full h-12 rounded-full border-border bg-card/50 font-black uppercase text-[10px] tracking-widest hover:bg-secondary transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+  >
+    <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+    Withdraw
+  </Button>
+</DialogTrigger>
       
       <DialogContent className="sm:max-w-[400px] bg-card border-border">
         <DialogHeader>
