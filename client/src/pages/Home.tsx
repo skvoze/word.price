@@ -92,51 +92,55 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
   }
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div 
+      className="min-h-[100dvh] bg-background flex flex-col"
+      style={{ 
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' 
+      }}
+    >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
-  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-  
-  <div className="relative z-10">
-    <div className="flex justify-between items-start mb-6">
-      <div>
-        <h1 className="text-xs font-medium text-muted-foreground mb-1 tracking-wider uppercase">
-          Available Balance
-        </h1>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-foreground tracking-tight">
-            {displayBalance}
-          </span>
-          <span className="text-sm font-bold text-[#2775CA]">USDC</span>
-        </div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
-        {lockedAmount > 0 && (
-          <div className="mt-2 flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md w-fit">
-            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-            <p className="text-[10px] text-orange-200 font-bold uppercase tracking-wider">
-              {(lockedAmount/100).toFixed(2)} USDC Locked
-            </p>
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h1 className="text-xs font-medium text-muted-foreground mb-1 tracking-wider uppercase">
+                Available Balance
+              </h1>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-foreground tracking-tight">
+                  {displayBalance}
+                </span>
+                <span className="text-sm font-bold text-[#2775CA]">USDC</span>
+              </div>
+              
+              {lockedAmount > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md w-fit">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  <p className="text-[10px] text-orange-200 font-bold uppercase tracking-wider">
+                    {(lockedAmount/100).toFixed(2)} USDC Locked
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <ConnectButton 
+              accountStatus="avatar"
+              chainStatus="icon"
+              showBalance={false}
+            />
           </div>
-        )}
-      </div>
 
-      <ConnectButton 
-        accountStatus="avatar"
-        chainStatus="icon"
-        showBalance={false}
-      />
-    </div>
+          {isConnected && (
+            <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-6"> 
+              <DepositDialog />
+              <WithdrawDialog />
+            </div>
+          )}
+        </div>
+      </header>
 
-    {isConnected && (
-  <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-6"> 
-    <DepositDialog />
-    <WithdrawDialog />
-  </div>
-)}
-  </div>
-</header>
-
-      {/* Main Content */}
-      <main className="px-4 py-6 space-y-8">
+      <main className="px-4 py-6 space-y-8 flex-1">
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tighter italic">

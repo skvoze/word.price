@@ -1,14 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { PlusCircle, CheckCircle, History, LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUser } from "@/hooks/use-user"; // Твой хук для работы с БД
+import { useUser } from "@/hooks/use-user"; 
 
-// Определяем интерфейс для элемента навигации
 interface NavItem {
   href: string;
   icon: LucideIcon;
   label: string;
-  highlight?: boolean; // Делаем свойство необязательным
+  highlight?: boolean; 
 }
 
 export function BottomNav() {
@@ -16,8 +15,11 @@ export function BottomNav() {
   const { data: user } = useUser();
   
   const isAdmin = user?.role === "admin";
+const safeAreaStyle = {
+    paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)', 
+    height: 'calc(env(safe-area-inset-bottom) + 88px)'
+  };
 
-  // Описываем тип NavItem[] для массива
   const navItems: NavItem[] = isAdmin 
     ? [
         { href: "/verify", icon: CheckCircle, label: "Verify" },
@@ -27,23 +29,19 @@ export function BottomNav() {
         { href: "/create", icon: PlusCircle, label: "New Task", highlight: true },
       ];
 
-  // --- ВАРИАНТ ДЛЯ ПОЛЬЗОВАТЕЛЯ (одна кнопка с текстом и прозрачностью) ---
   if (!isAdmin) {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Мягкий градиент над панелью, чтобы контент плавно "исчезал" */}
         <div className="absolute bottom-full left-0 right-0 h-16 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
-        
-        {/* Стеклянная панель на всю ширину с сильным блюром и полупрозрачным фоном */}
-        {/* Ключевое изменение: bg-background/30 и backdrop-blur-2xl */}
-        <div className="bg-background/30 backdrop-blur-2xl border-t border-white/5 h-24 pb-safe flex items-center justify-center px-6">
+        <div className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
+          style={safeAreaStyle}>
           <Link href="/create" className="w-full max-w-xs">
             <motion.div
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="cursor-pointer relative group"
             >
-              {/* Внутреннее свечение под кнопкой для объема (glow effect) */}
+
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/30 transition-colors" />
               
               <div className="relative bg-primary text-primary-foreground h-14 rounded-2xl shadow-[0_8px_32px_rgba(0,122,255,0.3)] flex items-center justify-center space-x-3 border border-white/10 px-8">
@@ -59,7 +57,7 @@ export function BottomNav() {
     );
   }
 
-  // --- ВАРИАНТ ДЛЯ АДМИНА (старый, классический) ---
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-t border-border/50 pb-safe">
       <div className="flex justify-around items-center h-16 max-w-2xl mx-auto px-4">
