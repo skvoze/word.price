@@ -41,11 +41,12 @@ export function BottomNav() {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50">
         <div className="absolute bottom-full left-0 right-0 h-16 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
+        
         <div 
           className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
           style={{ 
-            paddingBottom: mobileOffset,
-            height: isMobile ? 'auto' : '200px', 
+            paddingBottom: isMobile ? '36px' : '0px',
+            height: isMobile ? 'auto' : '96px',
             paddingTop: isMobile ? '12px' : '0px'
           }}
         >
@@ -58,7 +59,9 @@ export function BottomNav() {
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/30 transition-colors" />
               <div className="relative bg-primary text-primary-foreground h-14 rounded-2xl shadow-[0_8px_32px_rgba(0,122,255,0.3)] flex items-center justify-center space-x-3 border border-white/10 px-8">
                 <PlusCircle className="w-6 h-6 stroke-[2.5px]" />
-                <span className="text-base font-black uppercase tracking-wider">New Task</span>
+                <span className="text-base font-black uppercase tracking-wider">
+                  New Task
+                </span>
               </div>
             </motion.div>
           </Link>

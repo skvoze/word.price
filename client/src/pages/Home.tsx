@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -17,7 +17,10 @@ import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
-  const [, setLocation] = useLocation();
+  const [isMobile, setIsMobile] = useState(false);
+useEffect(() => {
+  setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+}, []);
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'prefetch';
@@ -100,9 +103,9 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
 
   return (
     <div 
-      className="min-h-[100dvh] bg-background flex flex-col pb-32 md:pb-12"
+      className="min-h-[100dvh] bg-background flex flex-col"
     style={{ 
-      paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)' 
+      paddingBottom: isMobile ? '160px' : '80px' 
     }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
