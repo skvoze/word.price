@@ -45,7 +45,7 @@ export function BottomNav() {
           className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
           style={{ 
             paddingBottom: mobileOffset,
-            height: isMobile ? 'auto' : '96px', 
+            height: isMobile ? 'auto' : '200px', 
             paddingTop: isMobile ? '12px' : '0px'
           }}
         >
