@@ -105,7 +105,7 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     <div 
       className="min-h-[100dvh] bg-background flex flex-col"
     style={{ 
-      paddingBottom: isMobile ? '160px' : '80px' 
+      paddingBottom: isMobile ? '200px' : '80px' 
     }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
