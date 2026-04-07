@@ -100,10 +100,10 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
 
   return (
     <div 
-      className="min-h-[100dvh] bg-background flex flex-col"
-      style={{ 
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' 
-      }}
+      className="min-h-[100dvh] bg-background flex flex-col pb-32 md:pb-12"
+    style={{ 
+      paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)' 
+    }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
