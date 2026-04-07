@@ -87,7 +87,7 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   
 
   if (isLoadingTasks || isLoadingUser) {
@@ -102,7 +102,9 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     <div 
       className="min-h-[100dvh] bg-background flex flex-col"
       style={{ 
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 140px)' 
+        paddingBottom: isMobile 
+        ? 'calc(env(safe-area-inset-bottom) + 140px)' 
+        : '100px'
       }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">

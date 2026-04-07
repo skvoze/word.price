@@ -14,12 +14,17 @@ export function BottomNav() {
   const [location] = useLocation();
   const { data: user } = useUser();
   const isAdmin = user?.role === "admin";
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
 const safeAreaStyle = {
-    paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)', 
-    minHeight: 'calc(env(safe-area-inset-bottom) + 110px)',
-    display: 'flex',
-    alignItems: 'center'
-  };
+  paddingBottom: isMobile 
+    ? 'calc(env(safe-area-inset-bottom) + 40px)' 
+    : '12px',
+  height: 'auto',
+  minHeight: isMobile 
+    ? 'calc(env(safe-area-inset-bottom) + 100px)' 
+    : '70px'
+};
 
   const navItems: NavItem[] = isAdmin 
     ? [
