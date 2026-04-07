@@ -13,11 +13,12 @@ interface NavItem {
 export function BottomNav() {
   const [location] = useLocation();
   const { data: user } = useUser();
-  
   const isAdmin = user?.role === "admin";
 const safeAreaStyle = {
-    paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)', 
-    height: 'calc(env(safe-area-inset-bottom) + 88px)'
+    paddingBottom: 'calc(env(safe-area-inset-bottom) + 32px)', 
+    minHeight: 'calc(env(safe-area-inset-bottom) + 110px)',
+    display: 'flex',
+    alignItems: 'center'
   };
 
   const navItems: NavItem[] = isAdmin 
@@ -32,19 +33,19 @@ const safeAreaStyle = {
   if (!isAdmin) {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="absolute bottom-full left-0 right-0 h-16 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
-        <div className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
-          style={safeAreaStyle}>
-          <Link href="/create" className="w-full max-w-xs">
+        <div className="absolute bottom-full left-0 right-0 h-20 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+        <div 
+          className="bg-background/40 backdrop-blur-3xl border-t border-white/5 px-6 transition-all"
+          style={safeAreaStyle}
+        >
+          <Link href="/create" className="w-full max-w-xs mx-auto">
             <motion.div
               whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.95 }} // Чуть сильнее уменьшаем при нажатии для фидбека
               className="cursor-pointer relative group"
             >
-
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/30 transition-colors" />
-              
-              <div className="relative bg-primary text-primary-foreground h-14 rounded-2xl shadow-[0_8px_32px_rgba(0,122,255,0.3)] flex items-center justify-center space-x-3 border border-white/10 px-8">
+              <div className="absolute inset-0 bg-primary/25 blur-2xl rounded-full group-hover:bg-primary/35 transition-colors" />
+              <div className="relative bg-primary text-primary-foreground h-14 rounded-2xl shadow-[0_8px_32px_rgba(0,122,255,0.4)] flex items-center justify-center space-x-3 border border-white/10 px-8">
                 <PlusCircle className="w-6 h-6 stroke-[2.5px]" />
                 <span className="text-base font-black uppercase tracking-wider">
                   New Task

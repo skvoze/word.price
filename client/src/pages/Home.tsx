@@ -8,7 +8,7 @@ import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Loader2, Target, TrendingUp, ArrowUpRight, PlusCircle } from "lucide-react";
 import { type Task } from "@shared/schema";
-import { USDC_ADDRESS, USDC_ABI } from "@/lib/constants";
+import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
@@ -17,6 +17,13 @@ import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = '/create';
+    document.head.appendChild(link);
+  }, []);
   const queryClient = useQueryClient();
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: tasks, isLoading: isLoadingTasks } = useTasks();
@@ -95,7 +102,7 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     <div 
       className="min-h-[100dvh] bg-background flex flex-col"
       style={{ 
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' 
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 140px)' 
       }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
