@@ -39,8 +39,8 @@ export function BottomNav() {
 
   const mobileOffset = isMobile ? 'calc(env(safe-area-inset-bottom) + 32px)' : '0px';
 const dynamicPadding = isBaseApp 
-    ? '60px' 
-    : (isMobile ? 'env(safe-area-inset-bottom)' : '0px');
+    ? '70px' 
+    : (isMobile ? 'env(safe-area-inset-bottom)' : '10px');
 
   if (!isAdmin) {
   return (
