@@ -97,7 +97,7 @@ useEffect(() => {
   setIsBaseApp(ua.includes('coinbase') || !!(window as any).ethereum?.isCoinbaseWallet);
 }, []);
   const bottomPadding = isBaseApp 
-  ? '120px' 
+  ? '150px' 
   : (isMobile ? 'calc(env(safe-area-inset-bottom) + 90px)' : '90px');
   
 
