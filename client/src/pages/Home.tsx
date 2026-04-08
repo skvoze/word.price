@@ -90,7 +90,15 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  
+  const [isBaseApp, setIsBaseApp] = useState(false);
+useEffect(() => {
+  const ua = navigator.userAgent.toLowerCase();
+  setIsMobile(/iphone|ipad|ipod|android/i.test(ua));
+  setIsBaseApp(ua.includes('coinbase') || !!(window as any).ethereum?.isCoinbaseWallet);
+}, []);
+  const bottomPadding = isBaseApp 
+  ? '120px' 
+  : (isMobile ? 'calc(env(safe-area-inset-bottom) + 90px)' : '90px');
   
 
   if (isLoadingTasks || isLoadingUser) {
@@ -104,9 +112,7 @@ const activeTasks = (tasks as Task[])?.filter((t: Task) =>
   return (
     <div 
       className="min-h-[100dvh] bg-background flex flex-col"
-    style={{ 
-     paddingBottom: isMobile ? '140px' : '20px'
-    }}
+    style={{ paddingBottom: bottomPadding }}
     >
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />

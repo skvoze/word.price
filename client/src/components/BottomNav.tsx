@@ -15,13 +15,15 @@ export function BottomNav() {
   const [location] = useLocation();
   const { data: user } = useUser();
   const [isMobile, setIsMobile] = useState(false);
+  const [isBaseApp, setIsBaseApp] = useState(false);
   useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      const mobileRegex = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-      setIsMobile(mobileRegex.test(userAgent.toLowerCase()));
+    const checkDevice = () => {
+      const ua = navigator.userAgent.toLowerCase();
+      setIsMobile(/iphone|ipad|ipod|android/i.test(ua));
+      const isBase = ua.includes('coinbase') || !!(window as any).ethereum?.isCoinbaseWallet;
+      setIsBaseApp(isBase);
     };
-    checkMobile();
+    checkDevice();
   }, []);
 
   const isAdmin = user?.role === "admin";
@@ -36,6 +38,9 @@ export function BottomNav() {
       ];
 
   const mobileOffset = isMobile ? 'calc(env(safe-area-inset-bottom) + 32px)' : '0px';
+const dynamicPadding = isBaseApp 
+    ? '40px' 
+    : (isMobile ? 'env(safe-area-inset-bottom)' : '0px');
 
   if (!isAdmin) {
   return (
@@ -44,12 +49,11 @@ export function BottomNav() {
       
       <div 
         className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
-        style={{ 
-
-          paddingBottom: isMobile ? '80px' : '0px',
-          height: isMobile ? 'auto' : '96px',
-          minHeight: isMobile ? 'calc(env(safe-area-inset-bottom) + 80px)' : '96px',
-          paddingTop: '12px'
+       style={{ 
+            paddingBottom: dynamicPadding,
+            height: isMobile ? 'auto' : '96px',
+            minHeight: isMobile ? '80px' : '96px',
+            paddingTop: isMobile ? '12px' : '0px'
         }}
       >
         <Link href="/create" className="w-full max-w-xs">
