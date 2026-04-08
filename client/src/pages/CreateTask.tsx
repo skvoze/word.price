@@ -27,7 +27,7 @@ const formSchema = insertTaskSchema.extend({
 amount: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 1; 
-  }, "Minimum stake is 1 USDC"),deadline: z.coerce.date({
+  }, "Minimum amount is 1 USDC"),deadline: z.coerce.date({
   required_error: "Deadline is required",
   invalid_type_error: "That's not a valid date",
 }).refine((date) => {
@@ -101,7 +101,7 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
       
       toast({
         title: "Challenge Created!",
-        description: "Your USDC stake is safely locked.",
+        description: "Your USDC is safely locked.",
       });
       setLocation("/");
     } catch (error) {
@@ -177,7 +177,7 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Stake Amount (USDC)</FormLabel>
+                  <FormLabel className="text-base font-semibold">Amount (USDC)</FormLabel>
                   <FormDescription className="text-xs mb-2">
                     This money will be deducted from your app balance.
                   </FormDescription>

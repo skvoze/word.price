@@ -47,9 +47,9 @@ export default function Terms() {
           <p>
             2.1. The Service provides a decentralized platform for automated monitoring and verification of User-defined goals.
             <br />
-            2.2. Any amount locked by the User is a <b>commitment stake</b> held via smart contract. It is not an investment, deposit, or regulated financial product.
+            2.2. Any amount locked by the User is held via smart contract. It is not an investment, deposit, or regulated financial product.
             <br />
-            2.3. The release or forfeiture of the stake is governed strictly by the smart contract logic based on task completion evidence.
+            2.3. The release or forfeiture of the amount is governed strictly by the smart contract logic based on task completion evidence.
           </p>
         </section>
 

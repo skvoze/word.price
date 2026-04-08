@@ -36,20 +36,18 @@ export default function Refund() {
         <section>
           <h2 className="font-semibold text-base text-white mb-2">2. Conditions for Recovery</h2>
           <p>
-            Asset release (refund of the stake) occurs automatically when:
+            Asset release (refund of the amount) occurs automatically when:
             <br />
             • The task is verified as "Completed" before the deadline.
             <br />
             • A verified technical failure of the Protocol prevented evidence submission (requires proof).
-            <br />
-            • The task is cancelled by the User <b>before</b> any verification or slashing logic has been triggered.
           </p>
         </section>
 
         <section>
           <h2 className="font-semibold text-base text-white mb-2">3. Appeals Process</h2>
           <p>
-            If you believe your stake was slashed incorrectly due to a verification error, you must contact <b>cena.slova.help@gmail.com</b> within 24 hours of the slashing event. 
+            If you believe your amount was slashed incorrectly due to a verification error, you must contact <b>cena.slova.help@gmail.com</b> within 24 hours of the slashing event. 
             Provide your wallet address and Task Title.
           </p>
         </section>

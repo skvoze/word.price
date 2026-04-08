@@ -43,11 +43,11 @@ export default function Landing() {
     },
     { 
       q: "What happens if I miss the deadline?", 
-      a: "The smart contract triggers a 'Slash' event. Your locked stake is permanently forfeited to the protocol. No excuses, no extensions." 
+      a: "The smart contract triggers a 'Slash' event. Your locked amount is permanently forfeited to the protocol. No excuses, no extensions." 
     },
     { 
       q: "Are my funds secure on Base?", 
-      a: "Yes. All operations run on the Base Network (Layer 2 by Coinbase). We use non-custodial logic; the protocol handles the assets based on predefined rules you agree to when setting the stake." 
+      a: "Yes. All operations run on the Base Network (Layer 2 by Coinbase). We use non-custodial logic; the protocol handles the assets based on predefined rules you agree to when setting the amount." 
     }
   ];
 
@@ -59,7 +59,7 @@ export default function Landing() {
         <section className="text-center mb-28">
           <div className="inline-block px-3 py-1 border border-zinc-800 rounded-full mb-8">
              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-2">
-               <Zap className="w-3 h-3 fill-current" /> High Stakes Accountability
+               <Zap className="w-3 h-3 fill-current" /> High Amounts Accountability
              </span>
           </div>
           <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter uppercase mb-6 leading-[0.85]">
@@ -86,7 +86,7 @@ export default function Landing() {
               <div className="space-y-4">
                 <p className="text-zinc-900 font-extrabold text-3xl leading-[0.9] uppercase italic tracking-tighter">
                   Succeed: <span className="text-zinc-400">Keep All</span> <br/>
-                  Fail: <span className="text-red-600">Lose Stake</span>
+                  Fail: <span className="text-red-600">Lose Amount</span>
                 </p>
                 <div className="pt-4 border-t border-zinc-200">
                    <p className="text-[10px] text-zinc-400 leading-tight uppercase font-bold">
@@ -103,10 +103,10 @@ export default function Landing() {
           <h2 className="text-center text-4xl font-black uppercase italic tracking-tighter">The Protocol</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {[
-              { n: "01", t: "Commit", d: "Set a clear goal, a hard deadline, and lock your stake in the smart contract.", icon: <Lock className="w-4 h-4" /> },
+              { n: "01", t: "Commit", d: "Set a clear goal, a hard deadline, and lock your amount in the smart contract.", icon: <Lock className="w-4 h-4" /> },
               { n: "02", t: "Execute", d: "Do the work. No excuses. Record your progress and upload evidence before time runs out.", icon: <Zap className="w-4 h-4" /> },
               { n: "03", t: "Verify", d: "Decentralized auditing verifies your proof. One mistake or missed minute leads to slashing.", icon: <ShieldCheck className="w-4 h-4" /> },
-              { n: "04", t: "Recover", d: "Once approved, your full stake is released back to your balance instantly.", icon: <Wallet className="w-4 h-4" /> }
+              { n: "04", t: "Recover", d: "Once approved, your full amount is released back to your balance instantly.", icon: <Wallet className="w-4 h-4" /> }
             ].map((step, i) => (
               <div key={i} className="flex flex-col gap-4 p-8 bg-zinc-900/20 border border-zinc-900 rounded-3xl hover:border-zinc-700 transition-colors group">
                 <div className="flex items-center justify-between">
@@ -156,7 +156,7 @@ export default function Landing() {
             <span className="text-white font-black uppercase italic tracking-tight">USDC Native</span>
           </div>
           <p className="text-zinc-500 text-[11px] leading-relaxed">
-            We support <b>USDC on Base</b> for stable commitments. Your stake remains pegged to the dollar, unaffected by market volatility. No surprises when you recover your funds.
+            We support <b>USDC on Base</b> for stable commitments. Your amount remains pegged to the dollar, unaffected by market volatility. No surprises when you recover your funds.
           </p>
         </div>
 
