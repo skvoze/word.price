@@ -98,7 +98,7 @@ useEffect(() => {
 }, []);
   const bottomPadding = isBaseApp 
   ? '150px' 
-  : (isMobile ? 'calc(env(safe-area-inset-bottom) + 110px)' : '90px');
+  : (isMobile ? 'calc(env(safe-area-inset-bottom) + 90px)' : '90px');
   
 
   if (isLoadingTasks || isLoadingUser) {
