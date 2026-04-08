@@ -40,7 +40,7 @@ export function BottomNav() {
   const mobileOffset = isMobile ? 'calc(env(safe-area-inset-bottom) + 32px)' : '0px';
 const dynamicPadding = isBaseApp 
     ? '70px' 
-    : (isMobile ? '20px' : '10px');
+    : (isMobile ? '15px' : '5px');
 
   if (!isAdmin) {
   return (
