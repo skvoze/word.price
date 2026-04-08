@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { PlusCircle, CheckCircle, History, LucideIcon, Loader2 } from "lucide-react";
+import { PlusCircle, CheckCircle, History, LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUser } from "@/hooks/use-user"; 
 import { useEffect, useState } from "react";
@@ -23,13 +23,7 @@ export function BottomNav() {
     };
     checkMobile();
   }, []);
-const [, setLocation] = useLocation();
-  const [isPending, setIsPending] = useState(false);
 
-  const handleCreateClick = () => {
-    setIsPending(true);
-    setLocation("/create");
-  };
   const isAdmin = user?.role === "admin";
 
   const navItems: NavItem[] = isAdmin 
@@ -51,24 +45,28 @@ const [, setLocation] = useLocation();
       <div 
         className="bg-background/30 backdrop-blur-2xl border-t border-white/5 flex items-center justify-center px-6 transition-all"
         style={{ 
-          paddingBottom: isMobile ? '40px' : '0px',
+
+          paddingBottom: isMobile ? '80px' : '0px',
           height: isMobile ? 'auto' : '96px',
           minHeight: isMobile ? 'calc(env(safe-area-inset-bottom) + 80px)' : '96px',
           paddingTop: '12px'
         }}
       >
-        <div onClick={handleCreateClick} className="w-full max-w-xs cursor-pointer">
-     <motion.div className="relative bg-primary ...">
-        {isPending ? (
-          <Loader2 className="w-6 h-6 animate-spin" />
-        ) : (
-          <>
-            <PlusCircle className="w-6 h-6" />
-            <span>New Task</span>
-          </>
-        )}
-     </motion.div>
-  </div>
+        <Link href="/create" className="w-full max-w-xs">
+          <motion.div
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="cursor-pointer relative group"
+          >
+            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/30 transition-colors" />
+            <div className="relative bg-primary text-primary-foreground h-14 rounded-2xl shadow-[0_8px_32px_rgba(0,122,255,0.3)] flex items-center justify-center space-x-3 border border-white/10 px-8">
+              <PlusCircle className="w-6 h-6 stroke-[2.5px]" />
+              <span className="text-base font-black uppercase tracking-wider">
+                New Task
+              </span>
+            </div>
+          </motion.div>
+        </Link>
       </div>
     </div>
   );
