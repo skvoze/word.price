@@ -29,7 +29,7 @@ export default function Refund() {
         <section>
           <h2 className="font-semibold text-base text-white mb-2">1. Irreversibility of Blockchain</h2>
           <p>
-            All transactions on the <b>Base Network</b> are final. If funds are slashed by the smart contract due to a failure to meet task requirements, they cannot be manually reversed.
+            All transactions on the <b>Base Network</b> are final. If funds are forfeited due to a penalty triggered by the smart contract due to a failure to meet task requirements, they cannot be manually reversed.
           </p>
         </section>
 
@@ -47,7 +47,7 @@ export default function Refund() {
         <section>
           <h2 className="font-semibold text-base text-white mb-2">3. Appeals Process</h2>
           <p>
-            If you believe your amount was slashed incorrectly due to a verification error, you must contact <b>cena.slova.help@gmail.com</b> within 24 hours of the slashing event. 
+            If you believe your amount was debited incorrectly due to a verification error, you must contact <b>cena.slova.help@gmail.com</b> within 24 hours of the penalty event. 
             Provide your wallet address and Task Title.
           </p>
         </section>
@@ -55,7 +55,7 @@ export default function Refund() {
         <section>
           <h2 className="font-semibold text-base text-white mb-2">4. Fees</h2>
           <p>
-            4.1. Network (Gas) fees incurred during staking or recovery are non-refundable.
+            4.1. Network (Gas) fees incurred during locking or recovery are non-refundable.
             <br />
             4.2. Protocol processing fees (up to 5%) may be deducted from non-task-related recoveries.
           </p>

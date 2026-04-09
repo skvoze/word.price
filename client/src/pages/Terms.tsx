@@ -60,9 +60,9 @@ export default function Terms() {
             <br />
             3.2. <b>Asset Release:</b> Upon successful verification of the task, the locked amount is released back to the User's wallet.
             <br />
-            3.3. <b>Slashing:</b> If the task is not completed or verified by the deadline, the assets are "slashed" (forfeited) as per the protocol rules.
+            3.3. <b>Penalty:</b> If the task is not completed or verified by the deadline, the assets are forfeited as a penalty as per the protocol rules.
             <br />
-            3.4. <b>Service Fee:</b> A protocol fee of <b>5%</b> may be applied to non-task-related withdrawals or specified reward distributions to cover operational costs.
+            3.4. <b>Service Fee:</b> A protocol fee may be applied to cover operational costs for verification and maintenance.
           </p>
         </section>
 

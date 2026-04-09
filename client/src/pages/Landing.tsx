@@ -43,7 +43,7 @@ export default function Landing() {
     },
     { 
       q: "What happens if I miss the deadline?", 
-      a: "The smart contract triggers a 'Slash' event. Your locked amount is permanently forfeited to the protocol. No excuses, no extensions." 
+      a: "The smart contract triggers penalty. Your locked amount is permanently forfeited to the protocol. No excuses, no extensions." 
     },
     { 
       q: "Are my funds secure on Base?", 
@@ -59,7 +59,7 @@ export default function Landing() {
         <section className="text-center mb-28">
           <div className="inline-block px-3 py-1 border border-zinc-800 rounded-full mb-8">
              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-2">
-               <Zap className="w-3 h-3 fill-current" /> High Amounts Accountability
+               <Zap className="w-3 h-3 fill-current" /> Zero Excuse Protocol
              </span>
           </div>
           <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter uppercase mb-6 leading-[0.85]">
@@ -104,8 +104,8 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {[
               { n: "01", t: "Commit", d: "Set a clear goal, a hard deadline, and lock your amount in the smart contract.", icon: <Lock className="w-4 h-4" /> },
-              { n: "02", t: "Execute", d: "Do the work. No excuses. Record your progress and upload evidence before time runs out.", icon: <Zap className="w-4 h-4" /> },
-              { n: "03", t: "Verify", d: "Decentralized auditing verifies your proof. One mistake or missed minute leads to slashing.", icon: <ShieldCheck className="w-4 h-4" /> },
+              { n: "02", t: "Execute", d: "Do the work. No excuses. Record your progress and upload visual evidence before time runs out.", icon: <Zap className="w-4 h-4" /> },
+              { n: "03", t: "Verify", d: "Human-led verification ensures your evidence is authentic. One mistake or missed minute leads to penalty.", icon: <ShieldCheck className="w-4 h-4" /> },
               { n: "04", t: "Recover", d: "Once approved, your full amount is released back to your balance instantly.", icon: <Wallet className="w-4 h-4" /> }
             ].map((step, i) => (
               <div key={i} className="flex flex-col gap-4 p-8 bg-zinc-900/20 border border-zinc-900 rounded-3xl hover:border-zinc-700 transition-colors group">
@@ -167,15 +167,15 @@ export default function Landing() {
             <span className="text-green-500 font-black tracking-tighter">0%</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
-            <span className="text-zinc-500 font-bold uppercase text-[10px]">Failure (Slash)</span>
+            <span className="text-zinc-500 font-bold uppercase text-[10px]">Failure (Penalty)</span>
             <span className="text-red-500 font-black tracking-tighter">100%</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
             <div className="flex flex-col">
               <span className="text-zinc-500 font-bold uppercase text-[10px]">Withdrawal Fee</span>
-              <span className="text-[8px] text-zinc-600 uppercase">Operational Cost</span>
+              <span className="text-[8px] text-zinc-600 uppercase">Only Network Gas Fees</span>
             </div>
-            <span className="text-white font-black tracking-tighter">5%</span>
+            <span className="text-white font-black tracking-tighter">0%</span>
           </div>
         </div>
       </div>
@@ -183,7 +183,7 @@ export default function Landing() {
       <div className="text-center pt-6">
         <p className="text-[10px] text-zinc-600 uppercase font-black tracking-[0.2em] leading-relaxed max-w-sm mx-auto">
           Commit in ETH or USDC. Success costs nothing. <br/>
-          Withdrawal fees sustain the verification engine.
+          The protocol is built for discipline, not for profit.
         </p>
       </div>
     </div>
