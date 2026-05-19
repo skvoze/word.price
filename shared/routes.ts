@@ -41,7 +41,6 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/tasks',
-      // Важно: coerce.date() превращает строку из формы в объект Date
       input: insertTaskSchema.extend({ deadline: z.coerce.date() }),
       responses: {
         201: z.custom<typeof tasks.$inferSelect>(),
@@ -82,13 +81,13 @@ export const api = {
         200: z.custom<typeof users.$inferSelect>(),
       }
     },
-    // Изменили на синхронизацию депозита из блокчейна
+  
     addFunds: {
       method: 'POST' as const,
       path: '/api/users/funds',
       input: z.object({ 
         amount: z.number().positive(),
-        txHash: z.string() // Добавили хэш транзакции вместо Robokassa
+        txHash: z.string()
       }),
       responses: {
         200: z.object({ success: z.boolean() }),

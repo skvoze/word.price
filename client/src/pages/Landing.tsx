@@ -139,7 +139,6 @@ export default function Landing() {
         {/* ——— 5. THE COST OF FAILURE ——— */}
         <section className="mb-40">
   <div className="bg-zinc-900/30 border border-zinc-800 rounded-[3rem] p-10 md:p-16 relative overflow-hidden">
-    {/* Декоративный элемент USDC */}
     <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full" />
     
     <div className="max-w-2xl mx-auto space-y-12">
@@ -149,7 +148,7 @@ export default function Landing() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Левая колонка: Поддержка USDC */}
+
         <div className="bg-zinc-950/50 p-6 rounded-2xl border border-zinc-800/50">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-black italic">S</div>
@@ -160,7 +159,7 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* Правая колонка: Комиссии */}
+   
         <div className="space-y-3">
           <div className="flex justify-between items-center p-3 bg-zinc-950/30 border border-zinc-900 rounded-xl">
             <span className="text-zinc-500 font-bold uppercase text-[10px]">Success Fee</span>

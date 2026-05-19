@@ -147,7 +147,6 @@ useEffect(() => {
       </DialogHeader>
 
       <div className="py-6 space-y-6">
-        {/* Поле ввода суммы (только на этапе Approve) */}
         {step === 'approve' && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-end px-1">
@@ -201,7 +200,6 @@ useEffect(() => {
           <Step circle="3" label="Finish" active={step === 'success'} done={step === 'success'} />
         </div>
 
-        {/* Кнопки управления */}
         <div className="pt-2">
           {step === 'approve' && (
             <Button 

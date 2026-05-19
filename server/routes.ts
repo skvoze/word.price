@@ -7,7 +7,6 @@ import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockc
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { getVaultBalance } from "../shared/blockchain";
-import AdminHistory from "@/pages/AdminHistory";
 import { VAULT_ADDRESS} from "../shared/contracts";
 
 cloudinary.config({
@@ -344,11 +343,11 @@ app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
       if (!evidenceUrl) return res.status(400).json({ message: "evidenceUrl is required" });
       const task = await storage.submitEvidence(id, evidenceUrl);
       const adminMessage = 
-      `<b>📦 Новое подтверждение!</b>\n\n` +
-      `📝 Задача #${task.id}: <b>${task.title}</b>\n` +
-      `👤 Юзер: <pre>${task.userAddress}</pre>\n` +
-      `💰 Сумма: ${task.amount / 100} USDC\n\n` +
-      `🔗 <a href="${evidenceUrl}">Открыть пруф</a>`;
+      `<b>📦 New verify!</b>\n\n` +
+      `📝 Task #${task.id}: <b>${task.title}</b>\n` +
+      `👤 User: <pre>${task.userAddress}</pre>\n` +
+      `💰 Amount: ${task.amount / 100} USDC\n\n` +
+      `🔗 <a href="${evidenceUrl}">Open proof</a>`;
 
     await notifyAdmins(adminMessage);
       if (!task) return res.status(404).json({ message: "Task not found" });
@@ -363,8 +362,6 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
   try {
     const id = Number(req.params.id);
     const { rejectionReason } = req.body;
-
-    // Пытаемся получить задачу быстро
     const task = await storage.getTask(id);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
@@ -373,8 +370,6 @@ app.post(api.tasks.fail.path, authMiddleware, async (req: any, res) => {
     
     const currentDeadline = new Date(task.deadline);
     const finalDeadline = bonusDeadline > currentDeadline ? bonusDeadline : currentDeadline;
-
-    // ОБНОВЛЯЕМ: добавляем true в конце, чтобы очистить старый пруф (твой storage это умеет)
     const updated = await storage.updateTaskStatus(
       id, 
       "failed", 

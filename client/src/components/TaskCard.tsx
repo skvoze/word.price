@@ -57,12 +57,10 @@ export function TaskCard({ task, isAdmin = false }: { task: TaskWithUser, isAdmi
         <div className="flex justify-between items-start mb-3">
           <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${status.bg} ${status.color} border ${status.border}`}>
             <StatusIcon className="w-3.5 h-3.5" />
-            {/* Гарантируем, что выводится строка */}
             <span>{String(currentStatusLabel)}</span>
           </div>
           <div className="flex items-center text-primary font-bold">
             <Coins className="w-4 h-4 mr-1.5 opacity-70" />
-            {/* Заменено на USDC и безопасный расчет */}
             {Number(task.amount / 100).toFixed(2)} USDC
           </div>
         </div>

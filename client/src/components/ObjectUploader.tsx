@@ -2,7 +2,6 @@ import { useState,useEffect,useRef } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import type { UppyFile, UploadResult } from "@uppy/core";
-import DashboardModal from "@uppy/react/dashboard-modal";
 import "@uppy/core/css/style.min.css";
 import "@uppy/dashboard/css/style.min.css";
 import XHRUpload from '@uppy/xhr-upload'
@@ -99,7 +98,7 @@ export function ObjectUploader({
           });
         } catch (err) {
           console.error("Failed to prepare upload params:", err);
-          uppy.info("Ошибка подготовки загрузки", "error", 5000);
+          uppy.info("Failed to prepare upload", "error", 5000);
           throw err;
         }
       }
@@ -143,12 +142,11 @@ export function ObjectUploader({
         console.error(err);
       }
     });
-    e.target.value = ""; // Сбрасываем инпут для повторных загрузок
+    e.target.value = ""; 
   };
 
   return (
     <div className="w-full">
-      {/* Скрытый нативный инпут */}
       <input
         type="file"
         ref={fileInputRef}

@@ -7,7 +7,6 @@ export function RoleToggle() {
   const { data: user } = useUser();
   const [location, setLocation] = useLocation();
 
-  // Если пользователь не админ, кнопку вообще не показываем
   if (!user || user.role !== "admin") return null;
 
   const isAdminPage = location === "/admin";
@@ -22,12 +21,12 @@ export function RoleToggle() {
       {isAdminPage ? (
         <>
           <User className="w-4 h-4 mr-1 text-blue-500" />
-          Верификация
+          Verifycation
         </>
       ) : (
         <>
           <Shield className="w-4 h-4 mr-1 text-amber-500" />
-          Выплаты (Админ)
+          Payments (Admin)
         </>
       )}
     </Button>

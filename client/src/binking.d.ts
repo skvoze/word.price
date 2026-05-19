@@ -3,6 +3,6 @@ declare module 'binking' {
     isValid: boolean;
     brandAlias: string | null;
     brandName: string | null;
-    brandLogo: string | null; // Добавили это поле
+    brandLogo: string | null;
   };
 }

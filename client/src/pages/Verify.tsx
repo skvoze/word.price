@@ -57,7 +57,7 @@ export default function Verify() {
 };
 
   const handleReject = async (taskId: number) => {
-  const reason = window.prompt("Укажите причину отклонения (её увидит пользователь):");
+  const reason = window.prompt("Describe reason:");
   if (reason === null) return;
 
   try {
@@ -66,13 +66,13 @@ export default function Verify() {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
     toast({
       title: "Rejected",
-      description: "Причина сохранена, задача отклонена.",
+      description: "Reason saved, task canceled.",
     });
   } catch (error) {
     toast({
       title: "Error",
       variant: "destructive",
-      description: "Не удалось отклонить задачу",
+      description: "Failure to cancled task",
     });
   }
 };
@@ -160,7 +160,7 @@ export default function Verify() {
                                  className="h-7 text-[10px] uppercase font-bold text-primary"
                                  onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
                                >
-                                 <Share2 className="w-3 h-3 mr-1" /> Оригинал
+                                 <Share2 className="w-3 h-3 mr-1" /> Original
                                </Button>
                             </div>
                           ) : task.evidenceUrl.match(/\.(mp4|webm|mov|avi)$/i) ? (
@@ -180,7 +180,7 @@ export default function Verify() {
                                  className="h-7 text-[10px] uppercase font-bold text-primary"
                                  onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
                                >
-                                 <Share2 className="w-3 h-3 mr-1" /> Оригинал
+                                 <Share2 className="w-3 h-3 mr-1" /> Original
                                </Button>
                             </div>
                           ) : (

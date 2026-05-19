@@ -86,7 +86,6 @@ export default function AdminHistory() {
       </header>
 
       <main className="px-4 py-6 space-y-8">
-        {/* Секция активных задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -103,8 +102,6 @@ export default function AdminHistory() {
             ))}
           </div>
         </section>
-
-        {/* Секция завершенных задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">
