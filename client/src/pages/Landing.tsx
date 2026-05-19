@@ -220,7 +220,7 @@ export default function Landing() {
             <div className="space-y-8">
               <h4 className="text-white font-black uppercase italic text-sm tracking-widest">Protocol Support</h4>
               <div className="space-y-4 text-sm text-zinc-500 font-bold uppercase tracking-tighter">
-                <a href="https://t.me/word_price_help" className="flex items-center gap-3 hover:text-white transition-colors">
+                <a href="https://t.me/word_price" className="flex items-center gap-3 hover:text-white transition-colors">
                   <Send className="w-4 h-4" /> Telegram Support
                 </a>
                 <a href="mailto:word.price.help@gmail.com" className="flex items-center gap-3 hover:text-white transition-colors">
