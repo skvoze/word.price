@@ -7,7 +7,6 @@ import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockc
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { getVaultBalance } from "../shared/blockchain";
-import { VAULT_ADDRESS } from "../shared/contracts";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -69,6 +68,7 @@ function startDeadlineChecker() {
         if (task.status === "completed") continue;
         const deadlineDate = new Date(task.deadline);  
         const isExpired = bufferTime > deadlineDate;
+        const taskChainId = task.chainId || 8453; 
         
         try {
           if ((task.status === "pending" || task.status === "failed") && isExpired) {
@@ -76,7 +76,8 @@ function startDeadlineChecker() {
             const alreadySlashedInChain = userHistory.some(tx => 
               tx.type === "slash" && 
               tx.description?.includes(task.title) && 
-              tx.status === "completed"
+              tx.status === "completed" &&
+              tx.chainId === taskChainId
             );
 
             if (alreadySlashedInChain) {
@@ -86,15 +87,9 @@ function startDeadlineChecker() {
               continue;
             }
             
-            // Защита: Слэшинг вызываем только если таска была на Base Mainnet
-            let txHash = "0x_arc_testnet_slash_placeholder";
-            if (task.chainId === 8453) {
-              console.log(`[Deadline] Slashing funds for task #${task.id} on Base`);
-              const receipt = await slashUserFunds(task.userAddress, task.amount);
-              txHash = receipt.transactionHash;
-            } else {
-              console.log(`[Deadline] Simulating Arc Testnet Slash for task #${task.id}`);
-            }
+            console.log(`[Deadline] Slashing funds for task #${task.id} on chain ${taskChainId}`);
+            const receipt = await slashUserFunds(task.userAddress, task.amount, taskChainId);
+            const txHash = receipt.transactionHash;
 
             await storage.updateTaskStatus(task.id, "failed", "Final deadline expired (Funds slashed)");
             
@@ -105,7 +100,7 @@ function startDeadlineChecker() {
               status: "completed",
               description: `Deadline expired: ${task.title}`,
               txHash: txHash,
-              chainId: task.chainId
+              chainId: taskChainId
             });
             
             userCache.delete(task.userAddress.toLowerCase());
@@ -115,13 +110,9 @@ function startDeadlineChecker() {
             const submissionDate = new Date(task.updatedAt || task.createdAt || now);
             const msPassed = now.getTime() - submissionDate.getTime();
             if (msPassed >= (24 * 3600 * 1000 - 60000)) { 
-              console.log(`[Deadline] Auto-approving task #${task.id}`);
-              
-              let txHash = "0x_arc_testnet_refund_placeholder";
-              if (task.chainId === 8453) {
-                const receipt = await unlockUserFunds(task.userAddress, task.amount);
-                txHash = receipt.transactionHash;
-              }
+              console.log(`[Deadline] Auto-approving task #${task.id} on chain ${taskChainId}`);
+              const receipt = await unlockUserFunds(task.userAddress, task.amount, taskChainId);
+              const txHash = receipt.transactionHash;
               
               await storage.updateUserBalance(task.userAddress, task.amount);
               await storage.updateTaskStatus(task.id, "completed");
@@ -133,14 +124,14 @@ function startDeadlineChecker() {
                 status: "completed",
                 description: `Auto-approved (no admin review): ${task.title}`,
                 txHash: txHash,
-                chainId: task.chainId
+                chainId: taskChainId
               });
 
               userCache.delete(task.userAddress.toLowerCase());
             }
           }
         } catch (taskErr) {
-          console.error(`[Deadline Task #${task.id} Error]:`, taskErr);
+          console.error(`[Deadline Task #${task.id} Error on chain ${taskChainId}]:`, taskErr);
         }
       }
     } catch (err) {
@@ -149,7 +140,6 @@ function startDeadlineChecker() {
   }, 8 * 60 * 1000);
 }
 
-// ... Вспомогательные функции отправки уведомлений остаются без изменений ...
 async function sendTelegramNotification(telegramId: string, message: string) {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   if (!BOT_TOKEN || !telegramId) return;
@@ -161,6 +151,7 @@ async function sendTelegramNotification(telegramId: string, message: string) {
     });
   } catch (e) { console.error("[TG Notification Error]:", e); }
 }
+
 async function notifyAdmins(message: string) {
   const admin = process.env.ADMIN_TELEGRAM_ID||""; 
   try { await sendTelegramNotification(admin, message); } catch (e) { console.error("[Notify Admin Error]:", e); }
@@ -168,7 +159,7 @@ async function notifyAdmins(message: string) {
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   
-  // --- UPLOADS (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- UPLOADS 
   app.post("/api/uploads/request-url", authMiddleware, async (req, res) => {
     try {
       res.json({ uploadURL: "/api/uploads/direct", objectPath: `evidence-${Date.now()}.jpg` });
@@ -185,7 +176,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (error) { res.status(500).json({ message: "Failed to upload to Cloudinary" }); }
   });
 
-  // --- USER ME (ИСПРАВЛЕНО: СИНК ТОЛЬКО НА BASE MAINNET) ---
   app.get(api.users.me.path, authMiddleware, async (req: any, res) => {
     const lowerAddress = req.user.address.toLowerCase();
     const currentChainId = parseInt((req.query.chainId as string) || "8453");
@@ -193,21 +183,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const dbUser = await storage.getUserByAddress(lowerAddress);
     if (!dbUser) return res.json(req.user);
 
-    // Сверяем баланс с контрактом только если мы на Base Mainnet
-    if (currentChainId === 8453) {
-      try {
-        const realBalanceUnits = await getVaultBalance(lowerAddress);
-        const realBalanceInCents = Math.round(realBalanceUnits * 100);
-        const currentDbBalance = Number(dbUser.balance);
-        
-        if (currentDbBalance !== realBalanceInCents) {
-          const updatedUser = await storage.updateUserBalance(lowerAddress, realBalanceInCents - currentDbBalance);
-          userCache.set(lowerAddress, { user: updatedUser, expires: Date.now() + CACHE_TTL });
-          return res.json(updatedUser);
-        }
-      } catch (error) {
-        console.error("[Sync Skip] Using DB fallback:", error);
+    try {
+      const realBalanceUnits = await getVaultBalance(lowerAddress, currentChainId);
+      const realBalanceInCents = Math.round(realBalanceUnits * 100);
+      const currentDbBalance = Number(dbUser.balance);
+      
+      if (currentDbBalance !== realBalanceInCents) {
+        const updatedUser = await storage.updateUserBalance(lowerAddress, realBalanceInCents - currentDbBalance);
+        userCache.set(lowerAddress, { user: updatedUser, expires: Date.now() + CACHE_TTL });
+        return res.json(updatedUser);
       }
+    } catch (error) {
+      console.error(`[Sync Fallback] Using DB due to chain ${currentChainId} read failure:`, error);
     }
     res.json(dbUser);
   });
@@ -218,7 +205,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(history.filter((tx: any) => tx.chainId === chainId));
   });
 
-  // --- ДЕПОЗИТ (БЕЗ ИЗМЕНЕНИЙ) ---
   app.post("/api/users/deposit", authMiddleware, async (req: any, res) => {
     const { amount, txHash, chainId } = req.body; 
     const lowerAddress = req.user.address.toLowerCase();
@@ -240,14 +226,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         type: "deposit",
         status: "completed",
         description: `Deposit via tx: ${txHash.slice(0, 6)}...`,
-        chainId: targetChainId
+        chainId: targetChainId 
       });
 
       res.json(updatedUser);
     } catch (err: any) { res.status(400).json({ message: err.message }); }
   });
 
-  // --- ВЫВОД (ИСПРАВЛЕНО: ДОБАВЛЕН CHAIN_ID) ---
   app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
     const { amount, txHash, chainId } = req.body; 
     const user = req.user;
@@ -260,15 +245,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       const amountInCents = Math.round(parseFloat(amount) * 100);
       const tasks = await storage.getTasksByUser(user.address);
+      
       const activeTasks = tasks.filter(t => 
         (t.status === "pending" || t.status === "submitted" || t.status === "failed") && 
-        new Date(t.deadline) > new Date() && t.chainId === targetChainId // Фильтр по чейну при выводе
+        new Date(t.deadline) > new Date() && 
+        (t.chainId === targetChainId)
       );
       
       const totalLocked = activeTasks.reduce((sum, t) => sum + Number(t.amount), 0);
       if (Number(dbUser.balance) - totalLocked < amountInCents) {
         return res.status(400).json({ 
-          message: "Insufficient withdrawable balance. Some funds are locked in active challenges." 
+          message: "Insufficient withdrawable balance. Some funds are locked in active challenges on this network." 
         });
       }
 
@@ -289,7 +276,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (err: any) { res.status(500).json({ message: "Failed to process withdrawal" }); }
   });
 
-  // --- TASKS CORE (ИСПРАВЛЕНО: ЗАЩИТА БЛОКЧЕЙН ВЫЗОВА) ---
   app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
     const userAddress = req.user.address.toLowerCase();
     try {
@@ -302,14 +288,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       if (userBalance < cost) return res.status(400).json({ message: `Insufficient balance.` });
 
-      const targetChainId = taskData.chainId || 8453;
-      let txHash = "0x_arc_testnet_lock_placeholder";
+      const targetChainId = req.body.chainId ? parseInt(req.body.chainId) : (taskData.chainId || 8453);
 
-      // Дёргаем контракт Base ТОЛЬКО если это транзакции Base чейна
-      if (targetChainId === 8453) {
-        const receipt = await lockUserFunds(user.address, cost);
-        txHash = receipt.transactionHash;
-      }
+      console.log(`[Create Task] Invoking blockchain lock on chain ${targetChainId}`);
+
+      const receipt = await lockUserFunds(user.address, cost, targetChainId);
+      const txHash = receipt.transactionHash;
 
       await storage.updateUserBalance(user.address, -cost);
       const task = await storage.createTask({ ...taskData, userAddress: user.address, chainId: targetChainId });
@@ -338,8 +322,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const allTasks = req.user.role === "admin" 
         ? await storage.getTasks() 
         : await storage.getTasksByUser(req.user.address);
-      
-      res.json(allTasks.filter((t: any) => t.chainId === chainId));
+      res.json(allTasks.filter((t: any) => (t.chainId || 8453) === chainId));
     } catch (error) { res.status(503).json({ message: "Database connection lost." }); }
   });
 
@@ -363,7 +346,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     } catch (err: any) { res.status(400).json({ message: "Upload failed" }); }
   });
 
-  // --- ADMIN ACTIONS (ИСПРАВЛЕНО: ЗАЩИТА ТРАНЗАКЦИЙ ПРИ APPROVE) ---
+  // --- ADMIN ACTIONS 
   app.get("/api/admin/tasks", authMiddleware, async (req: any, res) => {
     if (req.user.role !== "admin") return res.sendStatus(403);
     const allTasks = await storage.getTasks();
@@ -396,13 +379,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (task.status === "completed") return res.json({ success: true });
 
       const workerAddress = task.userAddress.toLowerCase();
-      let txHash = "0x_arc_testnet_approve_placeholder";
+      const taskChainId = task.chainId || 8453;
 
-      // Снятие средств с контракта вызываем только для Base
-      if (task.chainId === 8453) {
-        await unlockUserFunds(workerAddress, task.amount);
-        txHash = "0x_base_mainnet_success_hash"; // Сюда можно прокинуть реальный хэш анлока
-      }
+      console.log(`[Admin Approve] Releasing locked funds on chain ${taskChainId}`);
+      const receipt = await unlockUserFunds(workerAddress, task.amount, taskChainId);
+      const txHash = receipt.transactionHash;
 
       await storage.updateUserBalance(workerAddress, task.amount);
       await storage.updateTaskStatus(id, "completed");
@@ -414,7 +395,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         status: "completed",
         description: `Task approved: ${task.title}`,
         txHash: txHash,
-        chainId: task.chainId
+        chainId: taskChainId
       });
       userCache.delete(workerAddress);
       res.json({ success: true });

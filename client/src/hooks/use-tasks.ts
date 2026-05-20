@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import { type InsertTask,type Task } from "@shared/schema";
+import { type InsertTask, type Task } from "@shared/schema";
 import { useAccount } from "wagmi";
 
 const getHeaders = (address?: string) => {
@@ -10,21 +10,20 @@ const getHeaders = (address?: string) => {
   }
   return headers;
 };
-
-export function useTasks() {
+export function useTasks(chainId: number = 8453) {
   const { address } = useAccount();
 
   return useQuery<Task[]>({
-    queryKey: [api.tasks.list.path, address],
+    queryKey: [api.tasks.list.path, chainId, address],
     queryFn: async () => {
-      const res = await fetch(api.tasks.list.path, { 
+      const res = await fetch(`${api.tasks.list.path}?chainId=${chainId}`, { 
         headers: getHeaders(address), 
       });
       if (!res.ok) throw new Error("Failed to fetch tasks");
       return await res.json();
     },
     enabled: !!address, 
-    retry: 2  ,  
+    retry: 2,    
     retryDelay: 1000
   });
 }
@@ -70,7 +69,7 @@ export function useCreateTask() {
   const { address } = useAccount();
 
   return useMutation({
-    mutationFn: async (data: InsertTask) => {
+    mutationFn: async (data: InsertTask & { chainId?: number }) => {
       const res = await fetch(api.tasks.create.path, {
         method: api.tasks.create.method,
         headers: getHeaders(address), 
@@ -82,12 +81,11 @@ export function useCreateTask() {
       }
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.users.me.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-      
-
+    onSuccess: (_, variables) => {
+      const taskChainId = variables.chainId || 8453;
+      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, taskChainId] });
+      queryClient.invalidateQueries({ queryKey: [api.users.me.path, taskChainId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions", taskChainId] });
     },
   });
 }
@@ -107,9 +105,10 @@ export function useSubmitEvidence() {
       if (!res.ok) throw new Error("Failed to submit evidence");
       return await res.json();
     },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
+    onSuccess: (updatedTask) => {
+      const taskChainId = updatedTask.chainId || 8453;
+      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, taskChainId] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
     },
   });
@@ -117,14 +116,13 @@ export function useSubmitEvidence() {
 
 export function useCompleteTask() {
   const queryClient = useQueryClient();
-   const { address } = useAccount();
+  const { address } = useAccount();
   return useMutation({
     mutationFn: async (id: number) => {
-     const res = await fetch(`/api/admin/tasks/${id}/approve`, { 
-    method: "POST", 
-    headers: getHeaders(address), 
-
-  });
+      const res = await fetch(`/api/admin/tasks/${id}/approve`, { 
+        method: "POST", 
+        headers: getHeaders(address), 
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Database Error" }));
         throw new Error(err.message || "Failed to complete task");
@@ -132,7 +130,7 @@ export function useCompleteTask() {
       return await res.json();
     },
     retry: 2,
-    onSuccess: (_, id) => {
+    onSuccess: (data, id) => {
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
@@ -144,7 +142,7 @@ export function useCompleteTask() {
 
 export function useFailTask() {
   const queryClient = useQueryClient();
-   const { address } = useAccount();
+  const { address } = useAccount();
   return useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
       const url = buildUrl(api.tasks.fail.path, { id });
@@ -157,12 +155,13 @@ export function useFailTask() {
       if (!res.ok) throw new Error("Failed to fail task");
       return res.json();
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, variables.id] });
+    onSuccess: (updatedTask) => {
+      const taskChainId = updatedTask?.chainId || 8453;
+      queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, taskChainId] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, updatedTask?.id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions", taskChainId] });
     },
   });
 }

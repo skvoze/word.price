@@ -1,22 +1,22 @@
 import { useEffect,useState } from "react";
-import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { parseUnits, formatUnits } from "viem";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { Loader2, Target, TrendingUp, ArrowUpRight, PlusCircle } from "lucide-react";
+import { Loader2, Target, TrendingUp} from "lucide-react";
 import { type Task } from "@shared/schema";
-import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
-import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
-
+import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts";
 
 export default function Home() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount(); 
+  const currentChainId = chain?.id || 8453; 
+  const { vault: activeVaultAddress } = getContractAddresses(currentChainId);
   const [isMobile, setIsMobile] = useState(false);
 useEffect(() => {
   setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
@@ -28,10 +28,10 @@ useEffect(() => {
     document.head.appendChild(link);
   }, []);
   const queryClient = useQueryClient();
-  const { data: user, isLoading: isLoadingUser } = useUser();
-  const { data: tasks, isLoading: isLoadingTasks } = useTasks();
+  const { data: user, isLoading: isLoadingUser } = useUser(currentChainId);
+  const { data: tasks, isLoading: isLoadingTasks } = useTasks(currentChainId);
   const { data: vaultBalanceRaw } = useReadContract({
-    address: VAULT_ADDRESS,
+    address: activeVaultAddress as `0x${string}`,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
@@ -62,7 +62,7 @@ useEffect(() => {
           "Content-Type": "application/json",
           "x-user-address": address?.toLowerCase() || "" 
         },
-        body: JSON.stringify({ amount: 10, txHash })
+        body: JSON.stringify({ amount: 10, txHash, chainId: currentChainId }) // <-- Добавили chainId
       });
       return res.json();
     },

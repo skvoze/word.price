@@ -11,16 +11,16 @@ const getHeaders = (address?: string) => {
   return headers;
 };
 
-export function useUser() {
+export function useUser(chainId: number = 8453) {
   const { address, isConnected } = useAccount();
 
   return useQuery({
 
-    queryKey: [api.users.me.path, address?.toLowerCase()],
+    queryKey: [api.users.me.path, chainId, address?.toLowerCase()],
     queryFn: async () => {
       if (!address) return null;
       
-      const res = await fetch(api.users.me.path, { 
+      const res = await fetch(`${api.users.me.path}?chainId=${chainId}`, { 
         headers: getHeaders(address), 
       });
 
@@ -41,13 +41,13 @@ export function useUser() {
   });
 }
 
-export function useTransactions() {
+export function useTransactions(chainId: number = 8453) {
   const { address } = useAccount();
 
   return useQuery<Transaction[]>({
-    queryKey: ["/api/transactions", address],
+    queryKey: ["/api/transactions", chainId, address],
     queryFn: async () => {
-      const res = await fetch("/api/transactions", { 
+      const res = await fetch(`/api/transactions?chainId=${chainId}`, { 
         headers: getHeaders(address),
       });
       if (!res.ok) throw new Error("Failed to fetch transactions");
@@ -63,7 +63,7 @@ export function useWithdraw() {
   const { address } = useAccount();
 
   return useMutation({
-    mutationFn: async (data: { amount: number; description: string; metadata?: any }) => {
+    mutationFn: async (data: { amount: number; description: string; chainId: number; txHash?: string }) => {
       const res = await fetch("/api/users/withdraw", {
         method: "POST",
         headers: getHeaders(address),
@@ -75,30 +75,33 @@ export function useWithdraw() {
       }
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.users.me.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    onSuccess: (_, variables) => {
+      const targetChainId = variables.chainId || 8453;
+      queryClient.invalidateQueries({ queryKey: [api.users.me.path, targetChainId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions", targetChainId] });
     },
   });
 }
+
 
 export function useAddFunds() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
 
   return useMutation({
-    mutationFn: async ({ amount, txHash }: { amount: number; txHash: string }) => {
-      const res = await fetch("/api/users/funds", {
+    mutationFn: async ({ amount, txHash, chainId }: { amount: number; txHash: string; chainId: number }) => {
+      const res = await fetch("/api/users/deposit", { 
         method: "POST",
         headers: getHeaders(address),
-        body: JSON.stringify({ amount, txHash }),
+        body: JSON.stringify({ amount, txHash, chainId }),
       });
       if (!res.ok) throw new Error("Failed to sync deposit");
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.users.me.path] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    onSuccess: (_, variables) => {
+      const targetChainId = variables.chainId || 8453;
+      queryClient.invalidateQueries({ queryKey: [api.users.me.path, targetChainId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions", targetChainId] });
     },
   });
 }

@@ -1,10 +1,8 @@
 import { Switch, Route, Redirect } from "wouter";
-import { WagmiProvider, useAccount } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider, useAccount, useChainId, useConfig } from 'wagmi';
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { config } from "@/lib/web3Config";
-import { base } from 'viem/chains'; 
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
@@ -24,10 +22,9 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Refund from "@/pages/Refund";
 
-
 function Router() {
   const { isConnected, isConnecting } = useAccount();
-  const { data: user, isLoading: isUserLoading, isError } = useUser();
+  const { data: user, isLoading: isUserLoading } = useUser();
   
   if (isConnecting) {
     return (
@@ -83,26 +80,36 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const chainId = useChainId();
+  const wagmiConfig = useConfig();
+  const activeChain = wagmiConfig.chains.find((c) => c.id === chainId) || wagmiConfig.chains[0];
+
+  return (
+    <OnchainKitProvider chain={activeChain as any}>
+      <RainbowKitProvider 
+        theme={darkTheme({ 
+          accentColor: '#ffffff', 
+          accentColorForeground: '#000000',
+          borderRadius: 'medium'
+        })}
+        modalSize="compact"
+      >
+        <TooltipProvider>
+          <div className="antialiased min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
+            <Router />
+            <Toaster />
+          </div>
+        </TooltipProvider>
+      </RainbowKitProvider>
+    </OnchainKitProvider>
+  );
+}
+
 export default function App() {
   return (
     <WagmiProvider config={config}>
-        <OnchainKitProvider chain={base as any}>
-          <RainbowKitProvider 
-            theme={darkTheme({ 
-              accentColor: '#ffffff', 
-              accentColorForeground: '#000000',
-              borderRadius: 'medium'
-            })}
-            modalSize="compact"
-          >
-            <TooltipProvider>
-              <div className="antialiased min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-                <Router />
-                <Toaster />
-              </div>
-            </TooltipProvider>
-          </RainbowKitProvider>
-        </OnchainKitProvider>
+      <AppContent />
     </WagmiProvider>
   );
 }

@@ -1,35 +1,38 @@
-import { useState,useEffect } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useState, useEffect } from "react";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, ArrowUpRight, CheckCircle2 } from "lucide-react";
-import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
+import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts";
 
 export function WithdrawDialog() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const addresses = getContractAddresses(chainId);
+
   const { data: vaultBalanceRaw, refetch: refetchVaultBalance } = useReadContract({
-    address: VAULT_ADDRESS,
+    address: addresses.vault,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
   });
 
-const vaultBalance = vaultBalanceRaw 
-  ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
-  : 0;
+  const vaultBalance = vaultBalanceRaw 
+    ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
+    : 0;
 
   const withdraw = useWriteContract();
 
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ 
     hash: withdraw.data 
   });
-
 
   const syncWithdraw = useMutation({
     mutationFn: async (txHash: string) => {
@@ -39,7 +42,7 @@ const vaultBalance = vaultBalanceRaw
           "Content-Type": "application/json",
           "x-user-address": address?.toLowerCase() || "" 
         },
-        body: JSON.stringify({ amount,txHash })
+        body: JSON.stringify({ amount, txHash, chainId }) 
       });
       return res.json();
     },
@@ -55,13 +58,12 @@ const vaultBalance = vaultBalanceRaw
     if (!amount || parseFloat(amount) <= 0) return;
 
     withdraw.writeContract({
-      address: VAULT_ADDRESS,
+      address: addresses.vault,
       abi: VAULT_ABI,
       functionName: "withdraw",
       args: [parseUnits(amount, 6)],
     });
   };
-
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -73,27 +75,28 @@ const vaultBalance = vaultBalanceRaw
       }, 300);
     }
   };
+
   useEffect(() => {
-  if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
-    if (withdraw.data) {
-      syncWithdraw.mutate(withdraw.data);
+    if (withdraw.isSuccess && !isConfirming && !syncWithdraw.isPending && !syncWithdraw.isSuccess && !isSuccess) {
+      if (withdraw.data) {
+        syncWithdraw.mutate(withdraw.data);
+      }
     }
-  }
-}, [withdraw.isSuccess, isConfirming, syncWithdraw, isSuccess]);
+  }, [withdraw.isSuccess, isConfirming, syncWithdraw, isSuccess]);
 
   const isInvalid = !amount || parseFloat(amount) <= 0 || parseFloat(amount) > vaultBalance;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-  <Button 
-    variant="outline" 
-    className="w-full h-12 rounded-full border-border bg-card/50 font-black uppercase text-[10px] tracking-widest hover:bg-secondary transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-  >
-    <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-    Withdraw
-  </Button>
-</DialogTrigger>
+        <Button 
+          variant="outline" 
+          className="w-full h-12 rounded-full border-border bg-card/50 font-black uppercase text-[10px] tracking-widest hover:bg-secondary transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+        >
+          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+          Withdraw
+        </Button>
+      </DialogTrigger>
       
       <DialogContent className="sm:max-w-[400px] bg-card border-border">
         <DialogHeader>
@@ -122,18 +125,19 @@ const vaultBalance = vaultBalanceRaw
                     value={amount}
                     step="any"
                     onChange={(e) => {
-                        const value = e.target.value;
-                        if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
-                          setAmount(value.substring(1));
-                        } else {
-                          setAmount(value);
-                        }
-                      }}
-                    onFocus={(e) => {
-                        if (amount === "0") setAmount("");
+                      const value = e.target.value;
+                      if (value.length > 1 && value.startsWith("0") && !value.startsWith("0.")) {
+                        setAmount(value.substring(1));
+                      } else {
+                        setAmount(value);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (amount === "0") setAmount("");
                     }}
                     placeholder="0.00"
-                   className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner"                  />
+                    className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner"
+                  />
                 </div>
 
                 {parseFloat(amount) > vaultBalance && (
