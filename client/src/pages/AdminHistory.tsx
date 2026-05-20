@@ -3,23 +3,28 @@ import { useUser } from "@/hooks/use-user";
 import { api } from "@shared/routes";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
-import { Loader2, Target, History,Landmark } from "lucide-react";
-import { useAccount,useReadContract } from 'wagmi';
+import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts"; 
+import { Loader2, Target, History, Landmark } from "lucide-react";
+import { useAccount, useReadContract, useChainId } from 'wagmi'; 
 import { ConnectButton } from '@rainbow-me/rainbowkit'; 
 
 export default function AdminHistory() {
   const { data: user } = useUser();
   const { address } = useAccount();
+  const chainId = useChainId(); 
+  
+  const addresses = getContractAddresses(chainId);
+
   const { data: reserveRaw } = useReadContract({
-    address: VAULT_ADDRESS,
+    address: addresses.vault, 
     abi: VAULT_ABI,
     functionName: 'reserveBalance',
     query: {
       enabled: !!address,
-      refetchInterval: 1000*60,
+      refetchInterval: 1000 * 60,
     }
   });
+  
   const reserveBalance = reserveRaw ? Number(reserveRaw) / 1_000_000 : 0;
   
   const { data: tasks, isLoading } = useQuery({
@@ -62,15 +67,14 @@ export default function AdminHistory() {
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
           {address && (
-    <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
-      <Landmark className="w-4 h-4 text-primary" />
-      <span className="text-xs font-bold text-primary">
-        {reserveBalance.toFixed(2)} USDC
-      </span>
-    </div>
-  )}
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+              <Landmark className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-primary">
+                {reserveBalance.toFixed(2)} USDC
+              </span>
+            </div>
+          )}
           <ConnectButton chainStatus="none" showBalance={false} />
-
         </div>
 
         <div className="relative z-10">
@@ -102,6 +106,7 @@ export default function AdminHistory() {
             ))}
           </div>
         </section>
+        
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">

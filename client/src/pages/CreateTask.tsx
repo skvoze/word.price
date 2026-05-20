@@ -9,8 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useReadContract, useAccount } from "wagmi";
-import { VAULT_ADDRESS, VAULT_ABI } from "../../../shared/contracts";
+import { useReadContract, useAccount, useChainId } from "wagmi";
+import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts"; 
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Calendar as CalendarIcon, Wallet } from "lucide-react";
 import { z } from "zod";
@@ -24,27 +24,30 @@ import { useQueryClient } from "@tanstack/react-query";
 const formSchema = insertTaskSchema.extend({
   title: z.string().min(3, "Min 3 characters").max(100, "Max 100 characters"),
   description: z.string().max(500, "Max 500 characters").optional().or(z.literal('')),
-amount: z.string().refine((val) => {
+  amount: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 1; 
-  }, "Minimum amount is 1 USDC"),deadline: z.coerce.date({
-  required_error: "Deadline is required",
-  invalid_type_error: "That's not a valid date",
-}).refine((date) => {
-  return date > new Date();
-}, "Deadline must be in the future")
-  ,});
+  }, "Minimum amount is 1 USDC"),
+  deadline: z.coerce.date({
+    required_error: "Deadline is required",
+    invalid_type_error: "That's not a valid date",
+  }).refine((date) => {
+    return date > new Date();
+  }, "Deadline must be in the future")
+});
 
 export default function CreateTask() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { address } = useAccount();
+  const chainId = useChainId(); 
   const createTask = useCreateTask();
   const { data: user } = useUser();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("23:00");
-  
+  const addresses = getContractAddresses(chainId);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,8 +57,9 @@ export default function CreateTask() {
       userAddress: address || "", 
     },
   });
-  const { data: vaultBalanceRaw, isLoading: isBalanceLoading,isError: isBalanceError } = useReadContract({
-    address: VAULT_ADDRESS,
+
+  const { data: vaultBalanceRaw, isLoading: isBalanceLoading, isError: isBalanceError } = useReadContract({
+    address: addresses.vault,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
@@ -64,10 +68,12 @@ export default function CreateTask() {
       refetchInterval: 3000
     }
   });
-const dbBalance = user?.balance ? Number(user.balance) / 1_000_000 : 0;
-const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== null)
-  ? Number(vaultBalanceRaw) / 1_000_000 
-  : dbBalance;
+
+  const dbBalance = user?.balance ? Number(user.balance) / 1_000_000 : 0;
+  const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== null)
+    ? Number(vaultBalanceRaw) / 1_000_000 
+    : dbBalance;
+
   useEffect(() => {
     if (address) {
       form.setValue("userAddress", address.toLowerCase());
@@ -93,10 +99,13 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
         deadline: data.deadline, 
         userAddress: address.toLowerCase(),
       });
+
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      
+
       queryClient.invalidateQueries({ 
-        queryKey: ['wagmi', 'readContract', VAULT_ADDRESS] 
+        queryKey: ['wagmi', 'readContract', addresses.vault] 
       });
       
       toast({
@@ -109,28 +118,29 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create task",
         variant: "destructive",
-      });
+        });
     }
   }
+
   const getValidTimeForDate = (date: Date) => {
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  
-  if (isToday) {
-    const currentHour = now.getHours();
-    const [selectedH, selectedM] = selectedTime.split(':').map(Number);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
     
-    if (selectedH <= currentHour) {
-      const nextValidHour = Math.min(currentHour + 1, 23);
-      const newTime = `${nextValidHour.toString().padStart(2, '0')}:00`;
-      setSelectedTime(newTime);
-      return { h: nextValidHour, m: 0, timeStr: newTime };
+    if (isToday) {
+      const currentHour = now.getHours();
+      const [selectedH, selectedM] = selectedTime.split(':').map(Number);
+      
+      if (selectedH <= currentHour) {
+        const nextValidHour = Math.min(currentHour + 1, 23);
+        const newTime = `${nextValidHour.toString().padStart(2, '0')}:00`;
+        setSelectedTime(newTime);
+        return { h: nextValidHour, m: 0, timeStr: newTime };
+      }
     }
-  }
-  
-  const [h, m] = selectedTime.split(':').map(Number);
-  return { h, m, timeStr: selectedTime };
-};
+    
+    const [h, m] = selectedTime.split(':').map(Number);
+    return { h, m, timeStr: selectedTime };
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -231,13 +241,13 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
                         selected={field.value}
                         locale={enUS}
                         onSelect={(date) => {
-                        if (date) {
-                          const newDate = new Date(date);
-                          const { h, m } = getValidTimeForDate(newDate);
-                          newDate.setHours(h, m, 0, 0);
-                          field.onChange(newDate);
-                        }
-                      }}
+                          if (date) {
+                            const newDate = new Date(date);
+                            const { h, m } = getValidTimeForDate(newDate);
+                            newDate.setHours(h, m, 0, 0);
+                            field.onChange(newDate);
+                          }
+                        }}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         modifiersStyles={{
                           selected: { 
@@ -255,24 +265,24 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
                         <select 
                           value={selectedTime.split(':')[0]} 
                           onChange={(e) => {
-                          const h = e.target.value;
-                          const m = selectedTime.split(':')[1];
-                          const now = new Date();
-                          const isToday = field.value && new Date(field.value).toDateString() === now.toDateString();
-                          if (isToday && parseInt(h) < now.getHours()) return; 
-                          setSelectedTime(`${h}:${m}`);
-                          if (field.value) {
-                            const d = new Date(field.value);
-                            d.setHours(parseInt(h));
-                            field.onChange(d);
-                          }
-                        }}
+                            const h = e.target.value;
+                            const m = selectedTime.split(':')[1];
+                            const now = new Date();
+                            const isToday = field.value && new Date(field.value).toDateString() === now.toDateString();
+                            if (isToday && parseInt(h) < now.getHours()) return; 
+                            setSelectedTime(`${h}:${m}`);
+                            if (field.value) {
+                              const d = new Date(field.value);
+                              d.setHours(parseInt(h));
+                              field.onChange(d);
+                            }
+                          }}
                           className="bg-background border border-border rounded-md p-1 px-2 text-lg font-bold outline-none focus:border-primary transition-all appearance-none"
                         >
                           {Array.from({ length: 24 }).map((_, i) => {
                             const val = i.toString().padStart(2, '0');
                             const isToday = field.value && new Date(field.value).toDateString() === new Date().toDateString();
-                            const isPastHour = isToday && i < new Date().getHours();                                             
+                            const isPastHour = isToday && i < new Date().getHours();                                                        
                             return (
                               <option key={val} value={val} disabled={isPastHour}>
                                 {val}
@@ -345,7 +355,6 @@ const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== 
           </form>
         </Form>
       </main>
-
     </div>
   );
 }
