@@ -140,11 +140,97 @@ useEffect(() => {
               )}
             </div>
 
-            <ConnectButton 
-              accountStatus="avatar"
-              chainStatus="icon"
-              showBalance={false}
-            />
+            <ConnectButton.Custom>
+  {({
+    account,
+    chain,
+    openChainModal,
+    openConnectModal,
+    authenticationStatus,
+    mounted,
+  }) => {
+    const ready = mounted && authenticationStatus !== 'loading';
+    const connected =
+      ready &&
+      account &&
+      chain &&
+      (!authenticationStatus || authenticationStatus === 'authenticated');
+
+    return (
+      <div
+        {...(!ready && {
+          'aria-hidden': true,
+          'style': {
+            opacity: 0,
+            pointerEvents: 'none',
+            userSelect: 'none',
+          },
+        })}
+        className="flex items-center gap-2"
+      >
+        {(() => {
+          if (!connected) {
+            return (
+              <button
+                onClick={openConnectModal}
+                type="button"
+                className="bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+              >
+                Connect Wallet
+              </button>
+            );
+          }
+
+          if (chain.unsupported) {
+            return (
+              <button
+                onClick={openChainModal}
+                type="button"
+                className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Wrong Network
+              </button>
+            );
+          }
+
+          return (
+            <div className="flex items-center gap-2">
+              {/* Кнопка сети — Слева */}
+              <button
+                onClick={openChainModal}
+                type="button"
+                className="bg-card border border-border/80 text-foreground text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-accent transition-colors"
+              >
+                {chain.hasIcon && chain.iconUrl && (
+                  <img
+                    alt={chain.name ?? 'Chain icon'}
+                    src={chain.iconUrl}
+                    className="w-3.5 h-3.5 rounded-full"
+                  />
+                )}
+                <span className="hidden sm:inline">{chain.name}</span>
+              </button>
+
+              {/* Кнопка аккаунта (Аватар + Адрес) — Справа */}
+              <button
+                onClick={openConnectModal} // или openAccountModal, если импортирован
+                type="button"
+                className="bg-card border border-border/80 text-foreground text-xs font-mono px-3 py-2 rounded-xl flex items-center gap-2 hover:bg-accent transition-colors"
+              >
+                {account.ensAvatar ? (
+                  <img src={account.ensAvatar} className="w-3.5 h-3.5 rounded-full" alt="avatar" />
+                ) : (
+                  <div className="w-3.5 h-3.5 rounded-full bg-primary/20 border border-primary/40" />
+                )}
+                {account.displayName}
+              </button>
+            </div>
+          );
+        })()}
+      </div>
+    );
+  }}
+</ConnectButton.Custom>
           </div>
 
           {isConnected && (
