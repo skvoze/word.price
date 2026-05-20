@@ -18,7 +18,7 @@ export async function apiRequest(
 
   const userAddress = localStorage.getItem("userAddress");
   if (userAddress) {
-    headers["x-user-address"] = userAddress;
+    headers["x-user-address"] = userAddress.toLowerCase();
   }
 
   const res = await fetch(url, {
@@ -41,7 +41,7 @@ export const getQueryFn: <T>(options: {
     
     const userAddress = localStorage.getItem("userAddress");
     if (userAddress) {
-      headers["x-user-address"] = userAddress;
+      headers["x-user-address"] = userAddress.toLowerCase();
     }
     
     const path = queryKey.join("/");
