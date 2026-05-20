@@ -27,6 +27,7 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
   notified24h: boolean("notified_24h").notNull().default(false),
   notified1h: boolean("notified_1h").notNull().default(false),
+  chainId: integer("chain_id").notNull().default(8453),
 });
 
 
@@ -39,6 +40,7 @@ export const transactions = pgTable("transactions", {
   rejectionReason: text("rejection_reason"),
   description: text("description"),
   txHash: text("tx_hash").unique(), 
+  chainId: integer("chain_id").notNull().default(8453),
   metadata: jsonb("metadata").$type<{ 
     cardNumber?: string; 
     bankName?: string;
@@ -52,6 +54,7 @@ export const transactions = pgTable("transactions", {
 export const insertUserSchema = createInsertSchema(users).omit({ balance: true, createdAt: true, role: true });
 export const insertTaskSchema = createInsertSchema(tasks, {
   deadline: z.coerce.date(),
+  chainId: z.number().optional(),
 }).omit({ 
   id: true, 
   status: true, 
@@ -62,7 +65,7 @@ export const insertTaskSchema = createInsertSchema(tasks, {
   notified1h: true,
   rejectionReason: true,
 });
-export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
+export const insertTransactionSchema = createInsertSchema(transactions,{chainId: z.number().optional(),}).omit({ id: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
