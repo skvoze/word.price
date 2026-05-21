@@ -13,14 +13,17 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
+import { useAccount,useConfig } from 'wagmi';
+import { switchChain } from '@wagmi/core';
 import { useUser } from "@/hooks/use-user";
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [, setLocation] = useLocation();
-  const { isConnected } = useAccount();
+  const { isConnected, connector } = useAccount();
+  const config = useConfig();
   const { data: user } = useUser();
+  const targetChainId = 8453;
 
   useEffect(() => {
     if (isConnected && user) {
@@ -165,16 +168,30 @@ export default function Landing() {
                       }
 
                       if (chain.unsupported) {
-                        return (
-                          <button
-                            onClick={openChainModal}
-                            type="button"
-                            className="bg-red-600 text-white font-black uppercase italic tracking-tight text-sm px-8 py-4 rounded-full hover:bg-red-700 transition-all flex items-center gap-2 animate-pulse"
-                          >
-                            <AlertTriangle className="w-4 h-4" /> Wrong Network
-                          </button>
-                        );
-                      }
+  return (
+    <button
+      onClick={async () => {
+        if (connector) {
+          try {
+            await switchChain(config, { 
+              chainId: targetChainId, 
+              connector 
+            });
+          } catch (error) {
+            console.error("Error chain switch:", error);
+            openChainModal();
+          }
+        } else {
+          openChainModal();
+        }
+      }}
+      type="button"
+      className="bg-red-600 text-white font-black uppercase italic tracking-tight text-sm px-8 py-4 rounded-full hover:bg-red-700 transition-all flex items-center gap-2 animate-pulse"
+    >
+      <AlertTriangle className="w-4 h-4" /> Wrong Network
+    </button>
+  );
+}
 
                       return (
                         <div className="flex flex-col sm:flex-row items-center gap-3 bg-zinc-900 border border-zinc-800 p-2 rounded-full">

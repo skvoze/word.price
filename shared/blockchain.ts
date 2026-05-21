@@ -13,7 +13,7 @@ export const arcTestnet = defineChain({
   name: 'Arc Testnet',
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 }, 
   rpcUrls: {
-    default: { http: [process.env.ARC_RPC_URL || 'https://rpc-testnet.arc.network'] },
+    default: { http: [process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network'] },
   },
 });
 
@@ -22,7 +22,7 @@ const account = privateKeyToAccount(privateKey);
 
 function getClientsForChain(chainId: number) {
   if (chainId === ARC_CHAIN_ID) {
-    const rpc = process.env.ARC_RPC_URL || 'https://rpc-testnet.arc.network';
+    const rpc = process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network';
     return {
       publicClient: createPublicClient({ chain: arcTestnet, transport: http(rpc) }),
       walletClient: createWalletClient({ account, chain: arcTestnet, transport: http(rpc) })

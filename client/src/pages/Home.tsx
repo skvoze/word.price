@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract,useConfig } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
@@ -12,10 +12,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts";
+import { switchChain } from "@wagmi/core";
 
 export default function Home() {
-  const { address, isConnected, chain } = useAccount(); 
+  const { address, isConnected, chain,connector } = useAccount(); 
   const currentChainId = chain?.id || 8453; 
+  const config = useConfig();
   const { vault: activeVaultAddress } = getContractAddresses(currentChainId);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -192,16 +194,30 @@ export default function Home() {
                       }
 
                       if (chain.unsupported) {
-                        return (
-                          <button
-                            onClick={openChainModal}
-                            type="button"
-                            className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
-                          >
-                            Wrong Network
-                          </button>
-                        );
-                      }
+  return (
+    <button
+      onClick={async () => {
+        if (connector) {
+          try {
+            await switchChain(config, { 
+              chainId: currentChainId, 
+              connector 
+            });
+          } catch (error) {
+            console.error("Ошибка при безопасной смене сети:", error);
+            openChainModal();
+          }
+        } else {
+          openChainModal();
+        }
+      }}
+      type="button"
+      className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
+    >
+      Wrong Network
+    </button>
+  );
+}
 
                       return (
                         <div className="flex items-center gap-2">
