@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertTask, type Task } from "@shared/schema";
-import { useAccount } from "wagmi";
+import { useAccount, useConfig } from "wagmi";
 
 const getHeaders = (address?: string) => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -10,13 +10,16 @@ const getHeaders = (address?: string) => {
   }
   return headers;
 };
-export function useTasks(chainId: number = 8453) {
+
+export function useTasks(chainId?: number) {
   const { address } = useAccount();
+  const config = useConfig();
+  const targetChainId = chainId || config.chains[0]?.id || 8453;
 
   return useQuery<Task[]>({
-    queryKey: [api.tasks.list.path, chainId, address],
+    queryKey: [api.tasks.list.path, targetChainId, address],
     queryFn: async () => {
-      const res = await fetch(`${api.tasks.list.path}?chainId=${chainId}`, { 
+      const res = await fetch(`${api.tasks.list.path}?chainId=${targetChainId}`, { 
         headers: getHeaders(address), 
       });
       if (!res.ok) throw new Error("Failed to fetch tasks");
@@ -67,6 +70,8 @@ export function useTask(id: number) {
 export function useCreateTask() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
+  const config = useConfig();
+  const defaultChainId = config.chains[0]?.id || 8453;
 
   return useMutation({
     mutationFn: async (data: InsertTask & { chainId?: number }) => {
@@ -82,7 +87,7 @@ export function useCreateTask() {
       return await res.json();
     },
     onSuccess: (_, variables) => {
-      const taskChainId = variables.chainId || 8453;
+      const taskChainId = variables.chainId || defaultChainId;
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, taskChainId] });
       queryClient.invalidateQueries({ queryKey: [api.users.me.path, taskChainId] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions", taskChainId] });
@@ -143,6 +148,9 @@ export function useCompleteTask() {
 export function useFailTask() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
+  const config = useConfig();
+  const defaultChainId = config.chains[0]?.id || 8453;
+
   return useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
       const url = buildUrl(api.tasks.fail.path, { id });
@@ -156,7 +164,7 @@ export function useFailTask() {
       return res.json();
     },
     onSuccess: (updatedTask) => {
-      const taskChainId = updatedTask?.chainId || 8453;
+      const taskChainId = updatedTask?.chainId || defaultChainId;
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, taskChainId] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.get.path, updatedTask?.id] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.submitted.path] });

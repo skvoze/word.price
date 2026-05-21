@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, ArrowUpRight, CheckCircle2 } from "lucide-react";
-import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts";
+import { getContractAddresses, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 
 export function WithdrawDialog() {
   const { address } = useAccount();
@@ -17,6 +17,25 @@ export function WithdrawDialog() {
 
   const addresses = getContractAddresses(chainId);
 
+  // Динамически читаем decimals, локально расширяя ABI для TS
+  const { data: usdcDecimalsRaw } = useReadContract({
+    address: addresses.usdc,
+    abi: [
+      ...USDC_ABI,
+      {
+        inputs: [],
+        name: "decimals",
+        outputs: [{ type: "uint8" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: 'decimals',
+    chainId: chainId,
+    query: { enabled: !!addresses.usdc }
+  });
+  const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
+
   const { data: vaultBalanceRaw, refetch: refetchVaultBalance } = useReadContract({
     address: addresses.vault,
     abi: VAULT_ABI,
@@ -25,7 +44,7 @@ export function WithdrawDialog() {
   });
 
   const vaultBalance = vaultBalanceRaw 
-    ? parseFloat(formatUnits(vaultBalanceRaw as bigint, 6)) 
+    ? parseFloat(formatUnits(vaultBalanceRaw as bigint, usdcDecimals)) 
     : 0;
 
   const withdraw = useWriteContract();
@@ -61,7 +80,7 @@ export function WithdrawDialog() {
       address: addresses.vault,
       abi: VAULT_ABI,
       functionName: "withdraw",
-      args: [parseUnits(amount, 6)],
+      args: [parseUnits(amount, usdcDecimals)],
     });
   };
 

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { Transaction } from "@shared/schema";
-import { useAccount } from "wagmi";
+import { useAccount, useConfig } from "wagmi";
 
 const getHeaders = (address?: string) => {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -11,16 +11,19 @@ const getHeaders = (address?: string) => {
   return headers;
 };
 
-export function useUser(chainId: number = 8453) {
+export function useUser(chainId?: number) {
   const { address, isConnected } = useAccount();
+  const config = useConfig();
+  
+  // Если chainId не передан, берем первую сеть из конфигурации wagmi динамически
+  const targetChainId = chainId || config.chains[0]?.id || 8453;
 
   return useQuery({
-
-    queryKey: [api.users.me.path, chainId, address?.toLowerCase()],
+    queryKey: [api.users.me.path, targetChainId, address?.toLowerCase()],
     queryFn: async () => {
       if (!address) return null;
       
-      const res = await fetch(`${api.users.me.path}?chainId=${chainId}`, { 
+      const res = await fetch(`${api.users.me.path}?chainId=${targetChainId}`, { 
         headers: getHeaders(address), 
       });
 
@@ -41,13 +44,15 @@ export function useUser(chainId: number = 8453) {
   });
 }
 
-export function useTransactions(chainId: number = 8453) {
+export function useTransactions(chainId?: number) {
   const { address } = useAccount();
+  const config = useConfig();
+  const targetChainId = chainId || config.chains[0]?.id || 8453;
 
   return useQuery<Transaction[]>({
-    queryKey: ["/api/transactions", chainId, address],
+    queryKey: ["/api/transactions", targetChainId, address],
     queryFn: async () => {
-      const res = await fetch(`/api/transactions?chainId=${chainId}`, { 
+      const res = await fetch(`/api/transactions?chainId=${targetChainId}`, { 
         headers: getHeaders(address),
       });
       if (!res.ok) throw new Error("Failed to fetch transactions");
@@ -61,6 +66,8 @@ export function useTransactions(chainId: number = 8453) {
 export function useWithdraw() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
+  const config = useConfig();
+  const defaultChainId = config.chains[0]?.id || 8453;
 
   return useMutation({
     mutationFn: async (data: { amount: number; description: string; chainId: number; txHash?: string }) => {
@@ -76,17 +83,18 @@ export function useWithdraw() {
       return await res.json();
     },
     onSuccess: (_, variables) => {
-      const targetChainId = variables.chainId || 8453;
+      const targetChainId = variables.chainId || defaultChainId;
       queryClient.invalidateQueries({ queryKey: [api.users.me.path, targetChainId] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions", targetChainId] });
     },
   });
 }
 
-
 export function useAddFunds() {
   const queryClient = useQueryClient();
   const { address } = useAccount();
+  const config = useConfig();
+  const defaultChainId = config.chains[0]?.id || 8453;
 
   return useMutation({
     mutationFn: async ({ amount, txHash, chainId }: { amount: number; txHash: string; chainId: number }) => {
@@ -99,7 +107,7 @@ export function useAddFunds() {
       return await res.json();
     },
     onSuccess: (_, variables) => {
-      const targetChainId = variables.chainId || 8453;
+      const targetChainId = variables.chainId || defaultChainId;
       queryClient.invalidateQueries({ queryKey: [api.users.me.path, targetChainId] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions", targetChainId] });
     },

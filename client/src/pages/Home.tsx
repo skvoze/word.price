@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract,useConfig } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
@@ -11,14 +11,18 @@ import { type Task } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
-import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts";
-import { switchChain } from "@wagmi/core";
+import { getContractAddresses, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 
 export default function Home() {
-  const { address, isConnected, chain,connector } = useAccount(); 
-  const currentChainId = chain?.id || 8453; 
+  const { address, isConnected, chain } = useAccount(); 
   const config = useConfig();
-  const { vault: activeVaultAddress } = getContractAddresses(currentChainId);
+  const { switchChain } = useSwitchChain();
+  
+  // Динамически берем дефолтный chainId как первую сеть из конфигурации wagmi
+  const defaultChainId = config.chains[0]?.id || 8453;
+  const currentChainId = chain?.id || defaultChainId; 
+  
+  const addresses = getContractAddresses(currentChainId);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -36,12 +40,34 @@ export default function Home() {
   const { data: user, isLoading: isLoadingUser } = useUser(currentChainId);
   const { data: tasks, isLoading: isLoadingTasks } = useTasks(currentChainId);
 
+  // Исправлено ts(2322): Динамически читаем decimals для правильного форматирования, локально расширяя ABI
+  const { data: usdcDecimalsRaw } = useReadContract({
+    address: addresses.usdc,
+    abi: [
+      ...USDC_ABI,
+      {
+        inputs: [],
+        name: "decimals",
+        outputs: [{ type: "uint8" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: 'decimals',
+    chainId: currentChainId,
+    query: { enabled: !!addresses.usdc }
+  });
+  const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
+
+  // Исправлено: Свойство address теперь тоже динамически берет актуальный контракт из сети
   const { data: vaultBalanceRaw } = useReadContract({
-    address: activeVaultAddress as `0x${string}`,
+    address: addresses.vault,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
+    chainId: currentChainId,
     query: {
+      enabled: !!addresses.vault && !!address,
       refetchInterval: 5000
     }
   });
@@ -93,7 +119,7 @@ export default function Home() {
   const lockedAmount = activeTasks.reduce((acc, task) => acc + Number(task.amount), 0);
   
   const contractBalance = (typeof vaultBalanceRaw === 'bigint')
-    ? parseFloat(formatUnits(vaultBalanceRaw, 6)) 
+    ? parseFloat(formatUnits(vaultBalanceRaw, usdcDecimals)) 
     : (user?.balance ? Number(user.balance) / 100 : 0);
 
   const displayBalance = contractBalance.toLocaleString('en-US', { 
@@ -194,34 +220,26 @@ export default function Home() {
                       }
 
                       if (chain.unsupported) {
-  return (
-    <button
-      onClick={async () => {
-        if (connector) {
-          try {
-            await switchChain(config, { 
-              chainId: currentChainId, 
-              connector 
-            });
-          } catch (error) {
-            console.error("Ошибка при безопасной смене сети:", error);
-            openChainModal();
-          }
-        } else {
-          openChainModal();
-        }
-      }}
-      type="button"
-      className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
-    >
-      Wrong Network
-    </button>
-  );
-}
+                        return (
+                          <button
+                            onClick={async () => {
+                              try {
+                                switchChain({ chainId: defaultChainId });
+                              } catch (error) {
+                                console.error("Ошибка при безопасной смене сети:", error);
+                                openChainModal();
+                              }
+                            }}
+                            type="button"
+                            className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
+                          >
+                            Wrong Network
+                          </button>
+                        );
+                      }
 
                       return (
                         <div className="flex items-center gap-2">
-                          {/* Кнопка сети — Слева */}
                           <button
                             onClick={openChainModal}
                             type="button"
@@ -237,7 +255,6 @@ export default function Home() {
                             <span className="hidden sm:inline">{chain.name}</span>
                           </button>
 
-                          {/* Кнопка аккаунта — Справа (Клик вызывает openAccountModal с дисконнектом) */}
                           <button
                             onClick={openAccountModal}
                             type="button"

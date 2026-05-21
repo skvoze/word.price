@@ -16,7 +16,27 @@ export function DepositDialog() {
   const [isOpen, setIsOpen] = useState(false); 
   const addresses = getContractAddresses(chainId);
 
-  const usdcDecimals = chainId === 5042002 ? 18 : 6;
+  // Динамически читаем decimals, локально расширяя ABI для TS
+  const { data: usdcDecimalsRaw } = useReadContract({
+    address: addresses.usdc,
+    abi: [
+      ...USDC_ABI,
+      {
+        inputs: [],
+        name: "decimals",
+        outputs: [{ type: "uint8" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: 'decimals',
+    chainId: chainId,
+    query: {
+      enabled: !!addresses.usdc,
+    }
+  });
+
+  const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
 
   const { data: usdcBalanceRaw, refetch: refetchUSDC } = useReadContract({
     address: addresses.usdc,
@@ -145,6 +165,7 @@ export function DepositDialog() {
       syncDeposit.mutate(deposit.data!);
     }
   }, [depositConfirmed, step, syncDeposit, deposit.data]);
+
   console.log("DEBUG BLOCKCHAIN READS:", {
     chainId,
     addresses,
