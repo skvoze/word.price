@@ -16,13 +16,16 @@ export function DepositDialog() {
   const [isOpen, setIsOpen] = useState(false); 
   const addresses = getContractAddresses(chainId);
 
+  const usdcDecimals = chainId === 5042002 ? 18 : 6;
+
   const { data: usdcBalanceRaw, refetch: refetchUSDC } = useReadContract({
     address: addresses.usdc,
     abi: USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: chainId, 
     query: {
-      enabled: !!address,
+      enabled: !!address && !!addresses.usdc,
       refetchInterval: 5000, 
     }
   });
@@ -32,9 +35,13 @@ export function DepositDialog() {
     abi: USDC_ABI,
     functionName: 'allowance',
     args: address ? [address, addresses.vault] : undefined,
+    chainId: chainId, 
+    query: {
+      enabled: !!address && !!addresses.usdc && !!addresses.vault,
+    }
   });
 
-  const usdcBalance = usdcBalanceRaw ? parseFloat(formatUnits(usdcBalanceRaw as bigint, 6)) : 0;
+  const usdcBalance = usdcBalanceRaw ? parseFloat(formatUnits(usdcBalanceRaw as bigint, usdcDecimals)) : 0;
   
   const setMaxAmount = () => {
     setAmount(usdcBalance.toString());
@@ -45,6 +52,7 @@ export function DepositDialog() {
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
+    chainId: chainId, 
   });
 
   const isAmountValid = amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && parseFloat(amount) <= usdcBalance;
@@ -67,7 +75,7 @@ export function DepositDialog() {
           "Content-Type": "application/json",
           "x-user-address": address?.toLowerCase() || "" 
         },
-        body: JSON.stringify({ amount, txHash, chainId }) // Передаем chainId на бэкенд
+        body: JSON.stringify({ amount, txHash, chainId }) 
       });
       return res.json();
     },
@@ -98,7 +106,7 @@ export function DepositDialog() {
 
   const handleApprove = () => {
     const cleanAmount = amount.replace(',', '.');
-    const parsedAmount = parseUnits(cleanAmount, 6);
+    const parsedAmount = parseUnits(cleanAmount, usdcDecimals);
     if (currentAllowance && (currentAllowance as bigint) >= parsedAmount) {
       setStep('deposit');
       return;
@@ -121,7 +129,7 @@ export function DepositDialog() {
       address: addresses.vault,
       abi: VAULT_ABI,
       functionName: "deposit",
-      args: [parseUnits(amount.toString().replace(',', '.'), 6)], 
+      args: [parseUnits(amount.toString().replace(',', '.'), usdcDecimals)], 
     });
   };
 
@@ -137,6 +145,13 @@ export function DepositDialog() {
       syncDeposit.mutate(deposit.data!);
     }
   }, [depositConfirmed, step, syncDeposit, deposit.data]);
+  console.log("DEBUG BLOCKCHAIN READS:", {
+    chainId,
+    addresses,
+    rawBalance: usdcBalanceRaw?.toString(),
+    formattedBalance: usdcBalance,
+    decimals: usdcDecimals
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
