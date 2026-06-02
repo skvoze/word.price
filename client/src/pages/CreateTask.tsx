@@ -123,6 +123,7 @@ export default function CreateTask() {
         amount: taskAmountForDb, 
         deadline: data.deadline, 
         userAddress: address.toLowerCase(),
+        chainId: chainId,
       });
 
       // Сбрасываем кэши запросов, чтобы обновить главную страницу

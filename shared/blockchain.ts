@@ -15,6 +15,8 @@ export const arcTestnet = defineChain({
   rpcUrls: {
     default: { http: [process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network'] },
   },
+  // Позволяет viem корректно обрабатывать транзакции на старых/кастомных RPC без сбоев оценки газа
+  legacyGasValues: true 
 });
 
 const privateKey = (process.env.ADMIN_PRIVATE_KEY as `0x${string}`);
@@ -34,20 +36,36 @@ function getClientsForChain(chainId: number) {
     walletClient: createWalletClient({ account, chain: base, transport: http(rpc) })
   };
 }
+
 const toUSDC = (cents: number) => BigInt(cents) * BigInt(10000);
+
 export async function lockUserFunds(userAddress: string, amountInCents: number, chainId: number = BASE_CHAIN_ID) {
   const { publicClient, walletClient } = getClientsForChain(chainId);
   const addresses = getContractAddresses(chainId);
 
-  const { request } = await publicClient.simulateContract({
-    address: addresses.vault as `0x${string}`,
-    abi: VAULT_ABI,
-    functionName: 'lockFunds',
-    args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
-    account
-  });
+  let hash: `0x${string}`;
+
+  // Для Arc Testnet отключаем симуляцию, так как RPC тестнета может некорректно отвечать на eth_estimateGas
+  if (chainId === ARC_CHAIN_ID) {
+    hash = await walletClient.writeContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'lockFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+  } else {
+    // Для Base оставляем безопасную симуляцию
+    const { request } = await publicClient.simulateContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'lockFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+    hash = await walletClient.writeContract(request);
+  }
   
-  const hash = await walletClient.writeContract(request);
   return await publicClient.waitForTransactionReceipt({ hash });
 }
 
@@ -75,15 +93,27 @@ export async function unlockUserFunds(userAddress: string, amountInCents: number
   const { publicClient, walletClient } = getClientsForChain(chainId);
   const addresses = getContractAddresses(chainId);
 
-  const { request } = await publicClient.simulateContract({
-    address: addresses.vault as `0x${string}`,
-    abi: VAULT_ABI,
-    functionName: 'unlockFunds',
-    args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
-    account
-  });
+  let hash: `0x${string}`;
+
+  if (chainId === ARC_CHAIN_ID) {
+    hash = await walletClient.writeContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'unlockFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+  } else {
+    const { request } = await publicClient.simulateContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'unlockFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+    hash = await walletClient.writeContract(request);
+  }
   
-  const hash = await walletClient.writeContract(request);
   return await publicClient.waitForTransactionReceipt({ hash });
 }
 
@@ -91,14 +121,26 @@ export async function slashUserFunds(userAddress: string, amountInCents: number,
   const { publicClient, walletClient } = getClientsForChain(chainId);
   const addresses = getContractAddresses(chainId);
 
-  const { request } = await publicClient.simulateContract({
-    address: addresses.vault as `0x${string}`,
-    abi: VAULT_ABI,
-    functionName: 'slashFunds',
-    args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
-    account
-  });
+  let hash: `0x${string}`;
+
+  if (chainId === ARC_CHAIN_ID) {
+    hash = await walletClient.writeContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'slashFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+  } else {
+    const { request } = await publicClient.simulateContract({
+      address: addresses.vault as `0x${string}`,
+      abi: VAULT_ABI,
+      functionName: 'slashFunds',
+      args: [userAddress as `0x${string}`, toUSDC(amountInCents)],
+      account
+    });
+    hash = await walletClient.writeContract(request);
+  }
   
-  const hash = await walletClient.writeContract(request);
   return await publicClient.waitForTransactionReceipt({ hash });
 }
