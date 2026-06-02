@@ -277,44 +277,84 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
-    const userAddress = req.user.address.toLowerCase();
-    try {
-      const user = await storage.getUserByAddress(userAddress);
-      if (!user) return res.status(404).json({ message: "User not found. Please deposit first." });
-
-      const taskData = insertTaskSchema.parse(req.body);
-      const cost = Number(taskData.amount);
-      const userBalance = Number(user.balance);
-
-      if (userBalance < cost) return res.status(400).json({ message: `Insufficient balance.` });
-
-      const targetChainId = req.body.chainId ? parseInt(req.body.chainId) : (taskData.chainId || 8453);
-
-      console.log(`[Create Task] Invoking blockchain lock on chain ${targetChainId}`);
-
-      const receipt = await lockUserFunds(user.address, cost, targetChainId);
-      const txHash = receipt.transactionHash;
-
-      await storage.updateUserBalance(user.address, -cost);
-      const task = await storage.createTask({ ...taskData, userAddress: user.address, chainId: targetChainId });
-      
-      await storage.createTransaction({
-        userAddress: user.address,
-        amount: cost,
-        type: "lock",
-        status: "completed",
-        description: `Locked for task: ${task.title}`,
-        txHash: txHash,
-        chainId: targetChainId
-      });
-
-      userCache.delete(userAddress);
-      res.status(201).json(task);
-    } catch (err: any) {
-      console.error("[Create Task Error]:", err.message);
-      res.status(503).json({ message: "Blockchain failed or database busy." });
+  const userAddress = req.user.address.toLowerCase();
+  try {
+    const user = await storage.getUserByAddress(userAddress);
+    if (!user) {
+      return res.status(404).json({ message: "User not found. Please deposit first." });
     }
-  });
+
+    // 1. Извлекаем chainId отдельно, чтобы он не мешал валидации insertTaskSchema, 
+    // если схема строго описывает только поля таблицы задач
+    const targetChainId = req.body.chainId ? parseInt(req.body.chainId) : 8453;
+
+    // 2. Безопасно парсим только те поля, которые относятся к задаче
+    const taskData = insertTaskSchema.parse({
+      ...req.body,
+      amount: Number(req.body.amount) // гарантируем, что это number
+    });
+
+    const cost = Number(taskData.amount); // Это значение в центах (например, 100)
+    const userBalance = Number(user.balance); // Тоже в центах (например, 500)
+
+    // Проверка внутреннего баланса приложения
+    if (userBalance < cost) {
+      return res.status(400).json({ 
+        message: `Insufficient balance in app. Available: ${(userBalance / 100).toFixed(2)} USDC` 
+      });
+    }
+
+    console.log(`[Create Task] Invoking blockchain lock on chain ${targetChainId} for ${user.address}, amount cents: ${cost}`);
+
+    // 3. Вызываем транзакцию на блокчейне
+    let txHash: `0x${string}`;
+    try {
+      const receipt = await lockUserFunds(user.address, cost, targetChainId);
+      txHash = receipt.transactionHash;
+    } catch (blockchainError: any) {
+      // Если упал именно блокчейн (нет газа у админа, RPC лёг и т.д.), мы пишем это в лог отдельно
+      console.error("[Create Task - Blockchain TX Failed]:", blockchainError);
+      return res.status(502).json({ 
+        message: `Blockchain transaction failed: ${blockchainError.message || "Unknown RPC error"}` 
+      });
+    }
+
+    // 4. Обновляем БД только после УСПЕШНОЙ транзакции в сети
+    await storage.updateUserBalance(user.address, -cost);
+    
+    const task = await storage.createTask({ 
+      ...taskData, 
+      userAddress: user.address, 
+      chainId: targetChainId 
+    });
+    
+    await storage.createTransaction({
+      userAddress: user.address,
+      amount: cost,
+      type: "lock",
+      status: "completed",
+      description: `Locked for task: ${task.title}`,
+      txHash: txHash,
+      chainId: targetChainId
+    });
+
+    userCache.delete(userAddress);
+    return res.status(201).json(task);
+
+  } catch (err: any) {
+    // Сюда мы попадем, если упал Zod (ошибка валидации) или база данных
+    console.error("[Create Task Internal Error]:", err);
+    
+    if (err.name === "ZodError") {
+      return res.status(400).json({ 
+        message: "Invalid input data", 
+        errors: err.errors 
+      });
+    }
+    
+    return res.status(500).json({ message: "Internal server error or database busy." });
+  }
+});
 
   app.get(api.tasks.list.path, authMiddleware, async (req: any, res) => {
     try {

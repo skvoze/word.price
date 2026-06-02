@@ -45,7 +45,7 @@ export default function CreateTask() {
   const { address } = useAccount();
   const chainId = useChainId(); 
   const createTask = useCreateTask();
-  const { data: user } = useUser(chainId); // Передаем chainId для изоляции балансов пользователей
+  const { data: user } = useUser(chainId); 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("23:00");
   const addresses = getContractAddresses(chainId);
@@ -60,7 +60,6 @@ export default function CreateTask() {
     },
   });
 
-  // Динамическое получение decimals для текущей сети (защита от багов с нулями)
   const { data: usdcDecimalsRaw } = useReadContract({
     address: addresses.usdc,
     abi: [
@@ -77,8 +76,6 @@ export default function CreateTask() {
     query: { enabled: !!addresses.usdc }
   });
   const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
-
-  // Чтение баланса из смарт-контракта Vault
   const { data: vaultBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
     address: addresses.vault,
     abi: VAULT_ABI,
@@ -90,8 +87,6 @@ export default function CreateTask() {
       refetchInterval: 4000
     }
   });
-
-  // Рассчитываем баланс, используя безопасный метод форматирования viem
   const dbBalance = user?.balance ? Number(user.balance) / 100 : 0; 
   const blockchainBalance = (typeof vaultBalanceRaw === 'bigint')
     ? parseFloat(formatUnits(vaultBalanceRaw, usdcDecimals))
@@ -109,12 +104,10 @@ export default function CreateTask() {
 
       const taskAmountUnits = Number(data.amount);
       
-      // Сравниваем нормализованные значения типов float
       if (blockchainBalance < taskAmountUnits) {
         throw new Error(`Insufficient balance. Available: ${blockchainBalance.toFixed(2)} USDC, Required: ${taskAmountUnits} USDC`);
       }
 
-      // Сохраняем в БД в центах (или стандартном для твоего бэкенда формате)
       const taskAmountForDb = Math.round(taskAmountUnits * 100); 
 
       await createTask.mutateAsync({
@@ -125,8 +118,6 @@ export default function CreateTask() {
         userAddress: address.toLowerCase(),
         chainId: chainId,
       });
-
-      // Сбрасываем кэши запросов, чтобы обновить главную страницу
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       queryClient.invalidateQueries({ 
