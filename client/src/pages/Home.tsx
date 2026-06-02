@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
@@ -18,7 +18,6 @@ export default function Home() {
   const config = useConfig();
   const { switchChain } = useSwitchChain();
   
-  // Динамически берем дефолтный chainId как первую сеть из конфигурации wagmi
   const defaultChainId = config.chains[0]?.id || 8453;
   const currentChainId = chain?.id || defaultChainId; 
   
@@ -40,7 +39,7 @@ export default function Home() {
   const { data: user, isLoading: isLoadingUser } = useUser(currentChainId);
   const { data: tasks, isLoading: isLoadingTasks } = useTasks(currentChainId);
 
-  // Исправлено ts(2322): Динамически читаем decimals для правильного форматирования, локально расширяя ABI
+  // Чтение decimals с динамическим ABI для предотвращения ошибок TS
   const { data: usdcDecimalsRaw } = useReadContract({
     address: addresses.usdc,
     abi: [
@@ -59,7 +58,7 @@ export default function Home() {
   });
   const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
 
-  // Исправлено: Свойство address теперь тоже динамически берет актуальный контракт из сети
+  // Чтение доступного баланса из хранилища
   const { data: vaultBalanceRaw } = useReadContract({
     address: addresses.vault,
     abi: VAULT_ABI,
@@ -180,7 +179,7 @@ export default function Home() {
             <ConnectButton.Custom>
               {({
                 account,
-                chain,
+                chain: currentConnectedChain,
                 openChainModal,
                 openConnectModal,
                 openAccountModal, 
@@ -191,7 +190,7 @@ export default function Home() {
                 const connected =
                   ready &&
                   account &&
-                  chain &&
+                  currentConnectedChain &&
                   (!authenticationStatus || authenticationStatus === 'authenticated');
 
                 return (
@@ -219,16 +218,12 @@ export default function Home() {
                         );
                       }
 
-                      if (chain.unsupported) {
+                      if (currentConnectedChain.unsupported) {
                         return (
                           <button
-                            onClick={async () => {
-                              try {
-                                switchChain({ chainId: defaultChainId });
-                              } catch (error) {
-                                console.error("Ошибка при безопасной смене сети:", error);
-                                openChainModal();
-                              }
+                            onClick={() => {
+                              // Явный вызов wagmi switchChain заставляет кошелек открыть попап смены сети
+                              switchChain({ chainId: defaultChainId });
                             }}
                             type="button"
                             className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
@@ -245,14 +240,14 @@ export default function Home() {
                             type="button"
                             className="bg-card border border-border/80 text-foreground text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-accent transition-colors"
                           >
-                            {chain.hasIcon && chain.iconUrl && (
+                            {currentConnectedChain.hasIcon && currentConnectedChain.iconUrl && (
                               <img
-                                alt={chain.name ?? 'Chain icon'}
-                                src={chain.iconUrl}
+                                alt={currentConnectedChain.name ?? 'Chain icon'}
+                                src={currentConnectedChain.iconUrl}
                                 className="w-3.5 h-3.5 rounded-full"
                               />
                             )}
-                            <span className="hidden sm:inline">{chain.name}</span>
+                            <span className="hidden sm:inline">{currentConnectedChain.name}</span>
                           </button>
 
                           <button

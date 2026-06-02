@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useReadContract, useAccount, useChainId } from "wagmi";
+import { formatUnits } from "viem";
 import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts"; 
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Calendar as CalendarIcon, Wallet } from "lucide-react";
+import { ArrowLeft, Wallet } from "lucide-react";
 import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,6 +21,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { enUS } from "date-fns/locale"; 
 import { useQueryClient } from "@tanstack/react-query";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 const formSchema = insertTaskSchema.extend({
   title: z.string().min(3, "Min 3 characters").max(100, "Max 100 characters"),
@@ -43,7 +45,7 @@ export default function CreateTask() {
   const { address } = useAccount();
   const chainId = useChainId(); 
   const createTask = useCreateTask();
-  const { data: user } = useUser();
+  const { data: user } = useUser(chainId); // Передаем chainId для изоляции балансов пользователей
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState("23:00");
   const addresses = getContractAddresses(chainId);
@@ -58,20 +60,41 @@ export default function CreateTask() {
     },
   });
 
-  const { data: vaultBalanceRaw, isLoading: isBalanceLoading, isError: isBalanceError } = useReadContract({
+  // Динамическое получение decimals для текущей сети (защита от багов с нулями)
+  const { data: usdcDecimalsRaw } = useReadContract({
+    address: addresses.usdc,
+    abi: [
+      {
+        inputs: [],
+        name: "decimals",
+        outputs: [{ type: "uint8" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: 'decimals',
+    chainId: chainId,
+    query: { enabled: !!addresses.usdc }
+  });
+  const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
+
+  // Чтение баланса из смарт-контракта Vault
+  const { data: vaultBalanceRaw, isLoading: isBalanceLoading } = useReadContract({
     address: addresses.vault,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
+    chainId: chainId,
     query: {
-      enabled: !!address,
-      refetchInterval: 3000
+      enabled: !!address && !!addresses.vault,
+      refetchInterval: 4000
     }
   });
 
-  const dbBalance = user?.balance ? Number(user.balance) / 1_000_000 : 0;
-  const blockchainBalance = (vaultBalanceRaw !== undefined && vaultBalanceRaw !== null)
-    ? Number(vaultBalanceRaw) / 1_000_000 
+  // Рассчитываем баланс, используя безопасный метод форматирования viem
+  const dbBalance = user?.balance ? Number(user.balance) / 100 : 0; 
+  const blockchainBalance = (typeof vaultBalanceRaw === 'bigint')
+    ? parseFloat(formatUnits(vaultBalanceRaw, usdcDecimals))
     : dbBalance;
 
   useEffect(() => {
@@ -86,10 +109,12 @@ export default function CreateTask() {
 
       const taskAmountUnits = Number(data.amount);
       
+      // Сравниваем нормализованные значения типов float
       if (blockchainBalance < taskAmountUnits) {
-        throw new Error(`Insufficient balance in Vault. Real balance: ${blockchainBalance} USDC`);
+        throw new Error(`Insufficient balance. Available: ${blockchainBalance.toFixed(2)} USDC, Required: ${taskAmountUnits} USDC`);
       }
 
+      // Сохраняем в БД в центах (или стандартном для твоего бэкенда формате)
       const taskAmountForDb = Math.round(taskAmountUnits * 100); 
 
       await createTask.mutateAsync({
@@ -100,10 +125,9 @@ export default function CreateTask() {
         userAddress: address.toLowerCase(),
       });
 
+      // Сбрасываем кэши запросов, чтобы обновить главную страницу
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      
-
       queryClient.invalidateQueries({ 
         queryKey: ['wagmi', 'readContract', addresses.vault] 
       });
@@ -118,7 +142,7 @@ export default function CreateTask() {
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create task",
         variant: "destructive",
-        });
+      });
     }
   }
 
@@ -282,7 +306,7 @@ export default function CreateTask() {
                           {Array.from({ length: 24 }).map((_, i) => {
                             const val = i.toString().padStart(2, '0');
                             const isToday = field.value && new Date(field.value).toDateString() === new Date().toDateString();
-                            const isPastHour = isToday && i < new Date().getHours();                                                        
+                            const isPastHour = isToday && i < new Date().getHours();                                                                        
                             return (
                               <option key={val} value={val} disabled={isPastHour}>
                                 {val}
