@@ -11,7 +11,6 @@ export interface IStorage {
   // Users
   getUserByAddress(address: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUserBalance(address: string, amount: number): Promise<User>;
   updateUserRole(address: string, role: string): Promise<User>;
   getAdmins(): Promise<User[]>;
 
@@ -51,30 +50,6 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     return user;
   }
-
- async updateUserBalance(address: string, amount: number): Promise<User> {
-  if (!Number.isFinite(amount) || isNaN(amount)) {
-    throw new Error("Invalid amount");
-  }
-
-  const change = Math.round(amount);
-  const lowerAddress = address.toLowerCase();
-  const [updated] = await db.update(users)
-    .set({ 
-      balance: sql`${users.balance}::integer + ${change}` 
-    }) 
-    .where(eq(users.address, lowerAddress))
-    .returning();
-    
-  if (!updated) throw new Error("User not found");
-
-
-  if (parseInt(updated.balance) < 0) {
-    console.warn(`Balance for ${lowerAddress} went below zero!`);
-  }
-
-  return updated;
-}
 
   async updateUserRole(address: string, role: string): Promise<User> {
     const [updated] = await db.update(users)

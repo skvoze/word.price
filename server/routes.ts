@@ -3,10 +3,9 @@ import type { Server } from "http";
 import { storage } from "../server/storage";
 import { api } from "@shared/routes";
 import { insertTaskSchema } from "@shared/schema";
-import { lockUserFunds, unlockUserFunds, slashUserFunds } from "../shared/blockchain";
+import { lockUserFunds, unlockUserFunds, slashUserFunds, getVaultBalance } from "../shared/blockchain";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import { getVaultBalance } from "../shared/blockchain";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -37,7 +36,6 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (!user) {
       user = {
         address: lowerAddress,
-        balance: "0.00",
         role: "user",
         createdAt: new Date()
       };
@@ -114,7 +112,6 @@ function startDeadlineChecker() {
               const receipt = await unlockUserFunds(task.userAddress, task.amount, taskChainId);
               const txHash = receipt.transactionHash;
               
-              await storage.updateUserBalance(task.userAddress, task.amount);
               await storage.updateTaskStatus(task.id, "completed");
               
               await storage.createTransaction({
@@ -177,27 +174,27 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   app.get(api.users.me.path, authMiddleware, async (req: any, res) => {
-    const lowerAddress = req.user.address.toLowerCase();
-    const currentChainId = parseInt((req.query.chainId as string) || "8453");
-    
-    const dbUser = await storage.getUserByAddress(lowerAddress);
-    if (!dbUser) return res.json(req.user);
+  const lowerAddress = req.user.address.toLowerCase();
+  const currentChainId = parseInt((req.query.chainId as string) || "8453");
+  
+  const dbUser = await storage.getUserByAddress(lowerAddress);
+  const userObject = dbUser || req.user;
 
-    try {
-      const realBalanceUnits = await getVaultBalance(lowerAddress, currentChainId);
-      const realBalanceInCents = Math.round(realBalanceUnits * 100);
-      const currentDbBalance = Number(dbUser.balance);
-      
-      if (currentDbBalance !== realBalanceInCents) {
-        const updatedUser = await storage.updateUserBalance(lowerAddress, realBalanceInCents - currentDbBalance);
-        userCache.set(lowerAddress, { user: updatedUser, expires: Date.now() + CACHE_TTL });
-        return res.json(updatedUser);
-      }
-    } catch (error) {
-      console.error(`[Sync Fallback] Using DB due to chain ${currentChainId} read failure:`, error);
-    }
-    res.json(dbUser);
-  });
+  try {
+    const realBalanceUnits = await getVaultBalance(lowerAddress, currentChainId);
+    const realBalanceInCents = Math.round(realBalanceUnits * 100);
+    return res.json({
+      ...userObject,
+      balance: realBalanceInCents
+    });
+  } catch (error) {
+    console.error(`[RPC Balance Error] Failed to read chain ${currentChainId}:`, error);
+    return res.json({
+      ...dbUser,
+      balance: 0
+    });
+  }
+});
 
   app.get("/api/transactions", authMiddleware, async (req: any, res) => {
     const chainId = parseInt((req.query.chainId as string) || "8453");
@@ -217,7 +214,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         dbUser = await storage.createUser({ address: lowerAddress });
       }
 
-      const updatedUser = await storage.updateUserBalance(lowerAddress, amountInCents);
       userCache.delete(lowerAddress);
 
       await storage.createTransaction({
@@ -229,37 +225,56 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         chainId: targetChainId 
       });
 
-      res.json(updatedUser);
+      let blockchainBalanceUnits = 0;
+      try {
+        blockchainBalanceUnits = await getVaultBalance(lowerAddress, targetChainId);
+      } catch (e) {
+        blockchainBalanceUnits = parseFloat(amount);
+      }
+
+      res.json({
+        ...dbUser,
+        balance: Math.round(blockchainBalanceUnits * 100)
+      });
     } catch (err: any) { res.status(400).json({ message: err.message }); }
   });
 
-  app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
+ app.post("/api/users/withdraw", authMiddleware, async (req: any, res) => {
     const { amount, txHash, chainId } = req.body; 
     const user = req.user;
     const targetChainId = parseInt(chainId || "8453");
 
     try {
       const dbUser = await storage.getUserByAddress(user.address);
-      if (!dbUser) return res.status(400).json({ message: "User has no funds to withdraw" });
+      if (!dbUser) return res.status(400).json({ message: "User not found" });
       if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ message: "Invalid amount" });
 
       const amountInCents = Math.round(parseFloat(amount) * 100);
+
+      let blockchainBalanceUnits = 0;
+      try {
+        blockchainBalanceUnits = await getVaultBalance(user.address.toLowerCase(), targetChainId);
+      } catch (rpcErr) {
+        return res.status(503).json({ message: "RPC Node unavailable. Could not verify balance." });
+      }
+      const blockchainBalanceCents = Math.round(blockchainBalanceUnits * 100);
+
       const tasks = await storage.getTasksByUser(user.address);
-      
       const activeTasks = tasks.filter(t => 
         (t.status === "pending" || t.status === "submitted" || t.status === "failed") && 
         new Date(t.deadline) > new Date() && 
         (t.chainId === targetChainId)
       );
       
-      const totalLocked = activeTasks.reduce((sum, t) => sum + Number(t.amount), 0);
-      if (Number(dbUser.balance) - totalLocked < amountInCents) {
+      const totalLockedCents = activeTasks.reduce((sum, t) => sum + Number(t.amount), 0);
+      const withdrawableCents = blockchainBalanceCents - totalLockedCents;
+
+      if (withdrawableCents < amountInCents) {
         return res.status(400).json({ 
-          message: "Insufficient withdrawable balance. Some funds are locked in active challenges on this network." 
+          message: `Insufficient withdrawable balance. Available: ${(withdrawableCents / 100).toFixed(2)} USDC (Locked in tasks: ${(totalLockedCents / 100).toFixed(2)} USDC)` 
         });
       }
 
-      const updatedUser = await storage.updateUserBalance(user.address, -amountInCents);
       userCache.delete(user.address.toLowerCase());
       
       await storage.createTransaction({
@@ -272,89 +287,84 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         chainId: targetChainId
       });
 
-      res.json(updatedUser);
-    } catch (err: any) { res.status(500).json({ message: "Failed to process withdrawal" }); }
+      res.json({
+        ...dbUser,
+        balance: blockchainBalanceCents - amountInCents
+      });
+    } catch (err: any) { 
+      console.error("[Withdraw Error]:", err);
+      res.status(500).json({ message: "Failed to process withdrawal" }); 
+    }
   });
 
   app.post(api.tasks.create.path, authMiddleware, async (req: any, res) => {
-  const userAddress = req.user.address.toLowerCase();
-  try {
-    const user = await storage.getUserByAddress(userAddress);
-    if (!user) {
-      return res.status(404).json({ message: "User not found. Please deposit first." });
-    }
-
-    // 1. Извлекаем chainId отдельно, чтобы он не мешал валидации insertTaskSchema, 
-    // если схема строго описывает только поля таблицы задач
-    const targetChainId = req.body.chainId ? parseInt(req.body.chainId) : 8453;
-
-    // 2. Безопасно парсим только те поля, которые относятся к задаче
-    const taskData = insertTaskSchema.parse({
-      ...req.body,
-      amount: Number(req.body.amount) // гарантируем, что это number
-    });
-
-    const cost = Number(taskData.amount); // Это значение в центах (например, 100)
-    const userBalance = Number(user.balance); // Тоже в центах (например, 500)
-
-    // Проверка внутреннего баланса приложения
-    if (userBalance < cost) {
-      return res.status(400).json({ 
-        message: `Insufficient balance in app. Available: ${(userBalance / 100).toFixed(2)} USDC` 
-      });
-    }
-
-    console.log(`[Create Task] Invoking blockchain lock on chain ${targetChainId} for ${user.address}, amount cents: ${cost}`);
-
-    // 3. Вызываем транзакцию на блокчейне
-    let txHash: `0x${string}`;
+    const userAddress = req.user.address.toLowerCase();
     try {
-      const receipt = await lockUserFunds(user.address, cost, targetChainId);
-      txHash = receipt.transactionHash;
-    } catch (blockchainError: any) {
-      // Если упал именно блокчейн (нет газа у админа, RPC лёг и т.д.), мы пишем это в лог отдельно
-      console.error("[Create Task - Blockchain TX Failed]:", blockchainError);
-      return res.status(502).json({ 
-        message: `Blockchain transaction failed: ${blockchainError.message || "Unknown RPC error"}` 
+      const user = await storage.getUserByAddress(userAddress);
+      const targetChainId = req.body.chainId ? parseInt(req.body.chainId) : 8453;
+
+      const taskData = insertTaskSchema.parse({
+        ...req.body,
+        amount: Number(req.body.amount) 
       });
-    }
 
-    // 4. Обновляем БД только после УСПЕШНОЙ транзакции в сети
-    await storage.updateUserBalance(user.address, -cost);
-    
-    const task = await storage.createTask({ 
-      ...taskData, 
-      userAddress: user.address, 
-      chainId: targetChainId 
-    });
-    
-    await storage.createTransaction({
-      userAddress: user.address,
-      amount: cost,
-      type: "lock",
-      status: "completed",
-      description: `Locked for task: ${task.title}`,
-      txHash: txHash,
-      chainId: targetChainId
-    });
+      const costCents = Number(taskData.amount); 
 
-    userCache.delete(userAddress);
-    return res.status(201).json(task);
+      let blockchainBalanceUnits = 0;
+      try {
+        blockchainBalanceUnits = await getVaultBalance(userAddress, targetChainId);
+      } catch (blockchainReadError) {
+        console.error(`[Create Task] Failed to read balance from chain ${targetChainId}:`, blockchainReadError);
+        return res.status(503).json({ message: "Failed to verify wallet balance via RPC. Try again later." });
+      }
 
-  } catch (err: any) {
-    // Сюда мы попадем, если упал Zod (ошибка валидации) или база данных
-    console.error("[Create Task Internal Error]:", err);
-    
-    if (err.name === "ZodError") {
-      return res.status(400).json({ 
-        message: "Invalid input data", 
-        errors: err.errors 
+      const blockchainBalanceCents = Math.round(blockchainBalanceUnits * 100);
+
+      if (!user || blockchainBalanceCents < costCents) {
+        return res.status(400).json({ 
+          message: `Insufficient balance on chain ${targetChainId}. Available: ${blockchainBalanceUnits.toFixed(2)} USDC` 
+        });
+      }
+
+      console.log(`[Create Task] Invoking blockchain lock on chain ${targetChainId} for ${user.address}, amount cents: ${costCents}`);
+      let txHash: `0x${string}`;
+      try {
+        const receipt = await lockUserFunds(user.address, costCents, targetChainId);
+        txHash = receipt.transactionHash;
+      } catch (blockchainError: any) {
+        console.error("[Create Task - Blockchain TX Failed]:", blockchainError);
+        return res.status(502).json({ 
+          message: `Blockchain transaction failed: ${blockchainError.message || "Unknown RPC error"}` 
+        });
+      }
+
+      const task = await storage.createTask({ 
+        ...taskData, 
+        userAddress: user.address, 
+        chainId: targetChainId 
       });
+      
+      await storage.createTransaction({
+        userAddress: user.address,
+        amount: costCents,
+        type: "lock",
+        status: "completed",
+        description: `Locked for task: ${task.title}`,
+        txHash: txHash,
+        chainId: targetChainId
+      });
+
+      userCache.delete(userAddress);
+      return res.status(201).json(task);
+
+    } catch (err: any) {
+      console.error("[Create Task Internal Error]:", err);
+      if (err.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid input data", errors: err.errors });
+      }
+      return res.status(500).json({ message: "Internal server error or database busy." });
     }
-    
-    return res.status(500).json({ message: "Internal server error or database busy." });
-  }
-});
+  });
 
   app.get(api.tasks.list.path, authMiddleware, async (req: any, res) => {
     try {
@@ -425,7 +435,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const receipt = await unlockUserFunds(workerAddress, task.amount, taskChainId);
       const txHash = receipt.transactionHash;
 
-      await storage.updateUserBalance(workerAddress, task.amount);
       await storage.updateTaskStatus(id, "completed");
       
       await storage.createTransaction({

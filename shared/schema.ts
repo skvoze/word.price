@@ -7,7 +7,6 @@ export * from "./models/chat";
 export const users = pgTable("users", {
 
   address: text("address").primaryKey(),
-  balance: decimal("balance", { precision: 12, scale: 2 }).notNull().default("0.00"),
   role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -51,7 +50,7 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ balance: true, createdAt: true, role: true });
+export const insertUserSchema = createInsertSchema(users).omit({ createdAt: true, role: true });
 export const insertTaskSchema = createInsertSchema(tasks, {
   deadline: z.coerce.date(),
   chainId: z.number().optional(),
