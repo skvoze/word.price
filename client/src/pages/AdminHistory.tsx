@@ -1,36 +1,49 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@/hooks/use-user";
 import { api } from "@shared/routes";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { getContractAddresses, VAULT_ABI } from "../../../shared/contracts"; 
+import { getContractAddresses, VAULT_ABI, BASE_CHAIN_ID, ARC_CHAIN_ID } from "../../../shared/contracts"; 
 import { Loader2, Target, History, Landmark } from "lucide-react";
-import { useAccount, useReadContract, useChainId } from 'wagmi'; 
+import { useAccount, useReadContract } from 'wagmi'; 
 import { ConnectButton } from '@rainbow-me/rainbowkit'; 
+
+// Конфиг вкладок для админки на основе твоих точных экспортов
+const NETWORKS = [
+  { id: BASE_CHAIN_ID, name: "Base" }, // 8453
+  { id: ARC_CHAIN_ID, name: "Arc" }    // 5042002
+];
 
 export default function AdminHistory() {
   const { data: user } = useUser();
   const { address } = useAccount();
-  const chainId = useChainId(); 
   
-  const addresses = getContractAddresses(chainId);
+  // Храним выбранную администратором сеть (по дефолту Base)
+  const [selectedChainId, setSelectedChainId] = useState<number>(BASE_CHAIN_ID);
+  
+  // Получаем адреса контрактов для выбранной вкладки (динамически переключает с Base на Arc)
+  const addresses = getContractAddresses(selectedChainId);
 
+  // Считываем резервный баланс конкретно выбранного в табах контракта Vault
   const { data: reserveRaw } = useReadContract({
     address: addresses.vault, 
     abi: VAULT_ABI,
     functionName: 'reserveBalance',
     query: {
       enabled: !!address,
-      refetchInterval: 1000 * 60,
+      refetchInterval: 1000 * 60, // рефетч раз в минуту
     }
   });
   
   const reserveBalance = reserveRaw ? Number(reserveRaw) / 1_000_000 : 0;
   
+  // Запрашиваем задачи с бэкенда с обязательным queryKey-зависимым chainId
   const { data: tasks, isLoading } = useQuery({
-    queryKey: [api.tasks.list.path, address], 
+    // selectedChainId в ключе заставляет React Query делать рефетч при смене вкладки
+    queryKey: [api.tasks.list.path, address, selectedChainId], 
     queryFn: async () => {
-      const res = await fetch(api.tasks.list.path, { 
+      const res = await fetch(`${api.tasks.list.path}?chainId=${selectedChainId}`, { 
         headers: {
           "x-user-address": address || ""
         } 
@@ -52,6 +65,7 @@ export default function AdminHistory() {
     );
   }
 
+  // Распределяем задачи по статусам (бэкенд уже вернул массив строго для нужной сети)
   const activeTasks = tasks?.filter((t: any) => 
     ((t.status === "pending" || t.status === "failed" || t.status === 'submitted') && new Date(t.deadline) > new Date()) || 
     (t.status === 'submitted' && new Date(t.deadline) < new Date())
@@ -64,7 +78,7 @@ export default function AdminHistory() {
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
+      <header className="px-6 pt-8 pb-6 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
           {address && (
             <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
@@ -87,9 +101,27 @@ export default function AdminHistory() {
             </span>
           </div>
         </div>
+
+        {/* ПЕРЕКЛЮЧАТЕЛЬ СЕТЕЙ (ТАБЫ) */}
+        <div className="flex gap-1 mt-6 bg-secondary/60 p-1 rounded-xl w-fit border border-border/40 relative z-10">
+          {NETWORKS.map((net) => (
+            <button
+              key={net.id}
+              onClick={() => setSelectedChainId(net.id)}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                selectedChainId === net.id
+                  ? "bg-background text-foreground shadow-sm border border-border/30"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {net.name}
+            </button>
+          ))}
+        </div>
       </header>
 
       <main className="px-4 py-6 space-y-8">
+        {/* Секция Активных Задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -100,13 +132,21 @@ export default function AdminHistory() {
               {activeTasks.length}
             </span>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {activeTasks.map((task: any) => (
-              <TaskCard key={task.id} task={task} isAdmin={true} />
-            ))}
-          </div>
+          
+          {activeTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 px-1 border border-dashed border-border rounded-xl text-center">
+              No active tasks found on this network.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {activeTasks.map((task: any) => (
+                <TaskCard key={task.id} task={task} isAdmin={true} />
+              ))}
+            </div>
+          )}
         </section>
         
+        {/* Секция Завершенных Задач */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 text-muted-foreground">
@@ -117,11 +157,18 @@ export default function AdminHistory() {
               {completedTasks.length}
             </span>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-80">
-            {completedTasks.map((task: any) => (
-              <TaskCard key={task.id} task={task} isAdmin={true} />
-            ))}
-          </div>
+
+          {completedTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 px-1 border border-dashed border-border rounded-xl text-center">
+              No completed tasks history on this network.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-80">
+              {completedTasks.map((task: any) => (
+                <TaskCard key={task.id} task={task} isAdmin={true} />
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

@@ -3,23 +3,25 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Share2, CheckCircle2, XCircle, FileVideo, FileImage, FileWarning } from "lucide-react";
-import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 import { useQueryClient } from "@tanstack/react-query";
-
 
 export default function Verify() {
   const { toast } = useToast();
   const { address } = useAccount();
+  const currentChainId = useChainId();
   const { data: allSubmissions, isLoading } = useSubmittedTasks();
   const completeTask = useCompleteTask();
   const failTask = useFailTask();
- const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-  const pendingSubmissions = allSubmissions?.filter((t: any) => t.status === "submitted") || [];
+  // Фильтруем задачи: статус "submitted" + проверяем привязку к текущей сети (если нужно)
+  const pendingSubmissions = allSubmissions?.filter((t: any) => 
+    t.status === "submitted" && (t.chainId ? t.chainId === currentChainId : currentChainId === 8453)
+  ) || [];
 
   if (isLoading) {
     return (
@@ -30,52 +32,57 @@ export default function Verify() {
   }
 
   const handleApprove = async (taskId: number) => {
-   
-  try {
-    await completeTask.mutateAsync(taskId);
-    toast({
-      title: "Approved!",
-      description: "Task marked as completed.",
-    });
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
-  } catch (error: any) {
-    if (error.message?.includes("Already approved")) {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+    try {
+      await completeTask.mutateAsync(taskId);
       toast({
-        title: "Already processed",
-        description: "This task was already approved in a previous attempt.",
+        title: "Approved!",
+        description: "Task marked as completed.",
       });
+      // Инвалидируем все связанные ключи, чтобы избежать рассинхронизации
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks/list"] });
+    } catch (error: any) {
+      if (error.message?.includes("Already approved")) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+        toast({
+          title: "Already processed",
+          description: "This task was already approved in a previous attempt.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to approve",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (taskId: number) => {
+    const reason = window.prompt("Describe reason:");
+    if (reason === null) return;
+    if (!reason.trim()) {
+      toast({ title: "Error", description: "Reason cannot be empty", variant: "destructive" });
       return;
     }
 
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to approve",
-      variant: "destructive",
-    });
-  }
-};
-
-  const handleReject = async (taskId: number) => {
-  const reason = window.prompt("Describe reason:");
-  if (reason === null) return;
-
-  try {
-
-    await failTask.mutateAsync({ id: taskId, reason }); 
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
-    toast({
-      title: "Rejected",
-      description: "Reason saved, task canceled.",
-    });
-  } catch (error) {
-    toast({
-      title: "Error",
-      variant: "destructive",
-      description: "Failure to cancled task",
-    });
-  }
-};
+    try {
+      await failTask.mutateAsync({ id: taskId, reason }); 
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks/list"] });
+      toast({
+        title: "Rejected",
+        description: "Reason saved, task canceled.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Failure to cancel task",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -95,11 +102,11 @@ export default function Verify() {
               <CheckCircle2 className="w-6 h-6 text-emerald-500" />
             </div>
             <p className="text-foreground font-medium">All caught up!</p>
-            <p className="text-sm text-muted-foreground mt-1">No evidence submissions to review.</p>
+            <p className="text-sm text-muted-foreground mt-1">No evidence submissions to review on this network.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {(pendingSubmissions || []).map((task:any, idx:any) => (
+            {pendingSubmissions.map((task: any, idx: number) => (
               <motion.div
                 key={task.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -108,25 +115,25 @@ export default function Verify() {
               >
                 <Card className="p-6 border-border/50">
                   <div className="space-y-4">
-                    {/* Task Info */}
-<div>
-  <div className="flex items-start justify-between mb-2 gap-4">
-    <div className="min-w-0 flex-1">
-      <h3 className="text-lg font-bold text-foreground break-words leading-tight">
-        {task.title}
-      </h3>
-      
-    </div>
-    <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 font-medium dark:text-yellow-400">
-      Pending Review
-    </span>
-  </div>                      {task.description && (
+                    <div>
+                      <div className="flex items-start justify-between mb-2 gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg font-bold text-foreground break-words leading-tight">
+                            {task.title}
+                          </h3>
+                        </div>
+                        <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 font-medium dark:text-yellow-400">
+                          Pending Review
+                        </span>
+                      </div>
+                      {task.description && (
                         <p className="text-sm text-muted-foreground">{task.description}</p>
                       )}
                       <div className="mt-3 flex gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground"> Amount</p>
-                          <p className="font-bold text-foreground">{(task.amount / 100).toFixed(2)} ₽</p>
+                          <p className="text-muted-foreground">Amount</p>
+                          {/* ИСПРАВЛЕНО: Заменили знак рубля на USDC, так как балансы считаются в стейблкоинах */}
+                          <p className="font-bold text-foreground">{(task.amount / 100).toFixed(2)} USDC</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Submitted</p>
@@ -142,11 +149,9 @@ export default function Verify() {
                       <div className="bg-secondary/50 rounded-lg p-4 border border-border/50">
                         <p className="text-sm font-semibold text-muted-foreground mb-3">Evidence Submitted:</p>
                         <div className="bg-background rounded-lg p-3 border border-border/50 overflow-hidden">
-                         
                           {task.evidenceUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                             <div className="space-y-2">
-                              
-                               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                                 <FileImage className="w-3 h-3" /> Image Proof
                               </div>
                               <img 
@@ -155,13 +160,13 @@ export default function Verify() {
                                 className="w-full max-h-96 object-contain rounded bg-black/5"
                               />
                               <Button 
-                                 variant="ghost" 
-                                 size="sm" 
-                                 className="h-7 text-[10px] uppercase font-bold text-primary"
-                                 onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
-                               >
-                                 <Share2 className="w-3 h-3 mr-1" /> Original
-                               </Button>
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 text-[10px] uppercase font-bold text-primary"
+                                onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
+                              >
+                                <Share2 className="w-3 h-3 mr-1" /> Original
+                              </Button>
                             </div>
                           ) : task.evidenceUrl.match(/\.(mp4|webm|mov|avi)$/i) ? (
                             <div className="space-y-2">
@@ -175,13 +180,13 @@ export default function Verify() {
                                 className="w-full max-h-96 rounded bg-black"
                               />
                               <Button 
-                                 variant="ghost" 
-                                 size="sm" 
-                                 className="h-7 text-[10px] uppercase font-bold text-primary"
-                                 onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
-                               >
-                                 <Share2 className="w-3 h-3 mr-1" /> Original
-                               </Button>
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 text-[10px] uppercase font-bold text-primary"
+                                onClick={() => task.evidenceUrl && window.open(task.evidenceUrl, '_blank')}
+                              >
+                                <Share2 className="w-3 h-3 mr-1" /> Original
+                              </Button>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center py-4 text-center">
