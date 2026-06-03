@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain, useBalance } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { Loader2, Target, TrendingUp } from "lucide-react";
+import { Loader2, Target, TrendingUp, ChevronDown } from "lucide-react"; // Добавили ChevronDown
 import { type Task } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
@@ -23,6 +23,9 @@ export default function Home() {
   
   const addresses = getContractAddresses(currentChainId);
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Состояние для открытия нашего кастомного селектора сетей
+  const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false);
 
   useEffect(() => {
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
@@ -39,7 +42,6 @@ export default function Home() {
   const { data: user, isLoading: isLoadingUser } = useUser(currentChainId);
   const { data: tasks, isLoading: isLoadingTasks } = useTasks(currentChainId);
 
-  // Чтение decimals с динамическим ABI для предотвращения ошибок TS
   const { data: usdcDecimalsRaw } = useReadContract({
     address: addresses.usdc,
     abi: [
@@ -58,7 +60,6 @@ export default function Home() {
   });
   const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
 
-  // Чтение доступного баланса из хранилища
   const { data: vaultBalanceRaw } = useReadContract({
     address: addresses.vault,
     abi: VAULT_ABI,
@@ -154,8 +155,9 @@ export default function Home() {
       <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-6">
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          {/* Баланс и Веб3 Кнопки в одном ряду */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 mb-8">
             <div>
               <h1 className="text-xs font-medium text-muted-foreground mb-1 tracking-wider uppercase">
                 Available Balance
@@ -176,11 +178,12 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {/* Унифицированный блок авторизации (Строгая высота h-10, жирный капс) */}
             <ConnectButton.Custom>
               {({
                 account,
                 chain: currentConnectedChain,
-                openChainModal,
                 openConnectModal,
                 openAccountModal, 
                 authenticationStatus,
@@ -197,13 +200,9 @@ export default function Home() {
                   <div
                     {...(!ready && {
                       'aria-hidden': true,
-                      'style': {
-                        opacity: 0,
-                        pointerEvents: 'none',
-                        userSelect: 'none',
-                      },
+                      'style': { opacity: 0, pointerEvents: 'none', userSelect: 'none' },
                     })}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 self-start sm:self-center"
                   >
                     {(() => {
                       if (!connected) {
@@ -211,7 +210,7 @@ export default function Home() {
                           <button
                             onClick={openConnectModal}
                             type="button"
-                            className="bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+                            className="h-10 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-5 rounded-xl hover:opacity-90 transition-opacity shadow-sm"
                           >
                             Connect Wallet
                           </button>
@@ -221,12 +220,9 @@ export default function Home() {
                       if (currentConnectedChain.unsupported) {
                         return (
                           <button
-                            onClick={() => {
-                              // Явный вызов wagmi switchChain заставляет кошелек открыть попап смены сети
-                              switchChain({ chainId: defaultChainId });
-                            }}
+                            onClick={() => switchChain({ chainId: defaultChainId })}
                             type="button"
-                            className="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-red-700 transition-colors"
+                            className="h-10 bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-5 rounded-xl hover:bg-red-700 transition-colors shadow-sm"
                           >
                             Wrong Network
                           </button>
@@ -234,31 +230,80 @@ export default function Home() {
                       }
 
                       return (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={openChainModal}
-                            type="button"
-                            className="bg-card border border-border/80 text-foreground text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-accent transition-colors"
-                          >
-                            {currentConnectedChain.hasIcon && currentConnectedChain.iconUrl && (
-                              <img
-                                alt={currentConnectedChain.name ?? 'Chain icon'}
-                                src={currentConnectedChain.iconUrl}
-                                className="w-3.5 h-3.5 rounded-full"
-                              />
-                            )}
-                            <span className="hidden sm:inline">{currentConnectedChain.name}</span>
-                          </button>
+                        <div className="flex items-center gap-2 relative">
+                          {/* Кастомный выпадающий список выбора сетей с разделением на категории */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
+                              type="button"
+                              className="h-10 bg-card border border-border/80 hover:border-border text-foreground text-xs font-bold uppercase tracking-wider px-4 rounded-xl flex items-center gap-2 hover:bg-accent transition-all shadow-sm"
+                            >
+                              {currentConnectedChain.hasIcon && currentConnectedChain.iconUrl && (
+                                <img
+                                  alt={currentConnectedChain.name ?? 'Chain icon'}
+                                  src={currentConnectedChain.iconUrl}
+                                  className="w-4 h-4 rounded-full"
+                                />
+                              )}
+                              <span>{currentConnectedChain.name}</span>
+                              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" style={{ transform: isChainDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+                            </button>
 
+                            {/* Меню выбора сетей */}
+                            {isChainDropdownOpen && (
+                              <>
+                                <div className="fixed inset-0 z-30" onClick={() => setIsChainDropdownOpen(false)} />
+                                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-40 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                                  
+                                  {/* Категория Mainnet */}
+                                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1">
+                                    Mainnet
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      switchChain({ chainId: 8453 });
+                                      setIsChainDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-2.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-colors ${
+                                      currentChainId === 8453 ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
+                                    }`}
+                                  >
+                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                    Base
+                                  </button>
+
+                                  {/* Категория Testnet */}
+                                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1 pt-2 border-t border-border/50">
+                                    Testnet
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      switchChain({ chainId: 5042002 });
+                                      setIsChainDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-2.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-colors ${
+                                      currentChainId === 5042002 ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
+                                    }`}
+                                  >
+                                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                                    Arc Testnet
+                                  </button>
+                                  
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Кнопка Аккаунта (Выровнена под h-10) */}
                           <button
                             onClick={openAccountModal}
                             type="button"
-                            className="bg-card border border-border/80 text-foreground text-xs font-mono px-3 py-2 rounded-xl flex items-center gap-2 hover:bg-accent transition-colors"
+                            className="h-10 bg-card border border-border/80 hover:border-border text-foreground text-xs font-bold uppercase tracking-wider px-4 rounded-xl flex items-center gap-2 hover:bg-accent transition-all shadow-sm font-mono"
                           >
                             {account.ensAvatar ? (
-                              <img src={account.ensAvatar} className="w-3.5 h-3.5 rounded-full" alt="avatar" />
+                              <img src={account.ensAvatar} className="w-4 h-4 rounded-full" alt="avatar" />
                             ) : (
-                              <div className="w-3.5 h-3.5 rounded-full bg-primary/20 border border-primary/40" />
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                             )}
                             {account.displayName}
                           </button>
@@ -271,8 +316,9 @@ export default function Home() {
             </ConnectButton.Custom>
           </div>
 
+          {/* Кнопки действий (Депозит / Вывод) */}
           {isConnected && (
-            <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-6"> 
+            <div className="grid grid-cols-2 gap-3 w-full max-w-md"> 
               <DepositDialog />
               <WithdrawDialog />
             </div>
@@ -280,7 +326,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="px-4 py-6 space-y-8 flex-1">
+      <main className="px-4 py-6 space-y-8 flex-1 max-w-7xl mx-auto w-full">
+        {/* Активные задачи */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tighter italic">
@@ -311,13 +358,14 @@ export default function Home() {
           )}
         </section>
 
+        {/* История — ИСПРАВЛЕНА СЕТКА (lg:grid-cols-3), ТЕПЕРЬ КАРТОЧКИ НЕ РАСТЯГИВАЮТСЯ */}
         {completedTasks.length > 0 && (
           <section>
             <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground uppercase tracking-tighter italic flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
               History
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 opacity-80 hover:opacity-100 transition-opacity">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-80 hover:opacity-100 transition-opacity">
               {completedTasks.map((task) => (
                 <TaskCard key={task.id} task={task} />
               ))}
