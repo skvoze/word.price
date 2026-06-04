@@ -212,7 +212,8 @@ export function DepositDialog() {
                   onFocus={() => {
                     if (amount === "0") setAmount("");
                   }}
-                  className={`no-spinner w-full bg-black/40 border ${!isAmountValid && amount !== "0" ? 'border-red-500/50' : 'border-border/50'} rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-inner`}                  placeholder="0.00"
+                  className={`no-spinner w-full bg-black/40 border ${!isAmountValid && amount !== "0" ? 'border-red-500/50' : 'border-border/50'} rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner`}
+                  placeholder="0.00"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA] pointer-events-none text-sm">
                   USDC
