@@ -6,7 +6,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { Loader2, Target, TrendingUp, ChevronDown } from "lucide-react"; // Добавили ChevronDown
+import { Loader2, Target, TrendingUp, ChevronDown } from "lucide-react"; 
 import { type Task } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
@@ -23,8 +23,6 @@ export default function Home() {
   
   const addresses = getContractAddresses(currentChainId);
   const [isMobile, setIsMobile] = useState(false);
-  
-  // Состояние для открытия нашего кастомного селектора сетей
   const [isChainDropdownOpen, setIsChainDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -152,12 +150,12 @@ export default function Home() {
       className="min-h-[100dvh] bg-background flex flex-col"
       style={{ paddingBottom: bottomPadding }}
     >
-      <header className="px-6 pt-8 pb-10 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
+      <header className="px-6 pt-8 pb-8 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          {/* Баланс и Веб3 Кнопки в одном ряду */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 mb-8">
+          {/* Верхняя строка: Баланс слева, Веб3 Кнопки жестко СПРАВА */}
+          <div className="flex justify-between items-start gap-4 mb-5">
             <div>
               <h1 className="text-xs font-medium text-muted-foreground mb-1 tracking-wider uppercase">
                 Available Balance
@@ -179,7 +177,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Унифицированный блок авторизации (Строгая высота h-10, жирный капс) */}
+            {/* Блок авторизации прижат к правому углу */}
             <ConnectButton.Custom>
               {({
                 account,
@@ -202,7 +200,7 @@ export default function Home() {
                       'aria-hidden': true,
                       'style': { opacity: 0, pointerEvents: 'none', userSelect: 'none' },
                     })}
-                    className="flex items-center gap-2 self-start sm:self-center"
+                    className="flex items-center gap-2 ml-auto"
                   >
                     {(() => {
                       if (!connected) {
@@ -230,8 +228,8 @@ export default function Home() {
                       }
 
                       return (
-                        <div className="flex items-center gap-2 relative">
-                          {/* Кастомный выпадающий список выбора сетей с разделением на категории */}
+                        <div className="flex items-center gap-2">
+                          {/* Кастомный выпадающий список выбора сетей */}
                           <div className="relative">
                             <button
                               onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
@@ -249,13 +247,10 @@ export default function Home() {
                               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" style={{ transform: isChainDropdownOpen ? 'rotate(180deg)' : 'none' }} />
                             </button>
 
-                            {/* Меню выбора сетей */}
                             {isChainDropdownOpen && (
                               <>
                                 <div className="fixed inset-0 z-30" onClick={() => setIsChainDropdownOpen(false)} />
                                 <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-40 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                  
-                                  {/* Категория Mainnet */}
                                   <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1">
                                     Mainnet
                                   </div>
@@ -272,7 +267,6 @@ export default function Home() {
                                     Base
                                   </button>
 
-                                  {/* Категория Testnet */}
                                   <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1 pt-2 border-t border-border/50">
                                     Testnet
                                   </div>
@@ -288,13 +282,12 @@ export default function Home() {
                                     <div className="w-2 h-2 rounded-full bg-purple-500" />
                                     Arc Testnet
                                   </button>
-                                  
                                 </div>
                               </>
                             )}
                           </div>
 
-                          {/* Кнопка Аккаунта (Выровнена под h-10) */}
+                          {/* Кнопка Аккаунта */}
                           <button
                             onClick={openAccountModal}
                             type="button"
@@ -316,9 +309,9 @@ export default function Home() {
             </ConnectButton.Custom>
           </div>
 
-          {/* Кнопки действий (Депозит / Вывод) */}
+          {/* Строка Кнопок Действий (Депозит / Вывод) под Балансом */}
           {isConnected && (
-            <div className="grid grid-cols-2 gap-3 w-full max-w-md"> 
+            <div className="flex items-center gap-2 max-w-[260px] w-full"> 
               <DepositDialog />
               <WithdrawDialog />
             </div>
@@ -327,7 +320,6 @@ export default function Home() {
       </header>
 
       <main className="px-4 py-6 space-y-8 flex-1 max-w-7xl mx-auto w-full">
-        {/* Активные задачи */}
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tighter italic">
@@ -358,7 +350,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* История — ИСПРАВЛЕНА СЕТКА (lg:grid-cols-3), ТЕПЕРЬ КАРТОЧКИ НЕ РАСТЯГИВАЮТСЯ */}
         {completedTasks.length > 0 && (
           <section>
             <h2 className="text-lg font-bold mb-4 px-1 text-muted-foreground uppercase tracking-tighter italic flex items-center gap-2">

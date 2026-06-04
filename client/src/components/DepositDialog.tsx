@@ -16,7 +16,6 @@ export function DepositDialog() {
   const [isOpen, setIsOpen] = useState(false); 
   const addresses = getContractAddresses(chainId);
 
-  // Динамически читаем decimals, локально расширяя ABI для TS
   const { data: usdcDecimalsRaw } = useReadContract({
     address: addresses.usdc,
     abi: [
@@ -166,31 +165,23 @@ export function DepositDialog() {
     }
   }, [depositConfirmed, step, syncDeposit, deposit.data]);
 
-  console.log("DEBUG BLOCKCHAIN READS:", {
-    chainId,
-    addresses,
-    rawBalance: usdcBalanceRaw?.toString(),
-    formattedBalance: usdcBalance,
-    decimals: usdcDecimals
-  });
-
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full h-12 rounded-full bg-primary font-black uppercase text-[10px] tracking-widest transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-          <PlusCircle className="w-4 h-4" />
+        <Button className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all hover:opacity-90 flex items-center justify-center gap-1.5 shadow-sm">
+          <PlusCircle className="w-3.5 h-3.5" />
           Deposit
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter text-white">
             Refill Balance
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-6 space-y-6">
+        <div className="py-2 space-y-6">
           {step === 'approve' && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="flex justify-between items-end px-1">
@@ -223,32 +214,35 @@ export function DepositDialog() {
                   className={`no-spinner w-full bg-black/40 border ${!isAmountValid && amount !== "0" ? 'border-red-500/50' : 'border-border/50'} rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner`}
                   placeholder="0.00"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA] pointer-events-none">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA] pointer-events-none text-sm">
                   USDC
                 </span>
               </div>
 
               {parseFloat(amount) > usdcBalance && (
-                <p className="text-[10px] text-red-500 font-bold uppercase italic text-center ml-1 animate-pulse">
+                <p className="text-[10px] text-red-500 font-bold uppercase italic text-center ml-1 animate-pulse pt-1">
                   Insufficient USDC on wallet
                 </p>
               )}
             </div>
           )}
 
-          <div className="flex justify-between items-center px-4 py-2 bg-white/5 rounded-2xl border border-white/5">
-            <Step circle="1" label="Approve" active={step === 'approve'} done={step !== 'approve'} />
-            <ArrowRight className="text-muted-foreground/30 w-4 h-4" />
-            <Step circle="2" label="Deposit" active={step === 'deposit'} done={step === 'success'} />
-            <ArrowRight className="text-muted-foreground/30 w-4 h-4" />
-            <Step circle="3" label="Finish" active={step === 'success'} done={step === 'success'} />
-          </div>
+          {step !== 'success' && (
+            <div className="flex justify-between items-center px-4 py-3 bg-white/5 rounded-xl border border-white/5">
+              {/* Если step не success, значит мы либо на approve, либо на deposit */}
+              <Step circle="1" label="Approve" active={step === 'approve'} done={step === 'deposit'} />
+              <ArrowRight className="text-muted-foreground/30 w-4 h-4" />
+              <Step circle="2" label="Deposit" active={step === 'deposit'} done={false} />
+              <ArrowRight className="text-muted-foreground/30 w-4 h-4" />
+              <Step circle="3" label="Finish" active={false} done={false} />
+            </div>
+          )}
 
           <div className="pt-2">
             {step === 'approve' && (
               <Button 
                 onClick={handleApprove} 
-                className="w-full h-14 font-black uppercase tracking-widest text-sm italic" 
+                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic" 
                 disabled={!isAmountValid || approve.isPending || isConfirmingApprove}
               >
                 {isConfirmingApprove ? (
@@ -262,7 +256,7 @@ export function DepositDialog() {
             {step === 'deposit' && (
               <Button 
                 onClick={handleDeposit} 
-                className="w-full h-14 font-black uppercase tracking-widest text-sm italic" 
+                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic" 
                 disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}
               >
                 {(isConfirmingDeposit || syncDeposit.isPending) ? (
@@ -275,15 +269,15 @@ export function DepositDialog() {
 
             {step === 'success' && (
               <div className="space-y-4 animate-in zoom-in-95 duration-500">
-                <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 text-center">
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 text-center">
                   <CheckCircle2 className="w-16 h-16 mx-auto mb-3 text-green-500" />
-                  <h3 className="text-xl font-black text-white uppercase italic">Success!</h3>
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Success!</h3>
                   <p className="font-bold text-green-400 mt-1">+{amount} USDC</p>
                 </div>
                 <Button 
                   onClick={() => handleOpenChange(false)} 
                   variant="outline"
-                  className="w-full h-12 font-bold uppercase tracking-widest border-border hover:bg-white/5"
+                  className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs"
                 >
                   Back to App
                 </Button>
@@ -299,10 +293,10 @@ export function DepositDialog() {
 function Step({ circle, label, active, done }: { circle: string, label: string, active: boolean, done: boolean }) {
   return (
     <div className={`flex flex-col items-center gap-1 ${active || done ? 'opacity-100' : 'opacity-30'}`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${done ? 'bg-green-500 text-white' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-        {done ? <CheckCircle2 className="w-5 h-5" /> : circle}
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${done ? 'bg-green-500 text-white' : active ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+        {done ? <CheckCircle2 className="w-4 h-4" /> : circle}
       </div>
-      <span className="text-[10px] font-bold uppercase tracking-tighter">{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
     </div>
   );
 }

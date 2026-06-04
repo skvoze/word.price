@@ -17,7 +17,6 @@ export function WithdrawDialog() {
 
   const addresses = getContractAddresses(chainId);
 
-  // Динамически читаем decimals, локально расширяя ABI для TS
   const { data: usdcDecimalsRaw } = useReadContract({
     address: addresses.usdc,
     abi: [
@@ -110,31 +109,33 @@ export function WithdrawDialog() {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="w-full h-12 rounded-full border-border bg-card/50 font-black uppercase text-[10px] tracking-widest hover:bg-secondary transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+          className="w-full h-10 rounded-xl border border-border/80 bg-card hover:bg-accent text-foreground text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm"
         >
-          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground" />
           Withdraw
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[400px] bg-card border-border">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold uppercase italic text-center text-white">
+          <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter text-white">
             Withdraw USDC
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-4 space-y-6">
+        <div className="py-2 space-y-6">
           {!isSuccess ? (
             <>
               <div className="space-y-2">
-                <div className="flex justify-between px-1">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Vault Balance</span>
+                <div className="flex justify-between items-end px-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    Vault Balance
+                  </span>
                   <button 
                     onClick={() => setAmount(vaultBalance.toString())}
-                    className="text-[10px] font-black text-primary uppercase hover:underline"
+                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-primary/80 transition-colors"
                   >
-                    Max: {vaultBalance.toFixed(2)}
+                    Max: {vaultBalance.toFixed(2)} USDC
                   </button>
                 </div>
 
@@ -155,12 +156,15 @@ export function WithdrawDialog() {
                       if (amount === "0") setAmount("");
                     }}
                     placeholder="0.00"
-                    className="no-spinner w-full bg-black/40 border border-border/50 rounded-xl h-14 px-4 text-center text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner"
+                    className={`no-spinner w-full bg-black/40 border ${isInvalid && amount !== "" && amount !== "0" ? 'border-red-500/50' : 'border-border/50'} rounded-xl h-14 px-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner`}
                   />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[#2775CA] pointer-events-none text-sm">
+                    USDC
+                  </span>
                 </div>
 
                 {parseFloat(amount) > vaultBalance && (
-                  <p className="text-[10px] text-red-500 font-bold uppercase text-center mt-2 animate-pulse">
+                  <p className="text-[10px] text-red-500 font-bold uppercase italic text-center mt-2 animate-pulse">
                     Exceeds available balance
                   </p>
                 )}
@@ -168,21 +172,29 @@ export function WithdrawDialog() {
 
               <Button 
                 onClick={handleWithdraw}
-                className="w-full h-14 font-black uppercase italic tracking-widest"
+                className="w-full h-14 rounded-xl font-black uppercase italic tracking-widest text-sm"
                 disabled={isInvalid || withdraw.isPending || isConfirming || syncWithdraw.isPending}
               >
-                {isConfirming || syncWithdraw.isPending ? (
-                  <Loader2 className="animate-spin mr-2" />
-                ) : null}
+                {(isConfirming || syncWithdraw.isPending) && (
+                  <Loader2 className="animate-spin mr-2 w-5 h-5" />
+                )}
                 {isConfirming ? "Confirming..." : syncWithdraw.isPending ? "Updating..." : "Confirm Withdrawal"}
               </Button>
             </>
           ) : (
-            <div className="text-center py-6 animate-in zoom-in-95 duration-300">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-black text-white uppercase italic">Sent to Wallet!</h3>
-              <p className="text-muted-foreground text-sm mt-2">Your funds are back in your pocket.</p>
-              <Button onClick={() => handleOpenChange(false)} className="mt-6 w-full" variant="outline">Close</Button>
+            <div className="space-y-4 animate-in zoom-in-95 duration-500">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 text-center">
+                <CheckCircle2 className="w-16 h-16 mx-auto mb-3 text-green-500" />
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Sent to Wallet!</h3>
+                <p className="text-muted-foreground text-xs mt-1">Your funds are back in your pocket.</p>
+              </div>
+              <Button 
+                onClick={() => handleOpenChange(false)} 
+                variant="outline" 
+                className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs"
+              >
+                Close
+              </Button>
             </div>
           )}
         </div>
