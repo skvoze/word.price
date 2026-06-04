@@ -107,9 +107,10 @@ export function WithdrawDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
+        {/* Заменили border-border/80 на мягкий border-white/10, добавили деликатный фон и убрали фокусный ринг */}
         <Button 
           variant="outline" 
-          className="w-full h-10 rounded-xl border border-border/80 bg-card hover:bg-accent text-foreground text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm"
+          className="w-full h-10 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/5 text-foreground text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
         >
           <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground" />
           Withdraw
@@ -172,7 +173,7 @@ export function WithdrawDialog() {
 
               <Button 
                 onClick={handleWithdraw}
-                className="w-full h-14 rounded-xl font-black uppercase italic tracking-widest text-sm"
+                className="w-full h-14 rounded-xl font-black uppercase italic tracking-widest text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
                 disabled={isInvalid || withdraw.isPending || isConfirming || syncWithdraw.isPending}
               >
                 {(isConfirming || syncWithdraw.isPending) && (
@@ -191,7 +192,7 @@ export function WithdrawDialog() {
               <Button 
                 onClick={() => handleOpenChange(false)} 
                 variant="outline" 
-                className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs"
+                className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
               >
                 Close
               </Button>

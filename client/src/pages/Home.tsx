@@ -147,14 +147,14 @@ export default function Home() {
 
   return (
     <div 
-      className="min-h-[100dvh] bg-background flex flex-col"
+      className="min-h-[100dvh] bg-background flex flex-col overflow-x-hidden"
       style={{ paddingBottom: bottomPadding }}
     >
-      <header className="px-6 pt-8 pb-8 bg-gradient-to-br from-card to-background border-b border-border/50 relative overflow-hidden">
+
+      <header className="px-6 pt-8 pb-8 bg-gradient-to-br from-card to-background border-b border-border/50 relative z-20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="relative z-10 max-w-7xl mx-auto w-full">
-          {/* Верхняя строка: Баланс слева, Веб3 Кнопки жестко СПРАВА */}
           <div className="flex justify-between items-start gap-4 mb-5">
             <div>
               <h1 className="text-xs font-medium text-muted-foreground mb-1 tracking-wider uppercase">
@@ -319,7 +319,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="px-4 py-6 space-y-8 flex-1 max-w-7xl mx-auto w-full">
+      {/* Теперь выпадашка будет идеально пролетать над этой зоной main */}
+      <main className="px-4 py-6 space-y-8 flex-1 max-w-7xl mx-auto w-full relative z-10">
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tighter italic">

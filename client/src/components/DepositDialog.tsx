@@ -168,7 +168,8 @@ export function DepositDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all hover:opacity-90 flex items-center justify-center gap-1.5 shadow-sm">
+        {/* Убрали обводку фокуса */}
+        <Button className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all hover:opacity-90 flex items-center justify-center gap-1.5 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none">
           <PlusCircle className="w-3.5 h-3.5" />
           Deposit
         </Button>
@@ -229,7 +230,6 @@ export function DepositDialog() {
 
           {step !== 'success' && (
             <div className="flex justify-between items-center px-4 py-3 bg-white/5 rounded-xl border border-white/5">
-              {/* Если step не success, значит мы либо на approve, либо на deposit */}
               <Step circle="1" label="Approve" active={step === 'approve'} done={step === 'deposit'} />
               <ArrowRight className="text-muted-foreground/30 w-4 h-4" />
               <Step circle="2" label="Deposit" active={step === 'deposit'} done={false} />
@@ -242,7 +242,7 @@ export function DepositDialog() {
             {step === 'approve' && (
               <Button 
                 onClick={handleApprove} 
-                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic" 
+                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none" 
                 disabled={!isAmountValid || approve.isPending || isConfirmingApprove}
               >
                 {isConfirmingApprove ? (
@@ -256,7 +256,7 @@ export function DepositDialog() {
             {step === 'deposit' && (
               <Button 
                 onClick={handleDeposit} 
-                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic" 
+                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-sm italic focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none" 
                 disabled={deposit.isPending || isConfirmingDeposit || syncDeposit.isPending}
               >
                 {(isConfirmingDeposit || syncDeposit.isPending) ? (
@@ -277,7 +277,7 @@ export function DepositDialog() {
                 <Button 
                   onClick={() => handleOpenChange(false)} 
                   variant="outline"
-                  className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs"
+                  className="w-full h-12 rounded-xl font-bold uppercase tracking-widest border-border hover:bg-white/5 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
                 >
                   Back to App
                 </Button>
