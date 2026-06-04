@@ -175,7 +175,8 @@ export function DepositDialog() {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl"
+      onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter text-white">
             Refill Balance
