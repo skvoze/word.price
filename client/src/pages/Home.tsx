@@ -13,6 +13,33 @@ import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { getContractAddresses, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 
+// --- КОМПОНЕНТЫ ИКОНОК СЕТЕЙ (SVG) ---
+function BaseIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="12" fill="#0052FF"/>
+      <path d="M6.5 12H17.5M12 6.5V17.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function ArcIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="12" fill="#7C3AED"/>
+      <path d="M12 6.5L6.5 16H17.5L12 6.5Z" fill="white"/>
+    </svg>
+  );
+}
+
+// Хелпер для выбора иконки по ID сети
+function ChainIcon({ chainId, className = "w-4 h-4" }: { chainId: number; className?: string }) {
+  if (chainId === 8453) return <BaseIcon className={className} />;
+  if (chainId === 5042002) return <ArcIcon className={className} />;
+  return <div className={`${className} rounded-full bg-muted-foreground/30`} />;
+}
+
+
 export default function Home() {
   const { address, isConnected, chain } = useAccount(); 
   const config = useConfig();
@@ -177,7 +204,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Блок авторизации прижат к правому углу */}
             <ConnectButton.Custom>
               {({
                 account,
@@ -236,13 +262,8 @@ export default function Home() {
                               type="button"
                               className="h-10 bg-card border border-border/80 hover:border-border text-foreground text-xs font-bold uppercase tracking-wider px-4 rounded-xl flex items-center gap-2 hover:bg-accent transition-all shadow-sm"
                             >
-                              {currentConnectedChain.hasIcon && currentConnectedChain.iconUrl && (
-                                <img
-                                  alt={currentConnectedChain.name ?? 'Chain icon'}
-                                  src={currentConnectedChain.iconUrl}
-                                  className="w-4 h-4 rounded-full"
-                                />
-                              )}
+                              {/* Кастомная динамическая иконка на кнопке-триггере */}
+                              <ChainIcon chainId={currentChainId} className="w-4 h-4 rounded-full" />
                               <span>{currentConnectedChain.name}</span>
                               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" style={{ transform: isChainDropdownOpen ? 'rotate(180deg)' : 'none' }} />
                             </button>
@@ -263,7 +284,8 @@ export default function Home() {
                                       currentChainId === 8453 ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
                                     }`}
                                   >
-                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                    {/* Настоящая иконка Base в выпадающем списке */}
+                                    <ChainIcon chainId={8453} className="w-4 h-4 rounded-full" />
                                     Base
                                   </button>
 
@@ -279,7 +301,8 @@ export default function Home() {
                                       currentChainId === 5042002 ? 'bg-primary/10 text-primary' : 'hover:bg-accent text-foreground'
                                     }`}
                                   >
-                                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                                    {/* Настоящая иконка Arc в выпадающем списке */}
+                                    <ChainIcon chainId={5042002} className="w-4 h-4 rounded-full" />
                                     Arc Testnet
                                   </button>
                                 </div>
@@ -319,7 +342,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Теперь выпадашка будет идеально пролетать над этой зоной main */}
       <main className="px-4 py-6 space-y-8 flex-1 max-w-7xl mx-auto w-full relative z-10">
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
