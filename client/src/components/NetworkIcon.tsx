@@ -1,3 +1,4 @@
+// src/components/ChainIcon.tsx
 import React from "react";
 
 function BaseLogo({ className }: { className?: string }) {
@@ -18,15 +19,16 @@ function ArcLogo({ className }: { className?: string }) {
   );
 }
 
-const NETWORK_CONFIGS: Record<number, React.ComponentType<{ className?: string }>> = {
-  8453: BaseLogo,
-  5042002: ArcLogo,
+const NETWORK_CONFIGS: Record<number, { name: string; icon: React.ComponentType<{ className?: string }> }> = {
+  8453: { name: "Base", icon: BaseLogo },
+  5042002: { name: "Arc Testnet", icon: ArcLogo }
 };
 
 export function ChainIcon({ chainId, className = "w-4 h-4" }: { chainId: number; className?: string }) {
-  const IconComponent = NETWORK_CONFIGS[chainId];
+  const IconComponent = NETWORK_CONFIGS[chainId]?.icon;
   
   if (!IconComponent) {
+    // Фоллбэк: если сеть неизвестна, рисуем серый круг, чтобы ничего не ломалось
     return <div className={`${className} rounded-full bg-muted-foreground/20`} />;
   }
   

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState,Fragment } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useConfig, useSwitchChain } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -6,13 +6,51 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
 import { TaskCard } from "@/components/TaskCard";
 import { BottomNav } from "@/components/BottomNav";
-import { ChainIcon } from "@/components/NetworkIcon";
 import { Loader2, Target, TrendingUp, ChevronDown } from "lucide-react"; 
 import { type Task } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DepositDialog } from "@/components/DepositDialog";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { getContractAddresses, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
+
+// --- КОМПОНЕНТЫ ИКОНОК СЕТЕЙ (SVG) ---
+export function BaseLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="12" fill="#0052FF"/>
+      <path d="M12 6V18M6 12H18" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  ); 
+}
+
+export function ArcLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="12" fill="#A855F7"/>
+      <path d="M12 7L7 17H17L12 7Z" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+export const NETWORK_CONFIGS: Record<number, { name: string; icon: React.ComponentType<{ className?: string }> }> = {
+  8453: { 
+    name: "Base",
+    icon: BaseLogo,
+  },
+  5042002: { 
+    name: "Arc Testnet",
+    icon: ArcLogo,
+  }
+};
+
+export function ChainIcon({ chainId, className = "w-4 h-4" }: { chainId: number; className?: string }) {
+  const IconComponent = NETWORK_CONFIGS[chainId]?.icon;
+  
+  if (!IconComponent) return null;
+  
+  return <IconComponent className={className} />;
+}
+
 
 export default function Home() {
   const { address, isConnected, chain } = useAccount(); 
@@ -151,6 +189,7 @@ export default function Home() {
       className="min-h-[100dvh] bg-background flex flex-col overflow-x-hidden"
       style={{ paddingBottom: bottomPadding }}
     >
+
       <header className="px-6 pt-8 pb-8 bg-gradient-to-br from-card to-background border-b border-border/50 relative z-20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
@@ -228,49 +267,65 @@ export default function Home() {
 
                       return (
                         <div className="flex items-center gap-2">
-                          {/* Выпадающий список выбора сетей */}
+                          {/* Кастомный выпадающий список выбора сетей */}
                           <div className="relative">
                             <button
                               onClick={() => setIsChainDropdownOpen(!isChainDropdownOpen)}
                               type="button"
                               className="h-10 bg-card border border-border/80 hover:border-border text-foreground text-xs font-bold uppercase tracking-wider px-4 rounded-xl flex items-center gap-2 hover:bg-accent transition-all shadow-sm"
                             >
-                              <ChainIcon chainId={currentChainId} />
+                              {/* Кастомная динамическая иконка на кнопке-триггере */}
+                              <ChainIcon chainId={currentChainId} className="w-4 h-4 rounded-full" />
                               <span>{currentConnectedChain.name}</span>
                               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200" style={{ transform: isChainDropdownOpen ? 'rotate(180deg)' : 'none' }} />
                             </button>
 
                             {isChainDropdownOpen && (
-                              <>
-                                <div className="fixed inset-0 z-30" onClick={() => setIsChainDropdownOpen(false)} />
-                                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-40 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                  
-                                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1">
-                                    Networks
-                                  </div>
+  <>
+    <div className="fixed inset-0 z-30" onClick={() => setIsChainDropdownOpen(false)} />
+    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-40 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
+      
+      {config.chains.map((targetChain, index) => {
+        // Проверяем, нужно ли отрендерить заголовок группы (Mainnet / Testnet)
+        const isFirstMainnet = !targetChain.testnet && (index === 0 || config.chains[index - 1].testnet);
+        const isFirstTestnet = targetChain.testnet && (index === 0 || !config.chains[index - 1].testnet);
 
-                                  {/* ПОЛНОСТЬЮ ДИНАМИЧЕСКИЙ ВЫВОД СЕТЕЙ ИЗ НАСТРОЕК WAGMI */}
-                                  {config.chains.map((targetChain) => (
-                                    <button
-                                      key={targetChain.id}
-                                      onClick={() => {
-                                        switchChain({ chainId: targetChain.id });
-                                        setIsChainDropdownOpen(false);
-                                      }}
-                                      className={`w-full text-left px-2.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-colors ${
-                                        currentChainId === targetChain.id 
-                                          ? 'bg-primary/10 text-primary' 
-                                          : 'hover:bg-accent text-foreground'
-                                      }`}
-                                    >
-                                      <ChainIcon chainId={targetChain.id} />
-                                      {targetChain.name}
-                                    </button>
-                                  ))}
+        return (
+          <Fragment key={targetChain.id}>
+            {isFirstMainnet && (
+              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1">
+                Mainnet
+              </div>
+            )}
+            {isFirstTestnet && (
+              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5 py-1 pt-2 border-t border-border/50">
+                Testnet
+              </div>
+            )}
 
-                                </div>
-                              </>
-                            )}
+            {/* Одна универсальная кнопка для любой сети */}
+            <button
+              onClick={() => {
+                switchChain({ chainId: targetChain.id });
+                setIsChainDropdownOpen(false);
+              }}
+              className={`w-full text-left px-2.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-colors ${
+                currentChainId === targetChain.id 
+                  ? 'bg-primary/10 text-primary' 
+                  : 'hover:bg-accent text-foreground'
+              }`}
+            >
+              {/* Поиск иконки по ID сети происходит автоматически внутри компонента */}
+              <ChainIcon chainId={targetChain.id} className="w-4 h-4 rounded-full" />
+              {targetChain.name}
+            </button>
+          </Fragment>
+        );
+      })}
+
+    </div>
+  </>
+)}
                           </div>
 
                           {/* Кнопка Аккаунта */}
@@ -295,6 +350,7 @@ export default function Home() {
             </ConnectButton.Custom>
           </div>
 
+          {/* Строка Кнопок Действий (Депозит / Вывод) под Балансом */}
           {isConnected && (
             <div className="flex items-center gap-2 max-w-[260px] w-full"> 
               <DepositDialog />
