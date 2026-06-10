@@ -1,6 +1,6 @@
 import React from "react";
 
-export function BaseLogo({ className }: { className?: string }) {
+function BaseLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="12" fill="#0052FF"/>
@@ -9,7 +9,7 @@ export function BaseLogo({ className }: { className?: string }) {
   ); 
 }
 
-export function ArcLogo({ className }: { className?: string }) {
+function ArcLogo({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="12" fill="#A855F7"/>
@@ -18,23 +18,17 @@ export function ArcLogo({ className }: { className?: string }) {
   );
 }
 
-
-export const NETWORK_CONFIGS: Record<number, { name: string; icon: React.ComponentType<{ className?: string }> }> = {
-  8453: { 
-    name: "Base",
-    icon: BaseLogo,
-  },
-  5042002: { 
-    name: "Arc Testnet",
-    icon: ArcLogo,
-  }
+const NETWORK_CONFIGS: Record<number, React.ComponentType<{ className?: string }>> = {
+  8453: BaseLogo,
+  5042002: ArcLogo,
 };
 
-export function NetworkIcon({ chainId, className = "w-4 h-4" }: { chainId: number; className?: string }) {
-  const config = NETWORK_CONFIGS[chainId];
-  if (!config) {
-    return <div className={`${className} rounded-full bg-muted-foreground/30`} />;
+export function ChainIcon({ chainId, className = "w-4 h-4" }: { chainId: number; className?: string }) {
+  const IconComponent = NETWORK_CONFIGS[chainId];
+  
+  if (!IconComponent) {
+    return <div className={`${className} rounded-full bg-muted-foreground/20`} />;
   }
-  const IconComponent = config.icon;
+  
   return <IconComponent className={className} />;
 }
