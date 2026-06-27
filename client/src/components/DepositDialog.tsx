@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getContractAddresses, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
+import { getChainConfig, VAULT_ABI, USDC_ABI } from "../../../shared/contracts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, PlusCircle, CheckCircle2, ArrowRight } from "lucide-react";
@@ -14,49 +14,30 @@ export function DepositDialog() {
   const [step, setStep] = useState<'approve' | 'deposit' | 'success'>('approve');
   const [amount, setAmount] = useState(""); 
   const [isOpen, setIsOpen] = useState(false); 
-  const addresses = getContractAddresses(chainId);
-
-  const { data: usdcDecimalsRaw } = useReadContract({
-    address: addresses.usdc,
-    abi: [
-      ...USDC_ABI,
-      {
-        inputs: [],
-        name: "decimals",
-        outputs: [{ type: "uint8" }],
-        stateMutability: "view",
-        type: "function",
-      },
-    ],
-    functionName: 'decimals',
-    chainId: chainId,
-    query: {
-      enabled: !!addresses.usdc,
-    }
-  });
-
-  const usdcDecimals = Number(usdcDecimalsRaw ?? 6);
+  
+  const config = getChainConfig(chainId);
+  const usdcDecimals = config.usdcDecimals;
 
   const { data: usdcBalanceRaw, refetch: refetchUSDC } = useReadContract({
-    address: addresses.usdc,
+    address: config.usdc,
     abi: USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: chainId, 
     query: {
-      enabled: !!address && !!addresses.usdc,
+      enabled: !!address && !!config.usdc,
       refetchInterval: 5000, 
     }
   });
 
   const { data: currentAllowance } = useReadContract({
-    address: addresses.usdc,
+    address: config.usdc,
     abi: USDC_ABI,
     functionName: 'allowance',
-    args: address ? [address, addresses.vault] : undefined,
+    args: address ? [address, config.vault] : undefined,
     chainId: chainId, 
     query: {
-      enabled: !!address && !!addresses.usdc && !!addresses.vault,
+      enabled: !!address && !!config.usdc && !!config.vault,
     }
   });
 
@@ -67,7 +48,7 @@ export function DepositDialog() {
   };
 
   const { refetch: refetchVault } = useReadContract({
-    address: addresses.vault,
+    address: config.vault,
     abi: VAULT_ABI,
     functionName: 'availableBalance',
     args: address ? [address] : undefined,
@@ -102,8 +83,8 @@ export function DepositDialog() {
       await queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       await Promise.all([
         refetchUSDC(),
-        queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', addresses.vault] }),
-        queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', addresses.usdc] })
+        queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', config.vault] }),
+        queryClient.refetchQueries({ queryKey: ['wagmi', 'readContract', config.usdc] })
       ]);
       await refetchVault();
       setStep('success');
@@ -132,10 +113,10 @@ export function DepositDialog() {
     }
 
     approve.writeContract({
-      address: addresses.usdc,
+      address: config.usdc,
       abi: USDC_ABI,
       functionName: "approve",
-      args: [addresses.vault, parsedAmount],
+      args: [config.vault, parsedAmount],
     });
   };
 
@@ -145,7 +126,7 @@ export function DepositDialog() {
       return;
     }
     deposit.writeContract({
-      address: addresses.vault,
+      address: config.vault,
       abi: VAULT_ABI,
       functionName: "deposit",
       args: [parseUnits(amount.toString().replace(',', '.'), usdcDecimals)], 
@@ -168,15 +149,13 @@ export function DepositDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {/* Убрали обводку фокуса */}
         <Button className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider transition-all hover:opacity-90 flex items-center justify-center gap-1.5 shadow-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none">
           <PlusCircle className="w-3.5 h-3.5" />
           Deposit
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl"
-      onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-[425px] bg-card border-border shadow-2xl rounded-2xl" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold uppercase italic tracking-tighter text-white">
             Refill Balance
