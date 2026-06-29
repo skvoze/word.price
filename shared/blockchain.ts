@@ -1,4 +1,3 @@
-// blockchain.ts
 import { createWalletClient, createPublicClient, http, defineChain, Chain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
