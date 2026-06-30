@@ -82,8 +82,9 @@ function Router() {
 
 function AppContent() {
   const { chain } = useAccount();
+  const chainId = useChainId();
   const wagmiConfig = useConfig();
-  const activeChain = chain || wagmiConfig.chains.find((c) => c.id === useChainId()) || wagmiConfig.chains[0];
+  const activeChain = chain || wagmiConfig.chains.find((c) => c.id === chainId) || wagmiConfig.chains[0];
   return (
     <OnchainKitProvider chain={activeChain as any}>
       <RainbowKitProvider 

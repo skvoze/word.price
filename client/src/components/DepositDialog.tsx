@@ -26,7 +26,7 @@ export function DepositDialog() {
     chainId: chainId, 
     query: {
       enabled: !!address && !!config.usdc,
-      refetchInterval: 5000, 
+      refetchOnWindowFocus: true,
     }
   });
 
