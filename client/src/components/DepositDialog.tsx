@@ -30,6 +30,14 @@ export function DepositDialog() {
     }
   });
 
+
+console.log("DEBUG DEPOSIT:", {
+  currentChainId: chainId,
+  usdcAddressInConfig: config?.usdc,
+  rawBalanceFromBlockchain: usdcBalanceRaw?.toString(),
+  decimals: usdcDecimals
+});
+
   const { data: currentAllowance } = useReadContract({
     address: config.usdc,
     abi: USDC_ABI,
