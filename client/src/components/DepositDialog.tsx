@@ -18,7 +18,7 @@ export function DepositDialog() {
   const config = getChainConfig(chainId);
   const usdcDecimals = config.usdcDecimals;
 
-  const { data: usdcBalanceRaw, refetch: refetchUSDC } = useReadContract({
+  const { data: usdcBalanceRaw,error: usdcError, status: usdcStatus, refetch: refetchUSDC } = useReadContract({
     address: config.usdc,
     abi: USDC_ABI,
     functionName: 'balanceOf',
@@ -35,7 +35,8 @@ console.log("DEBUG DEPOSIT:", {
   currentChainId: chainId,
   usdcAddressInConfig: config?.usdc,
   rawBalanceFromBlockchain: usdcBalanceRaw?.toString(),
-  decimals: usdcDecimals
+  decimals: usdcDecimals,
+  error: usdcError?.message
 });
 
   const { data: currentAllowance } = useReadContract({
