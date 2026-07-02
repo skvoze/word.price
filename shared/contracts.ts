@@ -16,7 +16,7 @@ export const CHAIN_REGISTRY: Record<number, ChainConfig> = {
   [BASE_CHAIN_ID]: {
     chainId: BASE_CHAIN_ID,
     vault: "0x09AC8b9A30f3b16cfC1228c98a51384F4218353a",
-    usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913",
+    usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     usdcDecimals: 6,
     simulateBeforeWrite: true,
     rpcUrl: process.env.RPC_URL || 'https://mainnet.base.org',
