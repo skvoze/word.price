@@ -19,6 +19,9 @@ export default defineConfig({
         ]
       : []),
   ],
+  define: {
+    "process.env.RPC_URL": JSON.stringify(process.env.RPC_URL),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
