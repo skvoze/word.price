@@ -263,7 +263,6 @@ export default function TaskDetails() {
     if (uploadedUrl && typeof uploadedUrl === "string") {
       handleEvidenceSubmit(uploadedUrl);
     } else {
-      console.error("DEBUG: Could not find a valid URL string", success);
       toast({ 
         title: "Error", 
         description: "File uploaded but link was not found", 
