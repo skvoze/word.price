@@ -37,7 +37,7 @@ export const config = getDefaultConfig({
   chains: [base, arcTestnet], 
   ssr: true, 
   transports: {
-    [base.id]: http(import.meta.env.RPC_URL ||'https://rpc.ankr.com/base'),
+    [base.id]: http(process.env.RPC_URL||'https://rpc.ankr.com/base'),
     [arcTestnet.id]: http(), 
   },
 });
